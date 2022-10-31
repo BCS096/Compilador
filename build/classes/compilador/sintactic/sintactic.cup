@@ -1,0 +1,371 @@
+/**
+ * Assignatura 21780 - Compiladors
+ * Estudis: Grau en Informàtica 
+ * Itinerari: Intel·ligència Artificial i Computació
+ *
+ * Professor: Pere Palmer
+ */
+package sintactic;
+
+import java.io.*;
+import java_cup.runtime.ComplexSymbolFactory.ComplexSymbol;
+import java_cup.runtime.ComplexSymbolFactory.Location;
+
+import java_cup.runtime.*;
+
+import sintactic.nodes.*;
+import sintactic.descriptions.*;
+import sintactic.descriptions.BaseDescription.DescriptionType;
+import sintactic.*;
+import sintactic.semantic.SemanticAnalysis;
+import lexic.LiteralWrapper;
+
+class Parser;
+
+/**
+ ** Aquí es podria posar un codi 'ad hoc' però en aquest cas no és necessari.
+**/
+parser code {:
+    /**********************************************************************
+     * sobrecàrrega de mètodes per gestionar els errors que es localitzin *
+     **********************************************************************/
+    int numberErrors = 0;
+    BufferedWriter bf;
+
+    final String ERROR_FILE = "errors.txt";
+
+    public int getNumberErrors() {
+        return numberErrors;
+    }
+
+    @Override
+    public void report_error(String message, Object info) {
+        numberErrors++;
+        StringBuilder msg = new StringBuilder("");
+        if ((info != null) && (info instanceof Symbol)) {
+            ComplexSymbol token = (ComplexSymbol)info;
+            Location l = token.getLeft();
+
+            if (l != null) {
+                msg.append(message + " on ")
+                   .append("row: ")
+                   .append(l.getLine())
+                   .append(", column: ")
+                   .append(l.getColumn());
+            }
+        }
+        if ((info != null) && (info instanceof BaseNode)) {
+            BaseNode node = (BaseNode)info;
+            
+            msg.append("SEMANTIC ERROR: ")
+                .append(message + " on ")
+                .append("row: ")
+                .append(node.getLine())
+                .append(", column: ")
+                .append(node.getColumn());
+        }
+        //msg.append(": ").append(message);
+
+        if(numberErrors==1){
+            try {
+                //És el primer error detectat
+                bf = new BufferedWriter(new FileWriter(ERROR_FILE));
+            } catch (IOException ex) {
+            }
+        }
+
+        try {
+            bf.write(msg.toString()+"\n");
+        } catch (IOException ex) {
+        }
+
+        System.err.println(msg);
+    }
+
+    @Override
+    public void report_fatal_error(String message, Object info) throws Exception {
+        report_error("FATAL ERROR: ("+message+")", info);
+        done_parsing();
+    }
+
+    @Override
+    public void unrecovered_syntax_error(Symbol cur_token) throws Exception {
+        report_error("FATAL SINTACTIC ERROR: unexpected "+ParserSym.terminalNames[cur_token.sym], cur_token);
+        done_parsing();
+    }
+
+    @Override
+    public void syntax_error(Symbol cur_token) {
+        report_error("SINTACTIC ERROR: Unexpected "+ParserSym.terminalNames[cur_token.sym], cur_token);
+    }
+
+    private int extractLine(ComplexSymbol symbol) {
+        Location l = symbol.getLeft();
+        if(l != null) {
+            return l.getLine();
+        }
+        return 0;
+    }
+
+    private int extractColumn(ComplexSymbol symbol) {
+        Location l = symbol.getLeft();
+        if(l != null) {
+            return l.getColumn();
+        }
+        return 0;
+    }
+:}
+
+/**
+ ** També aquí es poden afegir accions a realitzar quan es requereix un token.
+scan with {:     next_token(); :}
+**/
+terminal ComplexSymbol op_add, op_sub, op_mul, op_div, op_mod;
+terminal ComplexSymbol op_increment, op_decrement;
+terminal ComplexSymbol sym_semicolon, sym_comma, sym_colon;
+terminal ComplexSymbol sym_lparen, sym_rparen, sym_lcbracket, sym_rcbracket, sym_lbracket, sym_rbracket;
+terminal ComplexSymbol r_if, r_else, r_elif, r_while, r_for, r_new;
+terminal ComplexSymbol r_procedure, r_function, r_return;
+terminal LiteralWrapper r_true, r_false;
+terminal ComplexSymbol sym_eq;
+
+terminal ComplexSymbol r_int, r_char, r_bool, r_string;
+terminal ComplexSymbol r_const;
+terminal ComplexSymbol r_main;
+terminal ComplexSymbol rel_eq, rel_neq, rel_lt, rel_le, rel_gt, rel_ge; 
+terminal ComplexSymbol r_or, r_and;
+terminal ComplexSymbol r_not;
+terminal ComplexSymbol r_print, r_println, r_read;
+terminal LiteralWrapper identifier;
+terminal LiteralWrapper l_int;
+terminal LiteralWrapper l_char;
+terminal LiteralWrapper l_string;
+
+non terminal ProgramNode          PROGRAM;
+non terminal DeclListNode         DECL_LIST;
+non terminal DeclNode             DECL;
+non terminal ModifierNode         MODIFIER;
+non terminal ActualDeclNode       ACTUAL_DECL;
+non terminal DeclElemNode         DECL_ELEM;
+non terminal TypeIdNode           TYPE_ID;
+non terminal ElemListNode         ELEM_LIST;
+non terminal ElemIdAssigNode      ELEM_ID_ASSIG;
+non terminal DeclArrayNode        DECL_ARRAY;
+non terminal ArrayDeclNode        ARRAY_DECL;
+non terminal InitArrayNode        INIT_ARRAY;
+non terminal ValueListNode        VALUE_LIST;
+non terminal MethodListNode       METHOD_LIST;
+non terminal MethodNode           METHOD;
+non terminal ProcNode             PROC;
+non terminal FuncNode             FUNC;
+non terminal ParamListNode        PARAM_LIST;
+non terminal ActualParamListNode  ACTUAL_PARAM_LIST;
+non terminal ParamNode            PARAM;
+non terminal SentenceListNode     SENTENCE_LIST;
+non terminal SentenceNode         SENTENCE;
+non terminal ForInstNode          FOR_INST;
+non terminal NextIfNode           NEXT_IF;
+non terminal InstNode             INST;
+non terminal InstExpNode          INST_EXP;
+non terminal MethodCallNode       METHOD_CALL;
+non terminal ParamInNode          PARAM_IN;
+non terminal AssigNode            ASSIG;
+non terminal ExpressionNode       EXP;
+non terminal SimpleValueNode      SIMPLE_VALUE;
+non terminal LiteralNode          LITERAL;
+non terminal BinaryOpNode         BINARY_OP;
+non terminal RelOpNode            REL_OP;
+non terminal LogicOpNode          LOGIC_OP;
+non terminal AritOpNode           ARIT_OP;
+non terminal NegOpNode            NEG_OP;
+non terminal SpecialOpNode        SPECIAL_OP;
+non terminal MainNode             MAIN;
+non terminal IdentifierNode       ID;
+
+precedence left op_add, op_sub;
+precedence left op_mul, op_div, op_mod;
+precedence left r_and, r_or;
+precedence left rel_eq, rel_neq, rel_lt, rel_gt, rel_ge, rel_le;
+
+start with PROGRAM;
+
+PROGRAM           ::= DECL_LIST:dl METHOD_LIST:ml MAIN:m                                                                                                                                  {: RESULT = new ProgramNode(dl, ml, m, m.getLine(), m.getColumn());
+                                                                                                                                                                                             SemanticAnalysis sem = new SemanticAnalysis(RESULT, parser); if(numberErrors == 0){sem.handleProgram();} :}
+                    ;
+
+DECL_LIST         ::= DECL_LIST:dl DECL:d sym_semicolon                                                                                                                                   {: RESULT = new DeclListNode(dl, d, d.getLine(), d.getColumn());                                        :}
+                    | DECL_LIST:dl DECL:d error                                                                                                                                           {: RESULT = new DeclListNode();                                                                         :}
+                    |                                                                                                                                                                     {: RESULT = new DeclListNode();                                                                         :}
+                    ;
+
+DECL              ::= MODIFIER:m ACTUAL_DECL:ad                                                                                                                                           {: RESULT = new DeclNode(m, ad, ad.getLine(), ad.getColumn());                                          :}
+                    ;
+
+MODIFIER          ::= r_const:c                                                                                                                                                           {: RESULT = new ModifierNode(DescriptionType.dconst, true, extractLine(c), extractColumn(c));           :}
+                    |                                                                                                                                                                     {: RESULT = new ModifierNode(DescriptionType.dvar, false, 0, 0);                                        :}
+                    ;
+
+ACTUAL_DECL       ::= DECL_ELEM:de                                                                                                                                                        {: RESULT = new ActualDeclNode(de, null, de.getLine(), de.getColumn());                                 :}
+                    | DECL_ARRAY:da                                                                                                                                                       {: RESULT = new ActualDeclNode(null, da, da.getLine(), da.getColumn());                                 :}
+                    ;
+
+DECL_ELEM         ::= TYPE_ID:t ELEM_LIST:el                                                                                                                                              {: RESULT = new DeclElemNode(t, el, t.getLine(), t.getColumn());                                        :}
+                    ;
+
+TYPE_ID           ::= r_int:t                                                                                                                                                             {: RESULT = new TypeIdNode(TypeEnum.INT, extractLine(t), extractColumn(t));                             :}
+                    | r_char:t                                                                                                                                                            {: RESULT = new TypeIdNode(TypeEnum.CHAR, extractLine(t), extractColumn(t));                            :}
+                    | r_bool:t                                                                                                                                                            {: RESULT = new TypeIdNode(TypeEnum.BOOL, extractLine(t), extractColumn(t));                            :}
+                    | r_string:t                                                                                                                                                          {: RESULT = new TypeIdNode(TypeEnum.STRING, extractLine(t), extractColumn(t));                          :}
+                    ;
+
+ELEM_LIST         ::= ELEM_LIST:el sym_comma ELEM_ID_ASSIG:ea                                                                                                                             {: RESULT = new ElemListNode(el, ea, el.getLine(), el.getColumn());                                     :}        
+                    | ELEM_ID_ASSIG:eia                                                                                                                                                   {: RESULT = new ElemListNode(null, eia, eia.getLine(), eia.getColumn());                                :} 
+                    ;
+
+ELEM_ID_ASSIG     ::= ID:id                                                                                                                                                               {: RESULT = new ElemIdAssigNode(null, id, id.getLine(), id.getColumn());                                :}
+                    | ID:id sym_eq EXP:exp                                                                                                                                                {: RESULT = new ElemIdAssigNode(exp, id, id.getLine(), id.getColumn());                                 :}
+                    ;
+
+DECL_ARRAY        ::= TYPE_ID:t ID:id sym_lbracket sym_rbracket ARRAY_DECL:ad                                                                                                             {: RESULT = new DeclArrayNode(t, ad, id, id.getLine(), id.getColumn());                                 :}
+                    ;
+
+ARRAY_DECL        ::= INIT_ARRAY:ia                                                                                                                                                       {: RESULT = new ArrayDeclNode(ia, ia.getLine(), ia.getColumn());                                        :}
+                    |                                                                                                                                                                     {: RESULT = new ArrayDeclNode();                                                                        :}
+                    ;
+
+INIT_ARRAY        ::= sym_eq:e r_new TYPE_ID:t sym_lbracket EXP:exp sym_rbracket                                                                                                          {: RESULT = new InitArrayNode(t, exp, null, extractLine(e), extractColumn(e));                          :}
+                    | sym_eq:e r_new TYPE_ID:t sym_lbracket sym_rbracket sym_lcbracket VALUE_LIST:vl sym_rcbracket                                                                        {: RESULT = new InitArrayNode(t, null, vl, extractLine(e), extractColumn(e));                           :}
+                    ;
+
+VALUE_LIST        ::= EXP:exp sym_comma VALUE_LIST:vl                                                                                                                                     {: RESULT = new ValueListNode(exp, vl, exp.getLine(), exp.getColumn());                                 :}
+                    | EXP:exp                                                                                                                                                             {: RESULT = new ValueListNode(exp, null, exp.getLine(), exp.getColumn());                               :}
+                    ;
+
+METHOD_LIST       ::= METHOD:m METHOD_LIST:ml                                                                                                                                             {: RESULT = new MethodListNode(m, ml, m.getLine(), m.getColumn());                                      :}
+                    |                                                                                                                                                                     {: RESULT = new MethodListNode();                                                                       :}
+                    ;
+
+METHOD            ::= PROC:p                                                                                                                                                              {: RESULT = new MethodNode(p, null, p.getLine(), p.getColumn());                                        :}
+                    | FUNC:f                                                                                                                                                              {: RESULT = new MethodNode(null, f, f.getLine(), f.getColumn());                                        :}
+                    ;
+
+PROC              ::= r_procedure:m ID:id sym_lparen PARAM_LIST:pl sym_rparen sym_lcbracket SENTENCE_LIST:sl sym_rcbracket                                                                {: RESULT = new ProcNode(pl, sl, id, extractLine(m), extractColumn(m));                                 :}
+                    ;
+
+FUNC              ::= r_function:m ID:id sym_lparen PARAM_LIST:pl sym_rparen sym_colon TYPE_ID:t sym_lcbracket SENTENCE_LIST:sl r_return EXP:exp sym_semicolon sym_rcbracket              {: RESULT = new FuncNode(id, pl, t, sl, exp, extractLine(m), extractColumn(m));                         :}
+                    ;
+
+PARAM_LIST        ::= ACTUAL_PARAM_LIST:apl                                                                                                                                               {: RESULT = new ParamListNode(apl, apl.getLine(), apl.getColumn());                                     :}
+                    |                                                                                                                                                                     {: RESULT = new ParamListNode();                                                                        :}
+                    ;
+
+ACTUAL_PARAM_LIST ::= PARAM:p                                                                                                                                                             {: RESULT = new ActualParamListNode(p, null, p.getLine(), p.getColumn());                               :}  
+                    | PARAM:p sym_comma ACTUAL_PARAM_LIST:apl                                                                                                                             {: RESULT = new ActualParamListNode(p, apl, p.getLine(), p.getColumn());                                :}    
+                    ;
+
+PARAM             ::= TYPE_ID:t ID:id                                                                                                                                                     {: RESULT = new ParamNode(t, id, t.getLine(), t.getColumn());                                           :}     
+                    ;
+
+SENTENCE_LIST     ::= SENTENCE:sentence SENTENCE_LIST:sentence_list                                                                                                                       {: RESULT = new SentenceListNode(sentence, sentence_list, sentence.getLine(), sentence.getColumn());    :}
+                    |                                                                                                                                                                     {: RESULT = new SentenceListNode();                                                                     :}
+                    ;
+
+SENTENCE          ::= r_if:v sym_lparen EXP:exp sym_rparen sym_lcbracket SENTENCE_LIST:sentence sym_rcbracket NEXT_IF:si                                                                  {: RESULT = new SentenceNode(null, null, exp, sentence, si,null, SentenceType.IF, extractLine(v), extractColumn(v)); :}
+                    | r_while:v sym_lparen EXP:exp sym_rparen sym_lcbracket SENTENCE_LIST:sentence sym_rcbracket                                                                          {: RESULT = new SentenceNode(null, null, exp, sentence, null,null, SentenceType.WHILE, extractLine(v), extractColumn(v)); :}
+                    | DECL:decl sym_semicolon                                                                                                                                             {: RESULT = new SentenceNode(decl, null, null, null, null,null,  SentenceType.DECL, decl.getLine(), decl.getColumn()); :}
+                    | INST:inst sym_semicolon                                                                                                                                             {: RESULT = new SentenceNode(null, inst, null, null, null,null,  SentenceType.INST, inst.getLine(), inst.getColumn()); :}                                       
+                    | r_for:v sym_lparen DECL:decl sym_semicolon EXP:exp sym_semicolon FOR_INST:inst sym_rparen sym_lcbracket SENTENCE_LIST:sl sym_rcbracket                              {: RESULT = new SentenceNode(decl, null, exp, sl, null,inst, SentenceType.FOR, extractLine(v), extractColumn(v)); :}
+                    | error                                                                                                                                                               {: RESULT = new SentenceNode(null, null, null, null, null,null, SentenceType.NONE, 0, 0); :}
+                    ;
+
+FOR_INST          ::= SPECIAL_OP:esp ID:v                                                                                                                                                 {: RESULT = new ForInstNode(esp,null,v, v.getLine(), v.getColumn());                                    :}
+                    | ID:v SPECIAL_OP:esp                                                                                                                                                 {: RESULT = new ForInstNode(esp,null,v, v.getLine(), v.getColumn());                                    :}
+                    | ID:v sym_eq EXP:exp                                                                                                                                                 {: RESULT = new ForInstNode(null,exp,v, v.getLine(), v.getColumn());                                    :}
+                    ;
+
+NEXT_IF           ::= r_else:r sym_lcbracket SENTENCE_LIST:v sym_rcbracket                                                                                                                {: RESULT = new NextIfNode(v,null,null, extractLine(r), extractColumn(r));                              :}
+                    | r_elif:r sym_lparen EXP:exp sym_rparen sym_lcbracket SENTENCE_LIST:sents sym_rcbracket NEXT_IF:next                                                                 {: RESULT = new NextIfNode(sents,exp,next, extractLine(r), extractColumn(r));                           :}
+                    |                                                                                                                                                                     {: RESULT = new NextIfNode();                                                                           :}
+	            ;
+
+INST              ::= INST_EXP:v                                                                                                                                                          {: RESULT = new InstNode(v, null,null, InstType.EXP, v.getLine(), v.getColumn());                       :}
+                    | ASSIG:v                                                                                                                                                             {: RESULT = new InstNode(null, v,null, InstType.ASSIG, v.getLine(), v.getColumn());                     :}
+                    | r_print:v sym_lparen EXP:exp sym_rparen                                                                                                                             {: RESULT = new InstNode(null, null,exp, InstType.PRINT, exp.getLine(), exp.getColumn());               :}
+                    | r_println:v sym_lparen EXP:exp sym_rparen                                                                                                                           {: RESULT = new InstNode(null, null,exp, InstType.PRINTLN, exp.getLine(), exp.getColumn());             :}
+                    ;
+
+INST_EXP          ::= SPECIAL_OP:op_esp ID:id                                                                                                                                             {: RESULT = new InstExpNode(op_esp, null, id, false, id.getLine(), id.getColumn());                     :}
+                    | ID:id SPECIAL_OP:op_esp                                                                                                                                             {: RESULT = new InstExpNode(op_esp, null, id, false, id.getLine(), id.getColumn());                     :}
+                    | METHOD_CALL:m_call                                                                                                                                                  {: RESULT = new InstExpNode(null, m_call, null, false, m_call.getLine(), m_call.getColumn());           :}
+                    | r_read:read sym_lparen sym_rparen                                                                                                                                   {: RESULT = new InstExpNode(null, null, null, true, extractLine(read), extractColumn(read));            :}
+                    ;
+
+METHOD_CALL       ::= ID:v sym_lparen PARAM_IN:param_in sym_rparen                                                                                                                        {: RESULT = new MethodCallNode(param_in, v, v.getLine(), v.getColumn());                                :}
+                    ;
+
+PARAM_IN          ::=  EXP:exp sym_comma PARAM_IN:param_in                                                                                                                                {: RESULT = new ParamInNode(exp, param_in, exp.getLine(), exp.getColumn());                             :}
+                    | EXP:exp                                                                                                                                                             {: RESULT = new ParamInNode(exp, null, exp.getLine(), exp.getColumn());                                 :}
+                    |                                                                                                                                                                     {: RESULT = new ParamInNode();                                                                          :}
+                    ;
+
+ASSIG             ::= ID:v INIT_ARRAY:init_array                                                                                                                                          {: RESULT = new AssigNode(init_array, null, null, v, init_array.getLine(), init_array.getColumn());     :}
+                    | ID:v sym_lbracket EXP:exp1 sym_rbracket sym_eq:o EXP:exp2                                                                                                           {: RESULT = new AssigNode(null, exp1, exp2, v, extractLine(o), extractColumn(o));                       :}
+                    | ID:v sym_eq:o EXP:exp                                                                                                                                               {: RESULT = new AssigNode(null, exp, null, v, extractLine(o), extractColumn(o));                        :}
+                    ;
+
+EXP               ::= sym_lparen EXP:exp sym_rparen                                                                                                                                       {: RESULT = new ExpressionNode(exp, null, null, null, null, null, null, exp.getLine(), exp.getColumn()); :}
+                    |   NEG_OP:neg_op  EXP:exp                                                                                                                                            {: RESULT = new ExpressionNode(exp, null, null, null, neg_op, null, null, neg_op.getLine(), neg_op.getColumn()); :}
+                    |   EXP:exp1 BINARY_OP:bin_op EXP:exp2                                                                                                                                {: RESULT = new ExpressionNode(exp1, exp2, bin_op, null, null, null, null, extractLine(bin_op), extractColumn(bin_op)); :}
+                    |   SIMPLE_VALUE:smpl                                                                                                                                                 {: RESULT = new ExpressionNode(null, null, null, smpl, null, null, null, smpl.getLine(), smpl.getColumn()); :}
+                    ;
+
+SIMPLE_VALUE      ::= LITERAL:l                                                                                                                                                           {: RESULT = new SimpleValueNode(null, l, null, null, null, l.getType(), l.getLine(), l.getColumn());    :}
+                    | ID:id                                                                                                                                                               {: RESULT = new SimpleValueNode(id, null, null, null, null, null, id.getLine(), id.getColumn());        :}
+                    | ID:id sym_lbracket EXP:exp sym_rbracket                                                                                                                             {: RESULT = new SimpleValueNode(id, null, exp, null, null, null, exp.getLine(), exp.getColumn());       :}
+                    | op_sub:o SIMPLE_VALUE:smpl                                                                                                                                          {: RESULT = new SimpleValueNode(null, null, null, null, smpl, null, extractLine(o), extractColumn(o));  :}
+                    | INST_EXP:v                                                                                                                                                          {: RESULT = new SimpleValueNode(null, null, null, v, null, null, v.getLine(), v.getColumn());           :}
+                    ;
+
+LITERAL           ::= l_int:l                                                                                                                                                             {: RESULT = new LiteralNode(Integer.toString((Integer)l.getLiteral()), TypeEnum.INT, l.getLine(), l.getColumn()); :}
+                    | l_char:l                                                                                                                                                            {: RESULT = new LiteralNode((String)l.getLiteral(), TypeEnum.CHAR, l.getLine(), l.getColumn());                   :}
+                    | r_true:l                                                                                                                                                            {: RESULT = new LiteralNode((String)l.getLiteral(), TypeEnum.BOOL, l.getLine(), l.getColumn());                   :}
+                    | r_false:l                                                                                                                                                           {: RESULT = new LiteralNode((String)l.getLiteral(), TypeEnum.BOOL, l.getLine(), l.getColumn());                   :}
+                    | l_string:l                                                                                                                                                          {: RESULT = new LiteralNode((String)l.getLiteral(), TypeEnum.STRING, l.getLine(), l.getColumn());                 :}
+                    ;
+
+BINARY_OP         ::= ARIT_OP:v                                                                                                                                                           {: RESULT = new BinaryOpNode(v, null, null, v.getLine(), v.getColumn());                                :}
+                    | REL_OP:v                                                                                                                                                            {: RESULT = new BinaryOpNode(null, v, null, v.getLine(), v.getColumn());                                :}
+                    | LOGIC_OP:v                                                                                                                                                          {: RESULT = new BinaryOpNode(null, null, v, v.getLine(), v.getColumn());                                :}
+                    ;
+
+REL_OP            ::= rel_eq:o                                                                                                                                                            {: RESULT = new RelOpNode(RelOpType.EQ, extractLine(o), extractColumn(o));                              :}
+                    | rel_neq:o                                                                                                                                                           {: RESULT = new RelOpNode(RelOpType.NEQ, extractLine(o), extractColumn(o));                             :}
+                    | rel_lt:o                                                                                                                                                            {: RESULT = new RelOpNode(RelOpType.LT, extractLine(o), extractColumn(o));                              :}
+                    | rel_gt:o                                                                                                                                                            {: RESULT = new RelOpNode(RelOpType.GT, extractLine(o), extractColumn(o));                              :}
+                    | rel_le:o                                                                                                                                                            {: RESULT = new RelOpNode(RelOpType.LE, extractLine(o), extractColumn(o));                              :}
+                    | rel_ge:o                                                                                                                                                            {: RESULT = new RelOpNode(RelOpType.GE, extractLine(o), extractColumn(o));                              :}
+                    ;
+
+LOGIC_OP          ::= r_or:o                                                                                                                                                              {: RESULT = new LogicOpNode(LogicOpType.OR, extractLine(o), extractColumn(o));                          :}
+                    | r_and:o                                                                                                                                                             {: RESULT = new LogicOpNode(LogicOpType.AND, extractLine(o), extractColumn(o));                         :}
+                    ;
+
+ARIT_OP           ::= op_add:o                                                                                                                                                            {: RESULT = new AritOpNode(AritOpType.ADD, extractLine(o), extractColumn(o));                           :}
+                    | op_sub:o                                                                                                                                                            {: RESULT = new AritOpNode(AritOpType.SUB, extractLine(o), extractColumn(o));                           :}
+                    | op_mul:o                                                                                                                                                            {: RESULT = new AritOpNode(AritOpType.MUL, extractLine(o), extractColumn(o));                           :}
+                    | op_div:o                                                                                                                                                            {: RESULT = new AritOpNode(AritOpType.DIV, extractLine(o), extractColumn(o));                           :}
+                    | op_mod:o                                                                                                                                                            {: RESULT = new AritOpNode(AritOpType.MOD, extractLine(o), extractColumn(o));                           :}
+                    ;
+
+NEG_OP            ::= r_not:n                                                                                                                                                             {: RESULT = new NegOpNode(extractLine(n), extractColumn(n));                                            :}
+                    ;
+
+SPECIAL_OP        ::= op_increment:o                                                                                                                                                      {: RESULT = new SpecialOpNode(SpecialOpType.INCREMENT, extractLine(o), extractColumn(o));               :}
+                    | op_decrement:o                                                                                                                                                      {: RESULT = new SpecialOpNode(SpecialOpType.DECREMENT, extractLine(o), extractColumn(o));               :}
+                    ;
+
+MAIN              ::= r_main:m   sym_lparen sym_rparen sym_lcbracket SENTENCE_LIST:sl sym_rcbracket                                                                                       {: RESULT = new MainNode(sl, extractLine(m), extractColumn(m));                                         :}
+                    ;
+
+ID                ::= identifier:i                                                                                                                                                        {: RESULT = new IdentifierNode((String)i.getLiteral(), i.getLine(), i.getColumn());                     :}
+                    ;
