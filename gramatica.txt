@@ -1,0 +1,160 @@
+PROGRAM        	   -> PROGRAM_INIT DECL_LIST METHODS_LIST MAIN
+
+PROGRAM_INIT   	   -> lambda // Inicializa código 
+
+DECL_LIST      	   -> DECL_LIST DECL;
+	              | lambda
+
+DECL           	   -> MODIFIER ACTUAL_DECL
+
+MODIFIER           -> const
+		      | lambda
+
+ACTUAL_DECL	   -> DECL_ELEM
+                      | DECL_ARRAY
+					  | DECL_TUPEL
+
+DECL_ELEM          -> TYPE_ID ELEM_LIST
+
+TYPE_ID            -> int
+                      | char
+                      | boolean
+                      | String
+					  | tupel
+
+ELEM_LIST          -> ELEM_LIST , ELEM_ID_ASSIG
+                      | ELEM_ID_ASSIG 
+					  
+ELEM_ID_ASSIG      -> ID
+                      | ID = EXP
+
+DECL_ARRAY         -> array TYPE_ID ID ARRAY_DECL
+
+DIM_ARRAY          -> DIM_ARRAY [EXP]
+					  | [EXP]
+
+ARRAY_DECL         -> INIT_ARRAY
+                      | lambda
+
+INIT_ARRAY         -> = new TYPE_ID DIM_ARRAY
+
+DECL_TUPEL		   -> tupel ID ( PARAM_LIST ) TUPEL_DECL
+
+TUPEL_DECL         -> INIT_TUPEL
+					  | lambda
+					  
+INIT_TUPEL		   -> = new tupel ( PARAM_IN )
+
+VALUE_LIST         -> EXP , VALUE_LIST
+                      | EXP
+
+METHODS_LIST       -> METHOD METHODS_LIST
+                      | lambda
+
+METHOD             -> PROC
+                      | FUNC
+
+PROC               -> procedure ID ( PARAM_LIST ) { SENTENCE_LIST }
+
+FUNC               -> function ID ( PARAM_LIST ) : TYPE_ID { SENTENCE_LIST  return EXP; }
+
+PARAM_LIST         -> ACTUAL_PARAM_LIST
+                      | lambda
+
+ACTUAL_PARAM_LIST  -> PARAM
+                      | PARAM , ACTUAL_PARAM_LIST
+
+PARAM              -> TYPE_ID ID
+
+SENTENCE_LIST      -> SENTENCE SENTENCE_LIST
+                      | lambda
+
+SENTENCE           -> if ( EXP ) { SENTENCE_LIST } NEXT_IF
+                      | while ( EXP ) { SENTENCE_LIST }
+                      | DECL;
+                      | INST;
+                      | for ( DECL; EXP; FOR_INST) { SENTENCE_LIST }
+					  | repeat { SENTENCE_LIST } until ( EXP )
+
+FOR_INST           -> SPECIAL_OP ID
+                      | ID SPECIAL_OP
+	              | ID = EXP
+
+NEXT_IF            -> else { SENTENCE_LIST }
+                      | elif ( EXP ) { SENTENCE_LIST } NEXT_IF
+                      | lambda
+				
+INST               -> INST_EXP
+                      | ASSIG
+                      | print ( PRINT_VALUE )
+		      | println ( PRINT_VALUE )
+                      | read ()
+
+PRINT_VALUE        -> string
+                      | ID
+
+INST_EXP           -> SPECIAL_OP ID
+                      | ID SPECIAL_OP
+                      | METHOD_CALL
+		      | read()
+
+METHOD_CALL        -> ID (PARAM_IN)
+
+PARAM_IN           -> EXP , PARAM_IN
+                      | EXP
+                      | lambda
+
+ASSIG              -> ID INIT_ARRAY
+					  | ID INIT_TUPEL
+                      | ID [ EXP ] = EXP
+                      | ID = EXP
+
+EXP                -> ( EXP )
+                      | NEG_OP EXP
+                      | EXP BINARY_OP EXP
+                      | SIMPLE_VALUE
+
+SIMPLE_VALUE       -> LITERAL
+                      | ID
+                      | IDX_ARRAY ]
+					  | SIMPLE_VALUE.ID
+                      | - SIMPLE_VALUE
+                      | INST_EXP
+
+IDX_ARRAY          -> IDX_ARRAY][ EXP
+					  | SIMPLE_VALUE [ EXP
+
+LITERAL            -> entero
+                      | caracter
+                      | true
+                      | false
+                      | string
+
+BINARY_OP          -> ARIT_OP
+                      | REL_OP
+                      | LOGIC_OP
+
+REL_OP             -> ==
+                      | !=
+                      | <
+                      | >
+                      | <=
+                      | >=
+
+LOGIC_OP           -> or
+                      | and
+
+ARIT_OP            -> +
+                      | -
+                      | *
+                      | /
+                      | mod
+
+NEG_OP             -> not
+
+SPECIAL_OP         -> ++
+                      | --
+
+MAIN               -> main () { SENTENCE_LIST }
+
+ID                 -> identifier
