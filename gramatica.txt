@@ -87,8 +87,7 @@ NEXT_IF            -> else { SENTENCE_LIST }
 INST               -> INST_EXP
                       | ASSIG
                       | print ( PRINT_VALUE )
-		      | println ( PRINT_VALUE )
-                      | read ()
+					  | println ( PRINT_VALUE )
 
 PRINT_VALUE        -> string
                       | ID
@@ -96,7 +95,7 @@ PRINT_VALUE        -> string
 INST_EXP           -> SPECIAL_OP ID
                       | ID SPECIAL_OP
                       | METHOD_CALL
-		      | read()
+		              | read()
 
 METHOD_CALL        -> ID (PARAM_IN)
 

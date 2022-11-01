@@ -1,0 +1,17 @@
+function prueba(int param): int {
+    int param = param + 5;
+
+    return param + 1;
+}
+
+main () {
+    int num = read() - '0';
+    num = prueba(num + 10);
+
+ 
+    int param = num;
+
+    print("Num= ");
+    print(num + 3);
+    println(num + 4);
+}

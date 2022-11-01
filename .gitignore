@@ -24,16 +24,16 @@ hs_err_pid*
 replay_pid*
 
 # NetBeans specific #
-nbproject/private/
-nbproject/Makefile-*.mk
-nbproject/Package-*.bash
-build/
-nbbuild/
-dist/
-nbdist/
-nbactions.xml
-nb-configuration.xml
-.nb-gradle/
+**/nbproject/private/
+**/nbproject/Makefile-*.mk
+**/nbproject/Package-*.bash
+**/build/
+**/nbbuild/
+**/dist/
+**/nbdist/
+**/nbactions.xml
+**/nb-configuration.xml
+**/.nb-gradle/
 
 # Class Files #
 *.class

@@ -1,0 +1,16 @@
+procedure printTest int a) {
+    println(a);
+}
+
+procedure printTest2 (int a) 
+    println(a);
+}
+
+procedure printTest3 (int a) {
+    println(a);
+
+
+main () {
+    int num = read() - '0';
+    printTest(num);
+}

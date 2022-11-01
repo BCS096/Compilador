@@ -1,0 +1,7 @@
+function test(): string {
+    return "a";
+}
+
+main () {
+    int test = test();
+}

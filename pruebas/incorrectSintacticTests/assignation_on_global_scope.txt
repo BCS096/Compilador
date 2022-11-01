@@ -1,0 +1,7 @@
+int test = 4;
+test = 7;
+
+main () {
+    print("test= ");
+    print(test);
+}

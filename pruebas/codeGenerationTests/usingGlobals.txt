@@ -1,0 +1,12 @@
+int TEST = 4;
+
+procedure doMathAndPrint(int n) {
+    int test = n + (4 / 2) * 3;
+
+    print("Result is: ");
+    println(test);
+}
+
+main () {
+    doMathAndPrint(TEST);
+}

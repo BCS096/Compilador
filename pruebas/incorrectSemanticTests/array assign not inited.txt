@@ -1,0 +1,7 @@
+main () {
+    array int test;
+ 
+    test[0] = 4;
+
+    println("DONE");
+}

@@ -1,0 +1,8 @@
+main () {
+    int 123num = read() - '0';
+    123num = prueba(num + 10);
+
+    print("123Num= ");
+    print(123num + 3);
+    println(123num + 4);
+}

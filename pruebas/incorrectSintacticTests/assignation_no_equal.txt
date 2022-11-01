@@ -1,0 +1,16 @@
+tupel tupla(
+	int a,
+	char b
+) = new tupel (
+	a = 1, b = 'b'
+)
+
+main () {
+    int num = read() - '0';
+    num  prueba(num + 10);
+
+    print("Num= ");
+    print(num + 3);
+    println(num + 4);
+}
+

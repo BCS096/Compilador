@@ -9,22 +9,23 @@ package compilador.lexic;
 
 import java.io.*;
 import java_cup.runtime.ComplexSymbolFactory.*;
+import compilador.lexic.utils;
 
 
-/** import sintactic.ParserSym; */
+import sintactic.ParserSym;
 
 %%
-
-%standalone
-
+/**
+* %standalone
+**/
 
 /****
  Indicació de quin tipus d'analitzador sintàctic s'utilitzarà. En aquest cas 
  es fa ús de Java CUP.
  ****/
-/** 
-* %cup 
-*/
+
+%cup 
+
 /****
 La línia anterior és una alternativa a la indicació element a element:
 /**
@@ -42,11 +43,10 @@ La línia anterior és una alternativa a la indicació element a element:
 %line
 %column
 
-/** 
-* %eofval{
-*  return symbol(ParserSym.EOF);
-* %eofval}
-*/
+
+%eofval{
+  return symbol(ParserSym.EOF);
+%eofval}
 
 // Declaracions
 
@@ -82,6 +82,7 @@ op_decrement    = "--"
 sym_eq          = \=
 sym_lparen      = \(
 sym_rparen      = \)
+sym_dot         = \.
 sym_colon       = \:
 sym_semicolon   = \;
 sym_comma       = \,
@@ -129,6 +130,9 @@ r_tupel         = "tupel"
 // El següent codi es copiarà també, dins de la classe. És a dir, si es posa res
 // ha de ser en el format adient: mètodes, atributs, etc. 
 %{
+
+    utils u = new utils();
+
     /***
        Mecanismes de gestió de símbols basat en ComplexSymbol. Tot i que en
        aquest cas potser no és del tot necessari.
@@ -136,26 +140,26 @@ r_tupel         = "tupel"
     /**
      Construcció d'un symbol sense atribut associat.
      **/
-/***
+
     private ComplexSymbol symbol(int type) {
         Location l = new Location(yyline+1, yycolumn+1); // primera posició del token
         Location r = new Location(yyline+1, yycolumn+1+yylength()); // ultima posició del token
         ComplexSymbol val = new ComplexSymbol(ParserSym.terminalNames[type], type, l, r);
         return new ComplexSymbol(ParserSym.terminalNames[type], type, l, r, val);
     }
-***/
+
 
     /**
      Construcció d'un symbol amb un atribut associat.
      **/
 
-/***
+
     private ComplexSymbol symbol(int type, Object value){
         Location l = new Location(yyline+1, yycolumn+1); // primera posició del token
         Location r = new Location(yyline+1, yycolumn+1+yylength()); // ultima posició del token
         return new ComplexSymbol(ParserSym.terminalNames[type], type, l, r, value);
     }
-***/
+
 %}
 
 /****************************************************************************/
@@ -173,9 +177,10 @@ r_tupel         = "tupel"
 {op_increment}              { System.out.println("increment " + this.yytext());}
 {op_decrement}              { System.out.println("decrement " + this.yytext());}
 
-{sym_eq}                    { System.out.println("eq = "+this.yytext());}
+{sym_eq}                    { System.out.println("equ = "+this.yytext());}
 {sym_lparen}                { System.out.println("lparen "+this.yytext());}
 {sym_rparen}                { System.out.println("rparen "+this.yytext());}
+{sym_dot}                   { System.out.println("dot "+this.yytext());}
 {sym_colon}                 { System.out.println("colon "+this.yytext());}
 {sym_semicolon}             { System.out.println("semicolon "+this.yytext());}
 {sym_comma}                 { System.out.println("comma "+this.yytext());}
@@ -237,6 +242,6 @@ r_tupel         = "tupel"
 {ws}                        { System.out.println("ws "+this.yytext());}
 {newline}                   { /* No fer res amb els espais */  }
 
-[^]                         { System.err.println("Soy gei");  }
+[^]                         { System.err.println(this.yytext() + ", corregido: " + u.Levenshtein((this.yytext()).toString())); }
 
 /****************************************************************************/

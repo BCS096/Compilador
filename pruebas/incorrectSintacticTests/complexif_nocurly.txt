@@ -1,0 +1,16 @@
+main () {
+    int num = 9;
+    
+    if num < 5) {
+	    num = num + 1;
+    } elif (num > 15 
+	
+	    num = num - 10;
+
+    } else 
+	num = num + 9999;
+    }
+  
+    print("Num= ");
+    println(num);
+}

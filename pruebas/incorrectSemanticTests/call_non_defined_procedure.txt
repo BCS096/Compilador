@@ -1,0 +1,4 @@
+main () {
+    int num = read() - '0';
+    procedureName(num);
+}

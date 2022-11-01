@@ -1,0 +1,5 @@
+main () {
+    array int test = new int["a"];
+
+    println("DONE");
+}

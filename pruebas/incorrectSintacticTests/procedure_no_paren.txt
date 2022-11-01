@@ -1,0 +1,8 @@
+procedure printTest int a) {
+    println(a);
+}
+
+main () {
+    int num = read() - '0';
+    printTest(num);
+}

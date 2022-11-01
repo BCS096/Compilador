@@ -1,0 +1,6 @@
+main () {
+    int test = "w";
+
+    print("Test = ");
+    println(test);
+}

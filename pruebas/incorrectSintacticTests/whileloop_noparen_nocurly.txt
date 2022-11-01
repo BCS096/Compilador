@@ -1,0 +1,10 @@
+main () {
+    int num = read() - '0';
+
+	while(num < 15 
+	    num = num + 1;
+    	}
+
+    print("Num= ");
+    println(num);
+}

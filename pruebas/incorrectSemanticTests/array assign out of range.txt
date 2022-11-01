@@ -1,0 +1,7 @@
+main () {
+   array int test = new int[3];
+ 
+    test[3] = 1;
+
+    println("DONE");
+}
