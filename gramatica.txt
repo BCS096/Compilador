@@ -78,7 +78,7 @@ SENTENCE           -> if ( EXP ) { SENTENCE_LIST } NEXT_IF
 
 FOR_INST           -> SPECIAL_OP ID
                       | ID SPECIAL_OP
-	              | ID = EXP
+	                  | ID = EXP
 
 NEXT_IF            -> else { SENTENCE_LIST }
                       | elif ( EXP ) { SENTENCE_LIST } NEXT_IF
