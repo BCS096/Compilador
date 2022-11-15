@@ -1,7 +1,7 @@
 /**
  * Assignatura 21780 - Compiladors
- * Estudis: Grau en Informàtica 
- * Itinerari: Intel·ligència Artificial i Computació
+ * Estudis: Grau en InformÃ tica 
+ * Itinerari: IntelÂ·ligÃ¨ncia Artificial i ComputaciÃ³
  *
  * Professor: Pere Palmer
  */
@@ -12,7 +12,7 @@ import java_cup.runtime.ComplexSymbolFactory.*;
 import compilador.lexic.utils;
 
 
-import sintactic.ParserSym;
+import compilador.sintactic.ParserSym;
 
 %%
 /**
@@ -20,14 +20,15 @@ import sintactic.ParserSym;
 **/
 
 /****
- Indicació de quin tipus d'analitzador sintàctic s'utilitzarà. En aquest cas 
- es fa ús de Java CUP.
+ IndicaciÃ³ de quin tipus d'analitzador sintÃ ctic s'utilitzarÃ . En aquest cas 
+ es fa Ãºs de Java CUP.
  ****/
-
+/*
 %cup 
-
+*/
+%standalone
 /****
-La línia anterior és una alternativa a la indicació element a element:
+La lÃ­nia anterior Ã©s una alternativa a la indicaciÃ³ element a element:
 /**
 * %implements java_cup.runtime.Scanner
 * %function next_token
@@ -36,18 +37,18 @@ La línia anterior és una alternativa a la indicació element a element:
 
 ****/
 
-%public              // Per indicar que la classe és pública
+%public              // Per indicar que la classe Ã©s pÃºblica
 %class Scanner       // El nom de la classe
 
 %char
 %line
 %column
 
-
+/*
 %eofval{
   return symbol(ParserSym.EOF);
 %eofval}
-
+*/
 // Declaracions
 
 id		= [A-Za-z_][A-Za-z0-9_]*
@@ -127,52 +128,52 @@ r_char          = "char"
 r_string        = "string"
 r_tupel         = "tupel"
 
-// El següent codi es copiarà també, dins de la classe. És a dir, si es posa res
-// ha de ser en el format adient: mètodes, atributs, etc. 
+// El segÃ¼ent codi es copiarÃ  tambÃ©, dins de la classe. Ã‰s a dir, si es posa res
+// ha de ser en el format adient: mÃ¨todes, atributs, etc. 
 %{
 
     utils u = new utils();
 
     /***
-       Mecanismes de gestió de símbols basat en ComplexSymbol. Tot i que en
-       aquest cas potser no és del tot necessari.
+       Mecanismes de gestiÃ³ de sÃ­mbols basat en ComplexSymbol. Tot i que en
+       aquest cas potser no Ã©s del tot necessari.
      ***/
     /**
-     Construcció d'un symbol sense atribut associat.
+     ConstrucciÃ³ d'un symbol sense atribut associat.
      **/
-
+/*
     private ComplexSymbol symbol(int type) {
-        Location l = new Location(yyline+1, yycolumn+1); // primera posició del token
-        Location r = new Location(yyline+1, yycolumn+1+yylength()); // ultima posició del token
+        Location l = new Location(yyline+1, yycolumn+1); // primera posiciÃ³ del token
+        Location r = new Location(yyline+1, yycolumn+1+yylength()); // ultima posiciÃ³ del token
         ComplexSymbol val = new ComplexSymbol(ParserSym.terminalNames[type], type, l, r);
         return new ComplexSymbol(ParserSym.terminalNames[type], type, l, r, val);
     }
 
 
     /**
-     Construcció d'un symbol amb un atribut associat.
+     ConstrucciÃ³ d'un symbol amb un atribut associat.
      **/
 
-
+/*
     private ComplexSymbol symbol(int type, Object value){
-        Location l = new Location(yyline+1, yycolumn+1); // primera posició del token
-        Location r = new Location(yyline+1, yycolumn+1+yylength()); // ultima posició del token
+        Location l = new Location(yyline+1, yycolumn+1); // primera posiciÃ³ del token
+        Location r = new Location(yyline+1, yycolumn+1+yylength()); // ultima posiciÃ³ del token
         return new ComplexSymbol(ParserSym.terminalNames[type], type, l, r, value);
     }
-
+*/
 %}
 
 /****************************************************************************/
 %%
 
 // Regles/accions
-// És molt important l'ordre de les regles!!!
+// Ã‰s molt important l'ordre de les regles!!!
 
-{op_add}                    { System.out.println("suma " + this.yytext());}
-{op_sub}                    { System.out.println("sub " + this.yytext());}
-{op_mul}                    { System.out.println("mul " + this.yytext());}
-{op_div}                    { System.out.println("div " + this.yytext());}
-{op_mod}                    { System.out.println("mod " + this.yytext());}
+{op_add}                    { System.out.println("suma " + this.yytext()); compilador.view.NombreCompilador.add("suma " + this.yytext() + '\n');}
+{op_sub}                    { System.out.println("sub " + this.yytext()); compilador.view.NombreCompilador.add("sub " + this.yytext()+ '\n');}
+{op_mul}                    { System.out.println("mul " + this.yytext()); compilador.view.NombreCompilador.add("mul " + this.yytext()+ '\n');}
+{op_div}                    { System.out.println("div " + this.yytext()); compilador.view.NombreCompilador.add("div " + this.yytext()+ '\n');}
+{op_mod}                    { System.out.println("mod " + this.yytext()); compilador.view.NombreCompilador.add("mod " + this.yytext()+ '\n');}
 
 {op_increment}              { System.out.println("increment " + this.yytext());}
 {op_decrement}              { System.out.println("decrement " + this.yytext());}
