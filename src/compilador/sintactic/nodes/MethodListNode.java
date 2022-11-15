@@ -1,4 +1,4 @@
-package sintactic.nodes;
+package compilador.sintactic.nodes;
 
 public class MethodListNode extends BaseNode {
 

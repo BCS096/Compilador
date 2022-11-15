@@ -1,4 +1,5 @@
-package sintactic.nodes;
+package compilador.sintactic.nodes;
+
 
 import sintactic.RelOpType;
 

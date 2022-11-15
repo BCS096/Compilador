@@ -1,4 +1,4 @@
-package sintactic.nodes;
+package compilador.sintactic.nodes;
 
 import java_cup.runtime.ComplexSymbolFactory.Location;
 import sintactic.TypeEnum;
