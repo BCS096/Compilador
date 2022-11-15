@@ -1,6 +1,7 @@
 package compilador.sintactic.nodes;
 
-import sintactic.SpecialOpType;
+import types.SpecialOpType;
+
 
 public class SpecialOpNode extends BaseNode {
 

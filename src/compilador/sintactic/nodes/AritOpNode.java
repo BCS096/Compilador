@@ -1,6 +1,8 @@
 package compilador.sintactic.nodes;
 
-import sintactic.AritOpType;
+import types.AritOpType;
+
+
 
 public class AritOpNode extends BaseNode {
 

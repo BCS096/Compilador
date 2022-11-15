@@ -1,6 +1,5 @@
 package compilador.sintactic.nodes;
 
-import sintactic.descriptions.BaseDescription.DescriptionType;
 
 public class ModifierNode extends BaseNode {
 

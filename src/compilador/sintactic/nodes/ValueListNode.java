@@ -1,6 +1,7 @@
 package compilador.sintactic.nodes;
 
-import sintactic.TypeEnum;
+import types.TypeEnum;
+
 
 public class ValueListNode extends BaseNode {
 

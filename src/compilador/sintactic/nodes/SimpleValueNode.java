@@ -1,12 +1,13 @@
 package compilador.sintactic.nodes;
 
-import sintactic.TypeEnum;
+import types.TypeEnum;
+
 
 public class SimpleValueNode extends BaseNode {
 
     private IdentifierNode id;
     private LiteralNode literal;
-    private IdxArrayNode idxArray
+    private IdxArrayNode idxArray;
     private InstExpNode instExp;
     private SimpleValueNode simpl;
     private TypeEnum type;

@@ -1,6 +1,7 @@
 package compilador.sintactic.nodes;
 
-import sintactic.InstType;
+import types.InstType;
+
 
 public class InstNode extends BaseNode {
 

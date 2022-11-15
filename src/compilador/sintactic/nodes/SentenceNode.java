@@ -1,6 +1,7 @@
 package compilador.sintactic.nodes;
 
-import sintactic.SentenceType;
+import types.SentenceType;
+
 
 public class SentenceNode extends BaseNode {
 

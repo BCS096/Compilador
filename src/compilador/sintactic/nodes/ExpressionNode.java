@@ -1,6 +1,8 @@
 package compilador.sintactic.nodes;
 
-import sintactic.TypeEnum;
+import types.TypeEnum;
+
+
 
 public class ExpressionNode extends BaseNode {
 
