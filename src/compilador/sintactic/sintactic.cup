@@ -14,10 +14,7 @@ import java_cup.runtime.ComplexSymbolFactory.Location;
 import java_cup.runtime.*;
 
 import sintactic.nodes.*;
-import sintactic.descriptions.*;
-import sintactic.descriptions.BaseDescription.DescriptionType;
-import sintactic.*;
-import sintactic.semantic.SemanticAnalysis;
+import sintactic.*;;
 import lexic.LiteralWrapper;
 
 class Parser;
