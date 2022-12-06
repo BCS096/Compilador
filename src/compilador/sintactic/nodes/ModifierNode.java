@@ -1,10 +1,9 @@
-package sintactic.nodes;
+package compilador.sintactic.nodes;
 
-import sintactic.descriptions.BaseDescription.DescriptionType;
 
 public class ModifierNode extends BaseNode {
 
-    private final DescriptionType description;
+    private final DescriptionType description; //const o variable
     
     public ModifierNode(DescriptionType description, Boolean empty, int line, int column) {
         super("MODIFIER", empty, line, column);

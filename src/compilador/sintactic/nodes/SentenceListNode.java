@@ -1,4 +1,4 @@
-package sintactic.nodes;
+package compilador.sintactic.nodes;
 
 public class SentenceListNode extends BaseNode {
 
@@ -15,7 +15,7 @@ public class SentenceListNode extends BaseNode {
         this.sentenceList = sentenceList;
     }
 
-    public SentenceNode getSetence() {
+    public SentenceNode getSentence() {
         return sentence;
     }
 

@@ -1,4 +1,4 @@
-package sintactic.nodes;
+package compilador.sintactic.nodes;
 
 import java_cup.runtime.ComplexSymbolFactory.ComplexSymbol;
 
@@ -7,7 +7,6 @@ public class BaseNode extends ComplexSymbol {
     private static int idAutoIncrement = 0;
     protected boolean empty;
     protected int reference;
-
     protected int line;
     protected int column;
 

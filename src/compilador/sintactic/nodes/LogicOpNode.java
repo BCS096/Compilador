@@ -1,6 +1,8 @@
-package sintactic.nodes;
+package compilador.sintactic.nodes;
 
-import sintactic.LogicOpType;
+import types.LogicOpType;
+
+
 
 public class LogicOpNode extends BaseNode {
 

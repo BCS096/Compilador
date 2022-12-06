@@ -1,23 +1,24 @@
-package sintactic.nodes;
+package compilador.sintactic.nodes;
 
-import sintactic.TypeEnum;
+import types.TypeEnum;
+
 
 public class SimpleValueNode extends BaseNode {
 
     private IdentifierNode id;
     private LiteralNode literal;
-    private ExpressionNode exp;
+    private IdxArrayNode idxArray;
     private InstExpNode instExp;
     private SimpleValueNode simpl;
     private TypeEnum type;
 
     public SimpleValueNode(IdentifierNode id, LiteralNode literal,
-            ExpressionNode exp, InstExpNode instExp, SimpleValueNode simpl,
+            IdxArrayNode idxArray, InstExpNode instExp, SimpleValueNode simpl,
             TypeEnum type, int line, int column) {
         super("SIMPLE_VALUE", false, line, column);
         this.id = id;
         this.literal = literal;
-        this.exp = exp;
+        this.idxArray = idxArray;
         this.instExp = instExp;
         this.simpl = simpl;
         this.type = type;
@@ -27,16 +28,16 @@ public class SimpleValueNode extends BaseNode {
         this.type = type;
     }
 
+    public IdxArrayNode getIdxArray() {
+        return idxArray;
+    }
+
     public IdentifierNode getId() {
         return id;
     }
 
     public LiteralNode getLiteral() {
         return literal;
-    }
-
-    public ExpressionNode getExp() {
-        return exp;
     }
 
     public InstExpNode getInstExp() {

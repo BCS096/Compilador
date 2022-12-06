@@ -1,6 +1,8 @@
-package sintactic.nodes;
+package compilador.sintactic.nodes;
 
-import sintactic.RelOpType;
+import types.RelOpType;
+
+
 
 public class RelOpNode extends BaseNode {
 
