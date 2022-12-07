@@ -10,6 +10,7 @@ package compilador.lexic;
 import java.io.*;
 import java_cup.runtime.ComplexSymbolFactory.*;
 import compilador.lexic.utils;
+import java_cup.sym;
 
 
 import compilador.sintactic.ParserSym;
@@ -23,10 +24,11 @@ import compilador.sintactic.ParserSym;
  IndicaciÃ³ de quin tipus d'analitzador sintÃ ctic s'utilitzarÃ . En aquest cas 
  es fa Ãºs de Java CUP.
  ****/
-/*
+
 %cup 
-*/
+/*
 %standalone
+*/
 /****
 La lÃ­nia anterior Ã©s una alternativa a la indicaciÃ³ element a element:
 /**

@@ -9,28 +9,26 @@ package compilador.sintactic.nodes;
  * @author tomeu
  */
 public class IdxArrayNode extends BaseNode {
-    private IdxArrayNode idxArray;
+    private IdxArrayNode_ idxArray_;
     private ExpressionNode exp;
     private SimpleValueNode sv;
     
-    public IdxArrayNode (IdxArrayNode idxArray, ExpressionNode exp, SimpleValueNode sv, int line, int column){
+    public IdxArrayNode (IdxArrayNode_ idxArray_, ExpressionNode exp, SimpleValueNode sv, int line, int column){
         super("IDX_ARRAY", false, line, column);
-        this.idxArray = idxArray;
+        this.idxArray_ = idxArray_;
         this.exp = exp;
-        this.sv = sv;
-        
+        this.sv = sv;        
     }
 
-    public IdxArrayNode getIdxArray() {
-        return idxArray;
+    public IdxArrayNode_ getIdxArray_() {
+        return idxArray_;
     }
 
     public ExpressionNode getExp() {
         return exp;
     }
-
-    public SimpleValueNode getSv() {
+    
+    public SimpleValueNode getSv(){
         return sv;
     }
-    
 }
