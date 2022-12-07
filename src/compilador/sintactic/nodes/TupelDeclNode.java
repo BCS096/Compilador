@@ -11,6 +11,10 @@ package compilador.sintactic.nodes;
 public class TupelDeclNode extends BaseNode {
     private InitTupelNode init;
     
+    public TupelDeclNode(){
+        super("TUPEL_DECL", true);
+    }
+    
     public TupelDeclNode (InitTupelNode init, int line, int column){
         super("TUPEL_DECL", false, line, column);
         this.init = init;
