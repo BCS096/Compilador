@@ -15,7 +15,7 @@ public class Data {
     private String idParent; //identificador del proc/func/tupel en caso que este id pertenezca a uno de estos
     private IdDescripcion descripcion;
     private int np;
-    private int idAnt; // misma variable en un ambito anterior
+    private int next; // apuntador a siguiente variable en cas de una tupla o argumentos
 
     public String getId() {
         return id;
@@ -49,11 +49,13 @@ public class Data {
         this.np = np;
     }
 
-    public int getIdAnt() {
-        return idAnt;
+    public int getNext() {
+        return next;
     }
 
-    public void setIdAnt(int idAnt) {
-        this.idAnt = idAnt;
+    public void setNext(int next) {
+        this.next = next;
     }
+
+
 }
