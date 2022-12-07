@@ -9,10 +9,6 @@ public class BaseNode extends ComplexSymbol {
     protected int reference;
     protected int line;
     protected int column;
-    //CAMBIAR, NO DEFINITIVO
-    public enum DescriptionType {
-        dnula, dvar, dconst, dtipus, dproc, dfunc, dindex, dargin, darg, darray, dstring
-    }
 
     /**
      * Constructor per crear una instància buida amb un nom, com a conseqüència

@@ -34,7 +34,6 @@ public class NombreCompilador extends JFrame{
         pesao[0] = "gramatica.txt";
         try {
             compilador.lexic.Scanner scan = new Scanner(new FileReader(new File("gramatica.txt")));
-            scan.main(pesao);
             this.setSize(800,600);
             this.add(tabs());
             this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
