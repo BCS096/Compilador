@@ -6,6 +6,7 @@ public enum SentenceType {
     WHILE("while"),
     DECL("decl"),
     INST("inst"),
+    REPEAT("repeat until"),
     NONE("none");
     
     private final String type;
