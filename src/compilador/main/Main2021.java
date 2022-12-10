@@ -45,7 +45,6 @@ public class Main2021 {
                 System.out.println("======= Finished " + fileName + " =======");
             }
             
-
             System.out.print(PROMPT);
             dirName = reader.readLine();
         }

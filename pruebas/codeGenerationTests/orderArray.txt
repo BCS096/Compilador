@@ -1,5 +1,5 @@
 main () {
-    array int v = new int [2]
+    array int v = new int [2];
     int n =  5;
 
     int i, aux;

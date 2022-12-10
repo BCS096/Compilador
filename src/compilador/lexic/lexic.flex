@@ -26,16 +26,13 @@ import compilador.sintactic.ParserSym;
  ****/
 
 %cup 
-/*
-%standalone
-*/
+
 /****
 La lÃ­nia anterior Ã©s una alternativa a la indicaciÃ³ element a element:
-/**
-* %implements java_cup.runtime.Scanner
-* %function next_token
-* %type java_cup.runtime.Symbol
-*/
+
+%implements java_cup.runtime.Scanner
+%function next_token
+%type java_cup.runtime.Symbol
 
 ****/
 
@@ -46,11 +43,10 @@ La lÃ­nia anterior Ã©s una alternativa a la indicaciÃ³ element a element:
 %line
 %column
 
-/*
 %eofval{
   return symbol(ParserSym.EOF);
 %eofval}
-*/
+
 // Declaracions
 
 id		= [A-Za-z_][A-Za-z0-9_]*
@@ -143,7 +139,7 @@ r_tupel         = "tupel"
     /**
      ConstrucciÃ³ d'un symbol sense atribut associat.
      **/
-/*
+
     private ComplexSymbol symbol(int type) {
         Location l = new Location(yyline+1, yycolumn+1); // primera posiciÃ³ del token
         Location r = new Location(yyline+1, yycolumn+1+yylength()); // ultima posiciÃ³ del token
@@ -156,13 +152,13 @@ r_tupel         = "tupel"
      ConstrucciÃ³ d'un symbol amb un atribut associat.
      **/
 
-/*
+
     private ComplexSymbol symbol(int type, Object value){
         Location l = new Location(yyline+1, yycolumn+1); // primera posiciÃ³ del token
         Location r = new Location(yyline+1, yycolumn+1+yylength()); // ultima posiciÃ³ del token
         return new ComplexSymbol(ParserSym.terminalNames[type], type, l, r, value);
     }
-*/
+
 %}
 
 /****************************************************************************/
