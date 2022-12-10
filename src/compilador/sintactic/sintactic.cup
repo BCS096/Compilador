@@ -335,7 +335,7 @@ EXP               ::= sym_lparen EXP:exp sym_rparen                             
 
 SIMPLE_VALUE      ::= LITERAL:l                                                                                                                                                           {: RESULT = new SimpleValueNode(null, l, null, null, null, l.getType(), l.getLine(), l.getColumn());    :}
                     | ID:id IDX_ARRAY:ia                                                                                                                                                  {: RESULT = new SimpleValueNode(id, null, ia, null, null, null, id.getLine(), id.getColumn());          :}
-                    | SIMPLE_VALUE:sv sym_dot ID:id                                                                                                                                       {: RESULT = new SimpleValueNode(id, null, null, null, sv, null, extractLine(sv), extractColumn(sv));    :}
+                    | SIMPLE_VALUE:sv sym_dot ID:id    ////////puede dar problemas///////////////////                                                                                     {: RESULT = new SimpleValueNode(id, null, null, null, sv, null, extractLine(sv), extractColumn(sv));    :}
                     | op_sub:o SIMPLE_VALUE:smpl                                                                                                                                          {: RESULT = new SimpleValueNode(null, null, null, null, smpl, null, extractLine(o), extractColumn(o));  :}
                     | INST_EXP:v                                                                                                                                                          {: RESULT = new SimpleValueNode(null, null, null, v, null, null, v.getLine(), v.getColumn());           :}
                     ;
@@ -387,3 +387,12 @@ MAIN              ::= r_main:m   sym_lparen sym_rparen sym_lcbracket SENTENCE_LI
 
 ID                ::= identifier:i                                                                                                                                                        {: RESULT = new IdentifierNode((String)i.getLiteral(), i.getLine(), i.getColumn());                     :}
                     ;
+
+
+/**
+SV --> GEST_IDX
+GEST_IDX --> ID GESTOR
+GESTOR --> [ EXP ] GESTOR
+           | . GEST_IDX
+           |
+**/
