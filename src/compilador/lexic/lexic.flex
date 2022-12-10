@@ -171,80 +171,80 @@ r_tupel         = "tupel"
 // Regles/accions
 // Ã‰s molt important l'ordre de les regles!!!
 
-{op_add}                    { System.out.println("suma " + this.yytext()); compilador.view.NombreCompilador.add("suma " + this.yytext() + '\n');}
-{op_sub}                    { System.out.println("sub " + this.yytext()); compilador.view.NombreCompilador.add("sub " + this.yytext()+ '\n');}
-{op_mul}                    { System.out.println("mul " + this.yytext()); compilador.view.NombreCompilador.add("mul " + this.yytext()+ '\n');}
-{op_div}                    { System.out.println("div " + this.yytext()); compilador.view.NombreCompilador.add("div " + this.yytext()+ '\n');}
-{op_mod}                    { System.out.println("mod " + this.yytext()); compilador.view.NombreCompilador.add("mod " + this.yytext()+ '\n');}
+{op_add}                    { return symbol(ParserSym.op_add); }
+{op_sub}                    { return symbol(ParserSym.op_sub); }
+{op_mul}                    { return symbol(ParserSym.op_mul); }
+{op_div}                    { return symbol(ParserSym.op_div); }
+{op_mod}                    { return symbol(ParserSym.op_mod); }
 
-{op_increment}              { System.out.println("increment " + this.yytext());}
-{op_decrement}              { System.out.println("decrement " + this.yytext());}
+{op_increment}              { return symbol(ParserSym.op_increment); }
+{op_decrement}              { return symbol(ParserSym.op_decrement); }
 
-{sym_eq}                    { System.out.println("equ = "+this.yytext());}
-{sym_lparen}                { System.out.println("lparen "+this.yytext());}
-{sym_rparen}                { System.out.println("rparen "+this.yytext());}
-{sym_dot}                   { System.out.println("dot "+this.yytext());}
-{sym_colon}                 { System.out.println("colon "+this.yytext());}
-{sym_semicolon}             { System.out.println("semicolon "+this.yytext());}
-{sym_comma}                 { System.out.println("comma "+this.yytext());}
-{sym_lbracket}              { System.out.println("lbracket "+this.yytext());}
-{sym_rbracket}              { System.out.println("rbracket "+this.yytext());}
-{sym_lcbracket}             { System.out.println("lcbracket "+this.yytext());}
-{sym_rcbracket}             { System.out.println("rcbracket "+this.yytext());}
+{sym_eq}                    { return symbol(ParserSym.sym_eq); }
+{sym_lparen}                { return symbol(ParserSym.sym_lparen); }
+{sym_rparen}                { return symbol(ParserSym.sym_rparen); }
+{sym_dot}                   { return symbol(ParserSym.sym_dot); }
+{sym_colon}                 { return symbol(ParserSym.sym_colon); }
+{sym_semicolon}             { return symbol(ParserSym.sym_semicolon); }
+{sym_comma}                 { return symbol(ParserSym.sym_comma); }
+{sym_lbracket}              { return symbol(ParserSym.sym_lbracket); }
+{sym_rbracket}              { return symbol(ParserSym.sym_rbracket); }
+{sym_lcbracket}             { return symbol(ParserSym.sym_lcbracket); }
+{sym_rcbracket}             { return symbol(ParserSym.sym_rcbracket); }
 
-{rel_eq}                    { System.out.println("eq == "+this.yytext());}
-{rel_neq}                   { System.out.println("neq "+this.yytext());}
-{rel_lt}                    { System.out.println("lt "+this.yytext());}
-{rel_le}                    { System.out.println("le "+this.yytext());}
-{rel_gt}                    { System.out.println("gt "+this.yytext());}
-{rel_ge}                    { System.out.println("ge "+this.yytext());}
+{rel_eq}                    { return symbol(ParserSym.rel_eq); }
+{rel_neq}                   { return symbol(ParserSym.rel_neq); }
+{rel_lt}                    { return symbol(ParserSym.rel_lt); }
+{rel_le}                    { return symbol(ParserSym.rel_le); }
+{rel_gt}                    { return symbol(ParserSym.rel_gt); }
+{rel_ge}                    { return symbol(ParserSym.rel_ge); }
 
-{r_if}                      { System.out.println("if "+this.yytext());}
-{r_elif}                    { System.out.println("elif "+this.yytext());}
-{r_else}                    { System.out.println("else "+this.yytext());}
-{r_print}                   { System.out.println("print "+this.yytext());}
-{r_println}                 { System.out.println("println "+this.yytext());}
-{r_true}                    { System.out.println("true "+this.yytext());}
-{r_false}                   { System.out.println("false "+this.yytext());}
-{r_function}                { System.out.println("function "+this.yytext());}
-{r_procedure}               { System.out.println("procedure "+this.yytext());}
-{r_return}                  { System.out.println("return "+this.yytext());}
-{r_while}                   { System.out.println("while "+this.yytext());}
-{r_for}                     { System.out.println("for "+this.yytext());}
-{r_repeat}                  { System.out.println("repeat "+this.yytext());}
-{r_until}                   { System.out.println("until "+this.yytext());}
-{r_array}                   { System.out.println("array "+this.yytext());}
-{r_const}                   { System.out.println("const "+this.yytext());}
-{r_and}                     { System.out.println("and "+this.yytext());}
-{r_or}                      { System.out.println("or "+this.yytext());}
-{r_not}                     { System.out.println("not "+this.yytext());}
-{r_new}                     { System.out.println("new "+this.yytext());}
-{r_main}                    { System.out.println("main "+this.yytext());}
-{r_read}                    { System.out.println("read "+this.yytext());}
+{r_if}                      { return symbol(ParserSym.r_if); }
+{r_elif}                    { return symbol(ParserSym.r_elif); }
+{r_else}                    { return symbol(ParserSym.r_else); }
+{r_print}                   { return symbol(ParserSym.r_print); }
+{r_println}                 { return symbol(ParserSym.r_println); }
+{r_true}                    { return symbol(ParserSym.r_true, new LiteralWrapper(this.yytext(), this.yyline+1, this.yycolumn+1)); }
+{r_false}                   { return symbol(ParserSym.r_false, new LiteralWrapper(this.yytext(), this.yyline+1, this.yycolumn+1)); }
+{r_function}                { return symbol(ParserSym.r_function); }
+{r_procedure}               { return symbol(ParserSym.r_procedure); }
+{r_return}                  { return symbol(ParserSym.r_return); }
+{r_while}                   { return symbol(ParserSym.r_while); }
+{r_for}                     { return symbol(ParserSym.r_for); }
+{r_repeat}                  { return symbol(ParserSym.r_repeat); }
+{r_until}                   { return symbol(ParserSym.r_until); }
+{r_array}                   { return symbol(ParserSym.r_array); }
+{r_const}                   { return symbol(ParserSym.r_const); }
+{r_and}                     { return symbol(ParserSym.r_and); }
+{r_or}                      { return symbol(ParserSym.r_or); }
+{r_not}                     { return symbol(ParserSym.r_not); }
+{r_new}                     { return symbol(ParserSym.r_new); }
+{r_main}                    { return symbol(ParserSym.r_main); }
+{r_read}                    { return symbol(ParserSym.r_read); }
 
-{r_int}                     { System.out.println("int "+this.yytext());}
-{r_bool}                    { System.out.println("bool "+this.yytext());}
-{r_char}                    { System.out.println("char "+this.yytext());}
-{r_string}                  { System.out.println("string "+this.yytext());}
-{r_tupel}                   { System.out.println("tupel "+this.yytext());}
+{r_int}                     { return symbol(ParserSym.r_int); }
+{r_bool}                    { return symbol(ParserSym.r_bool); }
+{r_char}                    { return symbol(ParserSym.r_char); }
+{r_string}                  { return symbol(ParserSym.r_string); }
+{r_tupel}                   { return symbol(ParserSym.r_tupel); }
 
-{id}                        { System.out.println("id "+this.yytext());}
+{id}                        { return symbol(ParserSym.identifier, new LiteralWrapper (this.yytext(), this.yyline+1, this.yycolumn+1)); }
 
-{zerodigit}                 { System.out.println("zerodigit "+this.yytext());}
-{enter}                     { System.out.println("enter "+this.yytext());}
-{tagbinari}{binari}         { System.out.println("binari "+this.yytext());}
-{taghexa}{hexadecimal}      { System.out.println("hexadecimal "+this.yytext());}
-{tagoctal}{octal}           { System.out.println("octal "+this.yytext());}
+{zerodigit}                 { return symbol(ParserSym.l_int, new LiteralWrapper (0, this.yyline+1, this.yycolumn+1)); }
+{enter}                     { return symbol(ParserSym.l_int, new LiteralWrapper (Integer.parseInt(this.yytext()), this.yyline+1, this.yycolumn+1)); }
+{tagbinari}{binari}         { return symbol(ParserSym.l_int, new LiteralWrapper (Integer.parseInt(this.yytext().substring(2, this.yytext().length()),2), this.yyline+1, this.yycolumn+1)); }
+{taghexa}{hexadecimal}      { return symbol(ParserSym.l_int, new LiteralWrapper (Integer.parseInt(this.yytext().substring(2, this.yytext().length()),16), this.yyline+1, this.yycolumn+1)); }
+{tagoctal}{octal}           { return symbol(ParserSym.l_int, new LiteralWrapper (Integer.parseInt(this.yytext().substring(2, this.yytext().length()),8), this.yyline+1, this.yycolumn+1)); }
 
-{singleLnComment}           { System.out.println("singleLnComment "+this.yytext());}
-{multiLnComment}            { System.out.println("multiLnComment "+this.yytext());}
+{singleLnComment}           {}
+{multiLnComment}            {}
 
-{l_char}                    { System.out.println("char "+this.yytext());}
-{l_string}                  { System.out.println("string "+this.yytext());}
+{l_char}                    { return symbol(ParserSym.l_char, new LiteralWrapper (this.yytext(), this.yyline+1, this.yycolumn+1)); }
+{l_string}                  { return symbol(ParserSym.l_string, new LiteralWrapper (this.yytext(), this.yyline+1, this.yycolumn+1)); }
 
-{ws}                        { System.out.println("ws "+this.yytext());}
-{newline}                   { /* No fer res amb els espais */  }
+{ws}                        {}
+{newline}                   {}
 
-[^]                         { System.err.println(this.yytext() + ", corregido: " + u.Levenshtein((this.yytext()).toString())); }
+[^]                         { return symbol(ParserSym.error); }
 
 /****************************************************************************/
