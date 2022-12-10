@@ -8,6 +8,8 @@ public enum TypeEnum {
     BOOL("boolean"),
     STRING("string"),
     VOID("void"),
+    TUPEL("tupel"),
+    ARRAY("array"),
     NULL("null");
 
     private final String type;

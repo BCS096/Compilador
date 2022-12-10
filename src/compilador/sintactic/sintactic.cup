@@ -217,8 +217,8 @@ TYPE_ID           ::= r_int:t                                                   
                     | r_char:t                                                                                                                                                            {: RESULT = new TypeIdNode(TypeEnum.CHAR, extractLine(t), extractColumn(t));                            :}
                     | r_bool:t                                                                                                                                                            {: RESULT = new TypeIdNode(TypeEnum.BOOL, extractLine(t), extractColumn(t));                            :}
                     | r_string:t                                                                                                                                                          {: RESULT = new TypeIdNode(TypeEnum.STRING, extractLine(t), extractColumn(t));                          :}
-                    | r_tupel:t//////////////////////
-                    | r_array:t//////////////////////
+                    | r_tupel:t                                                                                                                                                           {: RESULT = new TypeIdNode(TypeEnum.TUPEL, extractLine(t), extractColumn(t));                          :}
+                    | r_array:t                                                                                                                                                           {: RESULT = new TypeIdNode(TypeEnum.ARRAY, extractLine(t), extractColumn(t));                          :}
                     ;
 
 ELEM_LIST         ::= ELEM_LIST:el sym_comma ELEM_ID_ASSIG:ea                                                                                                                             {: RESULT = new ElemListNode(el, ea, el.getLine(), el.getColumn());                                     :}        
@@ -316,9 +316,9 @@ INST_EXP          ::= SPECIAL_OP:op_esp ID:id                                   
 METHOD_CALL       ::= ID:v sym_lparen PARAM_IN:param_in sym_rparen                                                                                                                        {: RESULT = new MethodCallNode(param_in, v, v.getLine(), v.getColumn());                                :}
                     ;
 
-PARAM_IN          ::= EXP:exp sym_comma PARAM_IN:param_in                                                                                                                                {: RESULT = new ParamInNode(exp, param_in, exp.getLine(), exp.getColumn());                             :}
+PARAM_IN          ::= EXP:exp sym_comma PARAM_IN:param_in                                                                                                                                 {: RESULT = new ParamInNode(exp, param_in, exp.getLine(), exp.getColumn());                             :}
                     | EXP:exp                                                                                                                                                             {: RESULT = new ParamInNode(exp, null, exp.getLine(), exp.getColumn());                                 :}
-                    | /*INIT_ARRAY PARAM_IN*/                                                                                                                                                                    {: RESULT = new ParamInNode();                                                                          :}
+                    |                                                                                                                                                                     {: RESULT = new ParamInNode();                                                                          :}
                     ;
 
 ASSIG             ::= ID:v INIT_ARRAY:init_array                                                                                                                                          {: RESULT = new AssigNode(init_array, null, null, null, v, init_array.getLine(), init_array.getColumn());     :}
