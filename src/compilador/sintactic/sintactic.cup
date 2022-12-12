@@ -160,6 +160,7 @@ non terminal FuncNode             FUNC;
 non terminal ParamListNode        PARAM_LIST;
 non terminal ActualParamListNode  ACTUAL_PARAM_LIST;
 non terminal ParamNode            PARAM;
+non terminal SpecialParamNode     SPECIAL_PARAM; 
 non terminal SentenceListNode     SENTENCE_LIST;
 non terminal SentenceNode         SENTENCE;
 non terminal ForInstNode          FOR_INST;
@@ -171,7 +172,8 @@ non terminal ParamInNode          PARAM_IN;
 non terminal AssigNode            ASSIG;
 non terminal ExpressionNode       EXP;
 non terminal SimpleValueNode      SIMPLE_VALUE;
-non terminal IdxArrayNode         IDX_ARRAY;
+non terminal GestIdxNode          GEST_IDX;
+non terminal GestorNode           GESTOR;
 non terminal LiteralNode          LITERAL;
 non terminal BinaryOpNode         BINARY_OP;
 non terminal RelOpNode            REL_OP;
@@ -217,8 +219,6 @@ TYPE_ID           ::= r_int:t                                                   
                     | r_char:t                                                                                                                                                            {: RESULT = new TypeIdNode(TypeEnum.CHAR, extractLine(t), extractColumn(t));                            :}
                     | r_bool:t                                                                                                                                                            {: RESULT = new TypeIdNode(TypeEnum.BOOL, extractLine(t), extractColumn(t));                            :}
                     | r_string:t                                                                                                                                                          {: RESULT = new TypeIdNode(TypeEnum.STRING, extractLine(t), extractColumn(t));                          :}
-                    | r_tupel:t                                                                                                                                                           {: RESULT = new TypeIdNode(TypeEnum.TUPEL, extractLine(t), extractColumn(t));                          :}
-                    | r_array:t                                                                                                                                                           {: RESULT = new TypeIdNode(TypeEnum.ARRAY, extractLine(t), extractColumn(t));                          :}
                     ;
 
 ELEM_LIST         ::= ELEM_LIST:el sym_comma ELEM_ID_ASSIG:ea                                                                                                                             {: RESULT = new ElemListNode(el, ea, el.getLine(), el.getColumn());                                     :}        
@@ -275,8 +275,13 @@ ACTUAL_PARAM_LIST ::= PARAM:p                                                   
                     | PARAM:p sym_comma ACTUAL_PARAM_LIST:apl                                                                                                                             {: RESULT = new ActualParamListNode(p, apl, p.getLine(), p.getColumn());                                :}
                     ;
 
-PARAM             ::= TYPE_ID:t ID:id                                                                                                                                                     {: RESULT = new ParamNode(t, id, t.getLine(), t.getColumn());                                           :}
+PARAM             ::= TYPE_ID:t ID:id                                                                                                                                                     {: RESULT = new ParamNode(t, null, id, t.getLine(), t.getColumn());                                           :}
+                    | SPECIAL_PARAM:t ID:id                                                                                                                                               {: RESULT = new ParamNode(null, t, id, t.getLine(), t.getColumn());                                           :}
                     ;
+
+SPECIAL_PARAM     ::= r_tupel:t                                                                                                                                                           {: RESULT = new SpecialParamNode(TypeEnum.TUPEL, extractLine(t), extractColumn(t));                             :}                                                                                                                      
+                    | r_array:t                                                                                                                                                           {: RESULT = new SpecialParamNode(TypeEnum.ARRAY, extractLine(t), extractColumn(t));                             :}
+                    ;                                                                                                                                                         
 
 SENTENCE_LIST     ::= SENTENCE:sentence SENTENCE_LIST:sentence_list                                                                                                                       {: RESULT = new SentenceListNode(sentence, sentence_list, sentence.getLine(), sentence.getColumn());    :}
                     |                                                                                                                                                                     {: RESULT = new SentenceListNode();                                                                     :}
@@ -334,14 +339,17 @@ EXP               ::= sym_lparen EXP:exp sym_rparen                             
                     ;
 
 SIMPLE_VALUE      ::= LITERAL:l                                                                                                                                                           {: RESULT = new SimpleValueNode(null, l, null, null, null, l.getType(), l.getLine(), l.getColumn());    :}
-                    | ID:id IDX_ARRAY:ia                                                                                                                                                  {: RESULT = new SimpleValueNode(id, null, ia, null, null, null, id.getLine(), id.getColumn());          :}
-                    | SIMPLE_VALUE:sv sym_dot ID:id    ////////puede dar problemas///////////////////                                                                                     {: RESULT = new SimpleValueNode(id, null, null, null, sv, null, extractLine(sv), extractColumn(sv));    :}
+                    | GEST_IDX:gest                                                                                                                                                       {: RESULT = new SimpleValueNode(null, null, gest, null, null, null, l.getLine(), l.getColumn());    :}
                     | op_sub:o SIMPLE_VALUE:smpl                                                                                                                                          {: RESULT = new SimpleValueNode(null, null, null, null, smpl, null, extractLine(o), extractColumn(o));  :}
                     | INST_EXP:v                                                                                                                                                          {: RESULT = new SimpleValueNode(null, null, null, v, null, null, v.getLine(), v.getColumn());           :}
                     ;
 
-IDX_ARRAY         ::= sym_lbracket EXP:exp sym_rbracket IDX_ARRAY:ia                                                                                                                      {: RESULT = new IdxArrayNode(exp, ia, extractLine(exp), extractColumn(exp));                             :}
-                    |                                                                                                                                                                     {: RESULT = new IdxArrayNode();                                                                          :}
+GEST_IDX           ::= ID:id GESTOR                                                                                                                                                       {: RESULT = new GestIdxNode(id, gest, extractLine(id), extractColumn(id)); :}                                     
+                    ;
+
+GESTOR             ::= sym_lbracket:v EXP:exp sym_rbracket GESTOR:gest                                                                                                                    {: RESULT = new GestorNode(exp, gest, null, extractLine(v), extractColumn(v));  :}
+                    | sym_dot:v GEST_IDX:gidx                                                                                                                                             {: RESULT = new GestorNode(null, null, gidx, extractLine(v), extractColumn(v));  :}
+                    |                                                                                                                                                                     {: RESULT = new GestorNode();  :}
                     ;
 
 LITERAL           ::= l_int:l                                                                                                                                                             {: RESULT = new LiteralNode(Integer.toString((Integer)l.getLiteral()), TypeEnum.INT, l.getLine(), l.getColumn()); :}
@@ -387,12 +395,3 @@ MAIN              ::= r_main:m   sym_lparen sym_rparen sym_lcbracket SENTENCE_LI
 
 ID                ::= identifier:i                                                                                                                                                        {: RESULT = new IdentifierNode((String)i.getLiteral(), i.getLine(), i.getColumn());                     :}
                     ;
-
-
-/**
-SV --> GEST_IDX
-GEST_IDX --> ID GESTOR
-GESTOR --> [ EXP ] GESTOR
-           | . GEST_IDX
-           |
-**/

@@ -8,25 +8,31 @@ package compilador.sintactic.nodes;
  *
  * @author tomeu
  */
-public class IdxArrayNode extends BaseNode {
+public class GestorNode extends BaseNode {
     private ExpressionNode exp;
-    private IdxArrayNode idxArray;
+    private GestorNode gest;
+    private GestIdxNode gestIdx;
     
-    public IdxArrayNode (ExpressionNode exp, IdxArrayNode idxArray, int line, int column){
+    public GestorNode (ExpressionNode exp, GestorNode idxArray, GestIdxNode gestIdx, int line, int column){
         super("IDX_ARRAY", false, line, column);
-        this.idxArray = idxArray;
+        this.gest = idxArray;
+        this.gestIdx = gestIdx;
         this.exp = exp;
     }
+
+    public GestIdxNode getGestIdx() {
+        return gestIdx;
+    }
     
-    public IdxArrayNode (){
-        super("IDX_ARRAY", true);
+    public GestorNode (){
+        super("GESTOR", true);
     }
 
     public ExpressionNode getExp(){
         return exp;
     }
     
-    public IdxArrayNode getIdxArray() {
-        return idxArray;
+    public GestorNode getGestor() {
+        return gest;
     }
 }

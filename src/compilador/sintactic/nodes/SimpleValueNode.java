@@ -7,13 +7,13 @@ public class SimpleValueNode extends BaseNode {
 
     private IdentifierNode id;
     private LiteralNode literal;
-    private IdxArrayNode idxArray;
+    private GestorNode idxArray;
     private InstExpNode instExp;
     private SimpleValueNode simpl;
     private TypeEnum type;
 
     public SimpleValueNode(IdentifierNode id, LiteralNode literal,
-            IdxArrayNode idxArray, InstExpNode instExp, SimpleValueNode simpl,
+            GestorNode idxArray, InstExpNode instExp, SimpleValueNode simpl,
             TypeEnum type, int line, int column) {
         super("SIMPLE_VALUE", false, line, column);
         this.id = id;
@@ -28,7 +28,7 @@ public class SimpleValueNode extends BaseNode {
         this.type = type;
     }
 
-    public IdxArrayNode getIdxArray() {
+    public GestorNode getGestor() {
         return idxArray;
     }
 
