@@ -1,0 +1,17 @@
+procedure doMathAndPrint(int n) {
+    int test = n + (4 / 2) * 3;
+
+    tupel tuple (int a, int b, char c, string s) = new tupel(3, 5, 'c', "hola");
+    int a = tuple.a;
+	
+	tupel tupla (array int a, int b, char c, string s);
+	tupla.a = new int[2][4];
+	int b = tupla.a[1][3];
+
+    print("Result is: ");
+    println(test);
+}
+
+main () {
+    doMathAndPrint(TEST);
+}
