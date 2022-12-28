@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.Set;
 import compilador.lexic.Scanner;
 import compilador.sintactic.Parser;
+import java.util.concurrent.Semaphore;
 import java_cup.runtime.ComplexSymbolFactory;
 import java_cup.runtime.SymbolFactory;
 //import compilador.sintactic.semantic.SemanticAnalysis;
@@ -19,36 +20,41 @@ import java_cup.runtime.SymbolFactory;
 public class Main2021 {
 
     static final String PROMPT = "Specify the name of the directory of tests you want to compile (type 'exit' to exit): ";
+    public static Semaphore fileWait = new Semaphore(0);
+    public static int filesCount;
 
     public static void main(String[] args) throws Exception, IOException {
+        MVP mvp = new MVP();
+        mvp.enable();
         String dirName;
-        BufferedReader reader = new BufferedReader(
-                new InputStreamReader(System.in));
-
-        System.out.print(PROMPT);
-        dirName = reader.readLine();
+        //System.out.print(PROMPT);
+        fileWait.acquire();
+        dirName = mvp.getFolder();
         while (!"exit".equals(dirName)) {
-            
+
             Set<String> files = listFiles(dirName);
+            filesCount = files.size();
+            mvp.setFileCount();
 
             for (String fileName : files) {
+                mvp.addLexic(fileName);
                 System.out.println("======= Running " + fileName + " =======");
                 Thread.sleep(1000);
-                Scanner scanner = new Scanner(new FileReader(dirName + "/" + fileName));
+                Scanner scanner = new Scanner(new FileReader(dirName + "/" + fileName), mvp);
 
                 SymbolFactory sf = new ComplexSymbolFactory();
                 Parser parser = new Parser(scanner, sf);
 
                 parser.parse();
-                
+
                 Thread.sleep(1000);
                 System.out.println("======= Finished " + fileName + " =======");
             }
-            
+
             System.out.print(PROMPT);
-            dirName = reader.readLine();
+            fileWait.acquire();
+            mvp.resetLexic();
         }
-        
 
     }
 
