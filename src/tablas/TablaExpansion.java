@@ -12,7 +12,11 @@ import java.util.ArrayList;
  * @author Bartomeu
  */
 public class TablaExpansion {
-    ArrayList <Data> expansion = new ArrayList<>();
+    private ArrayList <Data> expansion = new ArrayList<>();
     
     public TablaExpansion(){}
+    
+    public void put(int idxe, Data d){
+        this.expansion.add(idxe, d);
+    }
 }

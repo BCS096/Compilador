@@ -5,15 +5,15 @@ public class AssigNode extends BaseNode {
     private InitArrayNode initArray;
     private InitTupelNode initTupel;
     private ExpressionNode expression1, expression2;
-    private IdentifierNode identifier;
+    private GestIdxNode gidx;
 
-    public AssigNode(InitArrayNode initArray,InitTupelNode initTupel, ExpressionNode expression1, ExpressionNode expression2, IdentifierNode identifier, int line, int column) {
+    public AssigNode(InitArrayNode initArray,InitTupelNode initTupel, ExpressionNode expression1, ExpressionNode expression2, GestIdxNode gidx, int line, int column) {
         super("ASSIG", false, line, column);
         this.initArray = initArray;
         this.initTupel = initTupel;
         this.expression1 = expression1;
         this.expression2 = expression2;
-        this.identifier = identifier;
+        this.gidx = gidx;
     }
 
     public InitTupelNode getInitTupel() {
@@ -32,8 +32,8 @@ public class AssigNode extends BaseNode {
         return expression2;
     }
 
-    public IdentifierNode getIdentifier() {
-        return identifier;
+    public GestIdxNode getGestIdx() {
+        return gidx;
     }
 
 }

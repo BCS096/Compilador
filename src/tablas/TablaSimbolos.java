@@ -38,11 +38,14 @@ public class TablaSimbolos {
     public void poner(String id, IdDescripcion desc){
         Data d = td.get(id);
         if(d.getNp() == n){
+            throw new UnsupportedOperationException("The variable has already been declared");
             //lanzar excepcion
             //variable ya declarada en este ambito
         }
         if(d != null){
-            
+            //Idxe = ta[n], idxe = n, idxe = n+1, ta[n] = idxe. En resumen:
+            n++;
+            te.put(n, d);
         }
     }
 }

@@ -188,7 +188,8 @@ precedence left op_add, op_sub;
 precedence left op_mul, op_div, op_mod;
 precedence left r_and, r_or;
 precedence left rel_eq, rel_neq, rel_lt, rel_gt, rel_ge, rel_le;
-/*precedence left sym_lbracket, sym_rbracket;*/
+/*Gana '[' si hay conflicto ya que seguramente sea una asignación (puede llegar a dar errores, mirar)*/
+precedence left sym_lbracket;
 
 start with PROGRAM;
 
@@ -280,7 +281,7 @@ PARAM             ::= TYPE_ID:t ID:id                                           
                     ;
 
 SPECIAL_PARAM     ::= r_tupel:t                                                                                                                                                           {: RESULT = new SpecialParamNode(TypeEnum.TUPEL, extractLine(t), extractColumn(t));                             :}                                                                                                                      
-                    | r_array:t                                                                                                                                                           {: RESULT = new SpecialParamNode(TypeEnum.ARRAY, extractLine(t), extractColumn(t));                             :}
+                    | r_array:t TYPE_ID:tid                                                                                                                                                           {: RESULT = new SpecialParamNode(TypeEnum.ARRAY, extractLine(t), extractColumn(t));                             :}
                     ;                                                                                                                                                         
 
 SENTENCE_LIST     ::= SENTENCE:sentence SENTENCE_LIST:sentence_list                                                                                                                       {: RESULT = new SentenceListNode(sentence, sentence_list, sentence.getLine(), sentence.getColumn());    :}
@@ -326,16 +327,16 @@ PARAM_IN          ::= EXP:exp sym_comma PARAM_IN:param_in                       
                     |                                                                                                                                                                     {: RESULT = new ParamInNode();                                                                          :}
                     ;
 
-ASSIG             ::= ID:v INIT_ARRAY:init_array                                                                                                                                          {: RESULT = new AssigNode(init_array, null, null, null, v, init_array.getLine(), init_array.getColumn());     :}
-                    | ID:v INIT_TUPEL:it                                                                                                                                                  {: RESULT = new AssigNode(null, it, null, null, v, v.getLine(), v.getColumn());                         :}
-                    | ID:v sym_lbracket EXP:exp1 sym_rbracket sym_eq:o EXP:exp2                                                                                                           {: RESULT = new AssigNode(null, null, exp1, exp2, v, extractLine(o), extractColumn(o));                       :}
-                    | ID:v sym_eq:o EXP:exp                                                                                                                                               {: RESULT = new AssigNode(null, null, exp, null, v, extractLine(o), extractColumn(o));                        :}
+ASSIG             ::= GEST_IDX:gidx INIT_ARRAY:init_array                                                                                                                                 {: RESULT = new AssigNode(init_array, null, null, null, gidx, init_array.getLine(), init_array.getColumn());     :}
+                    | GEST_IDX:gidx INIT_TUPEL:it                                                                                                                                         {: RESULT = new AssigNode(null, it, null, null, gidx, extractLine(gidx), extractColumn(gidx));                   :}
+                    | GEST_IDX:gidx sym_lbracket EXP:exp1 sym_rbracket sym_eq:o EXP:exp2                                                                                                  {: RESULT = new AssigNode(null, null, exp1, exp2, gidx, extractLine(o), extractColumn(o));                       :}
+                    | GEST_IDX:gidx sym_eq:o EXP:exp                                                                                                                                      {: RESULT = new AssigNode(null, null, exp, null, gidx, extractLine(o), extractColumn(o));                        :}
                     ;
 
 EXP               ::= sym_lparen EXP:exp sym_rparen                                                                                                                                       {: RESULT = new ExpressionNode(exp, null, null, null, null, null, null, exp.getLine(), exp.getColumn()); :}
-                    |   NEG_OP:neg_op  EXP:exp                                                                                                                                            {: RESULT = new ExpressionNode(exp, null, null, null, neg_op, null, null, neg_op.getLine(), neg_op.getColumn()); :}
-                    |   EXP:exp1 BINARY_OP:bin_op EXP:exp2                                                                                                                                {: RESULT = new ExpressionNode(exp1, exp2, bin_op, null, null, null, null, extractLine(bin_op), extractColumn(bin_op)); :}
-                    |   SIMPLE_VALUE:smpl                                                                                                                                                 {: RESULT = new ExpressionNode(null, null, null, smpl, null, null, null, smpl.getLine(), smpl.getColumn()); :}
+                    | NEG_OP:neg_op  EXP:exp                                                                                                                                              {: RESULT = new ExpressionNode(exp, null, null, null, neg_op, null, null, neg_op.getLine(), neg_op.getColumn()); :}
+                    | EXP:exp1 BINARY_OP:bin_op EXP:exp2                                                                                                                                  {: RESULT = new ExpressionNode(exp1, exp2, bin_op, null, null, null, null, extractLine(bin_op), extractColumn(bin_op)); :}
+                    | SIMPLE_VALUE:smpl                                                                                                                                                   {: RESULT = new ExpressionNode(null, null, null, smpl, null, null, null, smpl.getLine(), smpl.getColumn()); :}
                     ;
 
 SIMPLE_VALUE      ::= LITERAL:l                                                                                                                                                           {: RESULT = new SimpleValueNode(null, l, null, null, null, l.getType(), l.getLine(), l.getColumn());    :}
