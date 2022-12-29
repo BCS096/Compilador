@@ -16,6 +16,7 @@ public class Data {
     private IdDescripcion descripcion;
     private int np;
     private int next; // apuntador a siguiente variable en cas de una tupla o argumentos
+    private boolean descriptionCopy; // se tiene que copiar a la tabla de descripción? (caso tupla)
 
     public String getId() {
         return id;
