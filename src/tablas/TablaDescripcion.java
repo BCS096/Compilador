@@ -19,4 +19,8 @@ public class TablaDescripcion {
     public Data get(String id){
         return tabla.get(id);
     }
+
+    boolean existe(String identifier) {
+        return tabla.containsKey(identifier);
+    }
 }

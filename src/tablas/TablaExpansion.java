@@ -19,4 +19,8 @@ public class TablaExpansion {
     public void put(int idxe, Data d){
         this.expansion.add(idxe, d);
     }
+
+    public Data get(int i) {
+        return this.expansion.get(i);
+    }
 }
