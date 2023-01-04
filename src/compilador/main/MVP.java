@@ -5,6 +5,8 @@
  */
 package compilador.main;
 
+import java.awt.Color;
+import java.awt.Font;
 import java.io.File;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
@@ -21,6 +23,10 @@ public class MVP extends javax.swing.JFrame {
     JTextArea[] lexicPanes;
     private int currentLexicTextIdx = -1;
     JScrollPane[] lexicScrollPanes;
+    StringBuilder sintacticText = new StringBuilder("");
+    JTextArea[] sintPanes;
+    private int currentSintTextIdx = -1;
+    JScrollPane[] sintScrollPanes;
     String carpeta = null;
 
     /**
@@ -48,11 +54,11 @@ public class MVP extends javax.swing.JFrame {
         jPanel3 = new javax.swing.JPanel();
         jButton1 = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
+        jButton2 = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
         jTabbedPane1 = new javax.swing.JTabbedPane();
         jPanel4 = new javax.swing.JPanel();
         jTabbedPane3 = new javax.swing.JTabbedPane();
-        jButton2 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -65,6 +71,14 @@ public class MVP extends javax.swing.JFrame {
 
         jLabel1.setText("Folder path...");
 
+        jButton2.setFont(new java.awt.Font("Verdana", 1, 36)); // NOI18N
+        jButton2.setText("Start");
+        jButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton2ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
@@ -74,7 +88,11 @@ public class MVP extends javax.swing.JFrame {
                 .addComponent(jButton1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 519, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(295, Short.MAX_VALUE))
+                .addContainerGap(478, Short.MAX_VALUE))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 156, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -83,7 +101,9 @@ public class MVP extends javax.swing.JFrame {
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jButton1)
                     .addComponent(jLabel1))
-                .addContainerGap(485, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 415, Short.MAX_VALUE)
+                .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
         );
 
         jTabbedPane2.addTab("Menu", jPanel3);
@@ -94,7 +114,7 @@ public class MVP extends javax.swing.JFrame {
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 901, Short.MAX_VALUE)
+                .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 1084, Short.MAX_VALUE)
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
@@ -113,26 +133,18 @@ public class MVP extends javax.swing.JFrame {
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel4Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jTabbedPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(811, Short.MAX_VALUE))
+                .addComponent(jTabbedPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 1084, Short.MAX_VALUE)
+                .addContainerGap())
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel4Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jTabbedPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(446, Short.MAX_VALUE))
+                .addComponent(jTabbedPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 535, Short.MAX_VALUE)
+                .addContainerGap())
         );
 
         jTabbedPane2.addTab("Sintactic", jPanel4);
-
-        jButton2.setFont(new java.awt.Font("Verdana", 1, 36)); // NOI18N
-        jButton2.setText("Start");
-        jButton2.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton2ActionPerformed(evt);
-            }
-        });
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -141,9 +153,7 @@ public class MVP extends javax.swing.JFrame {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jTabbedPane2)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 156, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(27, 27, 27))
+                .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -151,10 +161,6 @@ public class MVP extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(jTabbedPane2)
                 .addContainerGap())
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(30, 30, 30))
         );
 
         jTabbedPane2.getAccessibleContext().setAccessibleName("Lexic");
@@ -269,10 +275,25 @@ public class MVP extends javax.swing.JFrame {
 
         jTabbedPane1.addTab(fileName, lexicScrollPanes[currentLexicTextIdx]);
     }
+    
+    public void addSintactic(String fileName) {
+        ++currentSintTextIdx;
+        this.sintacticText = new StringBuilder("");
+        sintPanes[currentSintTextIdx] = new JTextArea("No sintactic errors for now...");
+        sintPanes[currentSintTextIdx].setEditable(false);
+        sintScrollPanes[currentSintTextIdx] = new JScrollPane();
+        sintPanes[currentSintTextIdx].setColumns(20);
+        sintPanes[currentSintTextIdx].setRows(5);
+        sintScrollPanes[currentSintTextIdx].setViewportView(sintPanes[currentSintTextIdx]);
+
+        jTabbedPane3.addTab(fileName, sintScrollPanes[currentSintTextIdx]);
+    }
 
     void setFileCount() {
         lexicPanes = new JTextArea[Main2021.filesCount];
         lexicScrollPanes = new JScrollPane[Main2021.filesCount];
+        sintPanes = new JTextArea[Main2021.filesCount];
+        sintScrollPanes = new JScrollPane[Main2021.filesCount];
     }
 
     String getFolder() {
@@ -281,5 +302,12 @@ public class MVP extends javax.swing.JFrame {
         } else {
             throw new UnsupportedOperationException("An error has ocurred");
         }
+    }
+
+    public void sintacticError(StringBuilder msg) {
+        sintacticText.append(msg);
+        this.sintPanes[currentSintTextIdx].setFont(new Font("Verdana", Font.BOLD, 12));
+        this.sintPanes[currentSintTextIdx].setForeground(Color.RED);
+        this.sintPanes[currentSintTextIdx].setText(sintacticText.toString());
     }
 }

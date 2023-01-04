@@ -8,10 +8,12 @@ package compilador.sintactic;
 import java.io.*;
 import java_cup.runtime.ComplexSymbolFactory.ComplexSymbol;
 import java_cup.runtime.ComplexSymbolFactory.Location;
+import compilador.main.MVP;
 import compilador.sintactic.nodes.*;
 import tablas.IdDescripcion.TipoDescripcion;
 import types.*;
 import compilador.lexic.LiteralWrapper;
+import compilador.sintactic.semantic.analisisSemantico;
 import java_cup.runtime.XMLElement;
 
 /** CUP v0.11b 20160615 (GIT 4ac7450) generated parser.
@@ -651,6 +653,13 @@ public class Parser extends java_cup.runtime.lr_parser {
 
     final String ERROR_FILE = "errors.txt";
 
+    private MVP mvp = null;
+
+    public Parser(java_cup.runtime.Scanner s, java_cup.runtime.SymbolFactory sf, MVP mvp) {
+        super(s,sf);
+        this.mvp = mvp;
+    }
+
     public int getNumberErrors() {
         return numberErrors;
     }
@@ -696,7 +705,7 @@ public class Parser extends java_cup.runtime.lr_parser {
         } catch (IOException ex) {
         }
 
-        System.err.println(msg);
+        mvp.sintacticError(msg);
     }
 
     @Override
@@ -785,6 +794,7 @@ class CUP$Parser$actions {
 		int mright = ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()).right;
 		MainNode m = (MainNode)((java_cup.runtime.Symbol) CUP$Parser$stack.peek()).value;
 		 RESULT = new ProgramNode(dl, ml, m, m.getLine(), m.getColumn());                                     
+                                                                                                                                                                                         analisisSemantico sem = new analisisSemantico(RESULT, parser); if(numberErrors == 0){sem.handleProgram();} 
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("PROGRAM",0, ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-2)), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
           return CUP$Parser$result;

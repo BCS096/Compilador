@@ -38,12 +38,13 @@ public class Main2021 {
 
             for (String fileName : files) {
                 mvp.addLexic(fileName);
+                mvp.addSintactic(fileName);
                 System.out.println("======= Running " + fileName + " =======");
                 Thread.sleep(1000);
                 Scanner scanner = new Scanner(new FileReader(dirName + "/" + fileName), mvp);
 
                 SymbolFactory sf = new ComplexSymbolFactory();
-                Parser parser = new Parser(scanner, sf);
+                Parser parser = new Parser(scanner, sf, mvp);
 
                 parser.parse();
 

@@ -10,11 +10,12 @@ package compilador.sintactic;
 import java.io.*;
 import java_cup.runtime.ComplexSymbolFactory.ComplexSymbol;
 import java_cup.runtime.ComplexSymbolFactory.Location;
-
+import compilador.main.MVP;
 import compilador.sintactic.nodes.*;
 import tablas.IdDescripcion.TipoDescripcion;
 import types.*;
 import compilador.lexic.LiteralWrapper;
+import compilador.sintactic.semantic.analisisSemantico;
 
 class Parser;
 
@@ -29,6 +30,13 @@ parser code {:
     BufferedWriter bf;
 
     final String ERROR_FILE = "errors.txt";
+
+    private MVP mvp = null;
+
+    public Parser(java_cup.runtime.Scanner s, java_cup.runtime.SymbolFactory sf, MVP mvp) {
+        super(s,sf);
+        this.mvp = mvp;
+    }
 
     public int getNumberErrors() {
         return numberErrors;
@@ -75,7 +83,7 @@ parser code {:
         } catch (IOException ex) {
         }
 
-        System.err.println(msg);
+        mvp.sintacticError(msg);
     }
 
     @Override
@@ -193,7 +201,8 @@ precedence left sym_lbracket;
 
 start with PROGRAM;
 
-PROGRAM           ::= DECL_LIST:dl METHOD_LIST:ml MAIN:m                                                                                                                                  {: RESULT = new ProgramNode(dl, ml, m, m.getLine(), m.getColumn());                                     :}
+PROGRAM           ::= DECL_LIST:dl METHOD_LIST:ml MAIN:m                                                                                                                                  {: RESULT = new ProgramNode(dl, ml, m, m.getLine(), m.getColumn());                                     
+                                                                                                                                                                                         analisisSemantico sem = new analisisSemantico(RESULT, parser); if(numberErrors == 0){sem.handleProgram();} :}
                     ;
 
 DECL_LIST         ::= DECL_LIST:dl DECL:d sym_semicolon                                                                                                                                   {: RESULT = new DeclListNode(dl, d, d.getLine(), d.getColumn());                                        :}

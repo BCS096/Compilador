@@ -58,5 +58,13 @@ public class Data {
         this.next = next;
     }
 
+    public void setTupel(boolean tupla) {
+        this.descriptionCopy = tupla;
+    }
+    
+    public boolean isTupel(){
+        return this.descriptionCopy;
+    }
+
 
 }

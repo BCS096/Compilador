@@ -68,15 +68,14 @@ public class TablaSimbolos {
                     te.put(idx, old);
 
                     //Y ahora la nueva en la td
-                    //TODO: Crear el método, no lo hago por si me estoy perdiendo algo que tenías planeado @Coti
-                    td.put(id, d.getDescripcion());
+                    td.put(id, d);
                 } else {
                     //Idxe = ta[n], idxe = n, idxe = n+1, ta[n] = idxe.
                     //Si no se da el caso de que sea menor a n, y no es igual pq es lo primero que se comprueba, solo puede ser este caso. Se coloca sin más
-                    td.put(id, d.getDescripcion());
+                    td.put(id, d);
                 }
             } else {
-                td.put(id, d.getDescripcion());
+                td.put(id, d);
             }
         }
     }
@@ -108,7 +107,69 @@ public class TablaSimbolos {
         n--;
     }
     
-    //TODO: COSAS PARA PARÁMETROS, el método de poner un parámetro y cogerlos (el primero y los demás) para las procedures (2 metodillos que no me daba la vida)
+    //TODO: Hacer que las tuplas se hagan bien? lo de que el primero en td y los demás tmb pero apuntando a los siguientes bla bla (arriba tmb?)
+    public void putParam(String idProcedure, String idParam, Data data) {
+        Data dataDescripcion = td.get(idProcedure);
+        if (dataDescripcion != null) {
+            IdDescripcion desc = dataDescripcion.getDescripcion();
+            if (desc.getTipoDescripcion() != IdDescripcion.TipoDescripcion.dproc
+                    && desc.getTipoDescripcion() != IdDescripcion.TipoDescripcion.dfunc) {
+                System.out.println("ERROR. Put parameter not passed to a procedure or function");
+            } else {
+                int idx_p = dataDescripcion.getNp();
+                int idx_ep = -1;
+                while (idx_p != -1 && !(te.get(idx_p).getId().equals(idParam))) {
+                    idx_ep = idx_p;
+                    idx_p = te.get(idx_p).getNp();
+                }
+                if (idx_p != -1) {
+                    System.out.println("ERROR. There's already a parameter with id: " + idParam + " . putParam");
+                } else {
+                    idx_p = ta.get(n) + 1;
+                    ta.set(n, idx_p);
+                    boolean tupla = dataDescripcion.getDescripcion().getTipoDescripcion() == IdDescripcion.TipoDescripcion.dtupel;
+                    Data nuevoElemento = new Data();
+                    nuevoElemento.setDescripcion(desc);
+                    nuevoElemento.setId(idParam);
+                    nuevoElemento.setIdParent(idProcedure);
+                    nuevoElemento.setNext(-1);
+                    nuevoElemento.setNp(n);
+                    nuevoElemento.setTupel(tupla);
+                    te.put(idx_p, nuevoElemento);
+
+                    if (idx_ep == -1) {
+                        dataDescripcion.setNp(idx_p);
+                        td.put(idProcedure, dataDescripcion);
+                    } else {
+                        Data pointerToUpdate = te.get(idx_ep);
+                        pointerToUpdate.setNp(idx_p);
+                        te.put(idx_ep, pointerToUpdate);
+                    }
+                }
+            }
+        } else {
+            System.out.println("ERROR. putParam, param does not exists: " + idParam);
+        }
+    }
+
+    public Data getFirstParam(String idProcedure) {
+        Data descripcion = td.get(idProcedure);
+        IdDescripcion.TipoDescripcion tipoDescripcion = descripcion.getDescripcion().getTipoDescripcion();
+        if (td.existe(idProcedure) && (tipoDescripcion == IdDescripcion.TipoDescripcion.dproc 
+                || tipoDescripcion == IdDescripcion.TipoDescripcion.dfunc)) {
+            if (descripcion.getNp() != -1) {
+                return te.get(descripcion.getNp());
+            }
+        }
+        return null;
+    }
+
+    public Data getNextParam(Data elem) {
+        if (elem.getNp() != -1) {
+            return te.get(elem.getNp());
+        }
+        return null;
+    }
     
     public int getActual(){
         return this.n;
