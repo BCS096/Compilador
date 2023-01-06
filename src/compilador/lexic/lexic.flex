@@ -10,6 +10,8 @@ package compilador.lexic;
 import java.io.*;
 import java_cup.runtime.ComplexSymbolFactory.*;
 import compilador.lexic.utils;
+import java_cup.sym;
+import compilador.main.MVP;
 
 
 import compilador.sintactic.ParserSym;
@@ -23,17 +25,15 @@ import compilador.sintactic.ParserSym;
  IndicaciÃ³ de quin tipus d'analitzador sintÃ ctic s'utilitzarÃ . En aquest cas 
  es fa Ãºs de Java CUP.
  ****/
-/*
+
 %cup 
-*/
-%standalone
+
 /****
 La lÃ­nia anterior Ã©s una alternativa a la indicaciÃ³ element a element:
-/**
-* %implements java_cup.runtime.Scanner
-* %function next_token
-* %type java_cup.runtime.Symbol
-*/
+
+%implements java_cup.runtime.Scanner
+%function next_token
+%type java_cup.runtime.Symbol
 
 ****/
 
@@ -44,11 +44,10 @@ La lÃ­nia anterior Ã©s una alternativa a la indicaciÃ³ element a element:
 %line
 %column
 
-/*
 %eofval{
   return symbol(ParserSym.EOF);
 %eofval}
-*/
+
 // Declaracions
 
 id		= [A-Za-z_][A-Za-z0-9_]*
@@ -131,6 +130,12 @@ r_tupel         = "tupel"
 // El segÃ¼ent codi es copiarÃ  tambÃ©, dins de la classe. Ã‰s a dir, si es posa res
 // ha de ser en el format adient: mÃ¨todes, atributs, etc. 
 %{
+    MVP mvp;
+
+    public Scanner(java.io.Reader in, MVP mvp) {
+    this.zzReader = in;
+    this.mvp = mvp;
+  }
 
     utils u = new utils();
 
@@ -141,7 +146,7 @@ r_tupel         = "tupel"
     /**
      ConstrucciÃ³ d'un symbol sense atribut associat.
      **/
-/*
+
     private ComplexSymbol symbol(int type) {
         Location l = new Location(yyline+1, yycolumn+1); // primera posiciÃ³ del token
         Location r = new Location(yyline+1, yycolumn+1+yylength()); // ultima posiciÃ³ del token
@@ -154,13 +159,13 @@ r_tupel         = "tupel"
      ConstrucciÃ³ d'un symbol amb un atribut associat.
      **/
 
-/*
+
     private ComplexSymbol symbol(int type, Object value){
         Location l = new Location(yyline+1, yycolumn+1); // primera posiciÃ³ del token
         Location r = new Location(yyline+1, yycolumn+1+yylength()); // ultima posiciÃ³ del token
         return new ComplexSymbol(ParserSym.terminalNames[type], type, l, r, value);
     }
-*/
+
 %}
 
 /****************************************************************************/
@@ -169,80 +174,80 @@ r_tupel         = "tupel"
 // Regles/accions
 // Ã‰s molt important l'ordre de les regles!!!
 
-{op_add}                    { System.out.println("suma " + this.yytext()); compilador.view.NombreCompilador.add("suma " + this.yytext() + '\n');}
-{op_sub}                    { System.out.println("sub " + this.yytext()); compilador.view.NombreCompilador.add("sub " + this.yytext()+ '\n');}
-{op_mul}                    { System.out.println("mul " + this.yytext()); compilador.view.NombreCompilador.add("mul " + this.yytext()+ '\n');}
-{op_div}                    { System.out.println("div " + this.yytext()); compilador.view.NombreCompilador.add("div " + this.yytext()+ '\n');}
-{op_mod}                    { System.out.println("mod " + this.yytext()); compilador.view.NombreCompilador.add("mod " + this.yytext()+ '\n');}
+{op_add}                    { mvp.setLexic("Símbol '+' -> "+this.yytext()+"\n"); return symbol(ParserSym.op_add); }
+{op_sub}                    { mvp.setLexic("Símbol '-' -> "+this.yytext()+"\n"); return symbol(ParserSym.op_sub); }
+{op_mul}                    { mvp.setLexic("Símbol '*' -> "+this.yytext()+"\n"); return symbol(ParserSym.op_mul); }
+{op_div}                    { mvp.setLexic("Símbol '/' -> "+this.yytext()+"\n"); return symbol(ParserSym.op_div); }
+{op_mod}                    { mvp.setLexic("Símbol '%' -> "+this.yytext()+"\n"); return symbol(ParserSym.op_mod); }
 
-{op_increment}              { System.out.println("increment " + this.yytext());}
-{op_decrement}              { System.out.println("decrement " + this.yytext());}
+{op_increment}              { mvp.setLexic("Símbol '++' -> "+this.yytext()+"\n"); return symbol(ParserSym.op_increment); }
+{op_decrement}              { mvp.setLexic("Símbol '--' -> "+this.yytext()+"\n"); return symbol(ParserSym.op_decrement); }
 
-{sym_eq}                    { System.out.println("equ = "+this.yytext());}
-{sym_lparen}                { System.out.println("lparen "+this.yytext());}
-{sym_rparen}                { System.out.println("rparen "+this.yytext());}
-{sym_dot}                   { System.out.println("dot "+this.yytext());}
-{sym_colon}                 { System.out.println("colon "+this.yytext());}
-{sym_semicolon}             { System.out.println("semicolon "+this.yytext());}
-{sym_comma}                 { System.out.println("comma "+this.yytext());}
-{sym_lbracket}              { System.out.println("lbracket "+this.yytext());}
-{sym_rbracket}              { System.out.println("rbracket "+this.yytext());}
-{sym_lcbracket}             { System.out.println("lcbracket "+this.yytext());}
-{sym_rcbracket}             { System.out.println("rcbracket "+this.yytext());}
+{sym_eq}                    { mvp.setLexic("Símbol '=' -> "+this.yytext()+"\n"); return symbol(ParserSym.sym_eq); }
+{sym_lparen}                { mvp.setLexic("Símbol '(' -> "+this.yytext()+"\n"); return symbol(ParserSym.sym_lparen); }
+{sym_rparen}                { mvp.setLexic("Símbol ')' -> "+this.yytext()+"\n"); return symbol(ParserSym.sym_rparen); }
+{sym_dot}                   { mvp.setLexic("Símbol '.' -> "+this.yytext()+"\n"); return symbol(ParserSym.sym_dot); }
+{sym_colon}                 { mvp.setLexic("Símbol ':' -> "+this.yytext()+"\n"); return symbol(ParserSym.sym_colon); }
+{sym_semicolon}             { mvp.setLexic("Símbol ';' -> "+this.yytext()+"\n"); return symbol(ParserSym.sym_semicolon); }
+{sym_comma}                 { mvp.setLexic("Símbol ',' -> "+this.yytext()+"\n"); return symbol(ParserSym.sym_comma); }
+{sym_lbracket}              { mvp.setLexic("Símbol '[' -> "+this.yytext()+"\n"); return symbol(ParserSym.sym_lbracket); }
+{sym_rbracket}              { mvp.setLexic("Símbol ']' -> "+this.yytext()+"\n"); return symbol(ParserSym.sym_rbracket); }
+{sym_lcbracket}             { mvp.setLexic("Símbol '{' -> "+this.yytext()+"\n"); return symbol(ParserSym.sym_lcbracket); }
+{sym_rcbracket}             { mvp.setLexic("Símbol '}' -> "+this.yytext()+"\n"); return symbol(ParserSym.sym_rcbracket); }
 
-{rel_eq}                    { System.out.println("eq == "+this.yytext());}
-{rel_neq}                   { System.out.println("neq "+this.yytext());}
-{rel_lt}                    { System.out.println("lt "+this.yytext());}
-{rel_le}                    { System.out.println("le "+this.yytext());}
-{rel_gt}                    { System.out.println("gt "+this.yytext());}
-{rel_ge}                    { System.out.println("ge "+this.yytext());}
+{rel_eq}                    { mvp.setLexic("Símbol '=' -> "+this.yytext()+"\n"); return symbol(ParserSym.rel_eq); }
+{rel_neq}                   { mvp.setLexic("Símbol '!=' -> "+this.yytext()+"\n"); return symbol(ParserSym.rel_neq); }
+{rel_lt}                    { mvp.setLexic("Símbol '<' -> "+this.yytext()+"\n"); return symbol(ParserSym.rel_lt); }
+{rel_le}                    { mvp.setLexic("Símbol '<=' -> "+this.yytext()+"\n"); return symbol(ParserSym.rel_le); }
+{rel_gt}                    { mvp.setLexic("Símbol '>' -> "+this.yytext()+"\n"); return symbol(ParserSym.rel_gt); }
+{rel_ge}                    { mvp.setLexic("Símbol '>=' -> "+this.yytext()+"\n"); return symbol(ParserSym.rel_ge); }
 
-{r_if}                      { System.out.println("if "+this.yytext());}
-{r_elif}                    { System.out.println("elif "+this.yytext());}
-{r_else}                    { System.out.println("else "+this.yytext());}
-{r_print}                   { System.out.println("print "+this.yytext());}
-{r_println}                 { System.out.println("println "+this.yytext());}
-{r_true}                    { System.out.println("true "+this.yytext());}
-{r_false}                   { System.out.println("false "+this.yytext());}
-{r_function}                { System.out.println("function "+this.yytext());}
-{r_procedure}               { System.out.println("procedure "+this.yytext());}
-{r_return}                  { System.out.println("return "+this.yytext());}
-{r_while}                   { System.out.println("while "+this.yytext());}
-{r_for}                     { System.out.println("for "+this.yytext());}
-{r_repeat}                  { System.out.println("repeat "+this.yytext());}
-{r_until}                   { System.out.println("until "+this.yytext());}
-{r_array}                   { System.out.println("array "+this.yytext());}
-{r_const}                   { System.out.println("const "+this.yytext());}
-{r_and}                     { System.out.println("and "+this.yytext());}
-{r_or}                      { System.out.println("or "+this.yytext());}
-{r_not}                     { System.out.println("not "+this.yytext());}
-{r_new}                     { System.out.println("new "+this.yytext());}
-{r_main}                    { System.out.println("main "+this.yytext());}
-{r_read}                    { System.out.println("read "+this.yytext());}
+{r_if}                      { mvp.setLexic("Símbol 'if' -> "+this.yytext()+"\n"); return symbol(ParserSym.r_if); }
+{r_elif}                    { mvp.setLexic("Símbol 'elif' -> "+this.yytext()+"\n"); return symbol(ParserSym.r_elif); }
+{r_else}                    { mvp.setLexic("Símbol 'else' -> "+this.yytext()+"\n"); return symbol(ParserSym.r_else); }
+{r_print}                   { mvp.setLexic("Símbol 'print()' -> "+this.yytext()+"\n"); return symbol(ParserSym.r_print); }
+{r_println}                 { mvp.setLexic("Símbol 'println()' -> "+this.yytext()+"\n"); return symbol(ParserSym.r_println); }
+{r_true}                    { mvp.setLexic("Símbol 'true' -> "+this.yytext()+"\n"); return symbol(ParserSym.r_true, new LiteralWrapper(this.yytext(), this.yyline+1, this.yycolumn+1)); }
+{r_false}                   { mvp.setLexic("Símbol 'false' -> "+this.yytext()+"\n"); return symbol(ParserSym.r_false, new LiteralWrapper(this.yytext(), this.yyline+1, this.yycolumn+1)); }
+{r_function}                { mvp.setLexic("Símbol 'function(){}' -> "+this.yytext()+"\n"); return symbol(ParserSym.r_function); }
+{r_procedure}               { mvp.setLexic("Símbol 'procedure(){}' -> "+this.yytext()+"\n"); return symbol(ParserSym.r_procedure); }
+{r_return}                  { mvp.setLexic("Símbol 'return' -> "+this.yytext()+"\n"); return symbol(ParserSym.r_return); }
+{r_while}                   { mvp.setLexic("Símbol 'while' -> "+this.yytext()+"\n"); return symbol(ParserSym.r_while); }
+{r_for}                     { mvp.setLexic("Símbol 'for' -> "+this.yytext()+"\n"); return symbol(ParserSym.r_for); }
+{r_repeat}                  { mvp.setLexic("Símbol 'repeat' -> "+this.yytext()+"\n"); return symbol(ParserSym.r_repeat); }
+{r_until}                   { mvp.setLexic("Símbol 'until' -> "+this.yytext()+"\n"); return symbol(ParserSym.r_until); }
+{r_array}                   { mvp.setLexic("Símbol 'array' -> "+this.yytext()+"\n"); return symbol(ParserSym.r_array); }
+{r_const}                   { mvp.setLexic("Símbol 'const' -> "+this.yytext()+"\n"); return symbol(ParserSym.r_const); }
+{r_and}                     { mvp.setLexic("Símbol 'and' -> "+this.yytext()+"\n"); return symbol(ParserSym.r_and); }
+{r_or}                      { mvp.setLexic("Símbol 'or' -> "+this.yytext()+"\n"); return symbol(ParserSym.r_or); }
+{r_not}                     { mvp.setLexic("Símbol 'not' -> "+this.yytext()+"\n"); return symbol(ParserSym.r_not); }
+{r_new}                     { mvp.setLexic("Símbol 'new' -> "+this.yytext()+"\n"); return symbol(ParserSym.r_new); }
+{r_main}                    { mvp.setLexic("Símbol 'main(){}' -> "+this.yytext()+"\n"); return symbol(ParserSym.r_main); }
+{r_read}                    { mvp.setLexic("Símbol 'read()' -> "+this.yytext()+"\n"); return symbol(ParserSym.r_read); }
 
-{r_int}                     { System.out.println("int "+this.yytext());}
-{r_bool}                    { System.out.println("bool "+this.yytext());}
-{r_char}                    { System.out.println("char "+this.yytext());}
-{r_string}                  { System.out.println("string "+this.yytext());}
-{r_tupel}                   { System.out.println("tupel "+this.yytext());}
+{r_int}                     { mvp.setLexic("Símbol 'int' -> "+this.yytext()+"\n"); return symbol(ParserSym.r_int); }
+{r_bool}                    { mvp.setLexic("Símbol 'bool' -> "+this.yytext()+"\n"); return symbol(ParserSym.r_bool); }
+{r_char}                    { mvp.setLexic("Símbol 'char' -> "+this.yytext()+"\n"); return symbol(ParserSym.r_char); }
+{r_string}                  { mvp.setLexic("Símbol 'string' -> "+this.yytext()+"\n"); return symbol(ParserSym.r_string); }
+{r_tupel}                   { mvp.setLexic("Símbol 'tupel' -> "+this.yytext()+"\n"); return symbol(ParserSym.r_tupel); }
 
-{id}                        { System.out.println("id "+this.yytext());}
+{id}                        { mvp.setLexic("Símbol 'ID' -> "+this.yytext()+"\n"); return symbol(ParserSym.identifier, new LiteralWrapper (this.yytext(), this.yyline+1, this.yycolumn+1)); }
 
-{zerodigit}                 { System.out.println("zerodigit "+this.yytext());}
-{enter}                     { System.out.println("enter "+this.yytext());}
-{tagbinari}{binari}         { System.out.println("binari "+this.yytext());}
-{taghexa}{hexadecimal}      { System.out.println("hexadecimal "+this.yytext());}
-{tagoctal}{octal}           { System.out.println("octal "+this.yytext());}
+{zerodigit}                 { mvp.setLexic("Literal 0 -> "+this.yytext()+"\n"); return symbol(ParserSym.l_int, new LiteralWrapper (0, this.yyline+1, this.yycolumn+1)); }
+{enter}                     { mvp.setLexic("Literal integer -> "+this.yytext()+"\n"); return symbol(ParserSym.l_int, new LiteralWrapper (Integer.parseInt(this.yytext()), this.yyline+1, this.yycolumn+1)); }
+{tagbinari}{binari}         { mvp.setLexic("Literal binari -> "+this.yytext()+"\n"); return symbol(ParserSym.l_int, new LiteralWrapper (Integer.parseInt(this.yytext().substring(2, this.yytext().length()),2), this.yyline+1, this.yycolumn+1)); }
+{taghexa}{hexadecimal}      { mvp.setLexic("Literal hexadecimal -> "+this.yytext()+"\n"); return symbol(ParserSym.l_int, new LiteralWrapper (Integer.parseInt(this.yytext().substring(2, this.yytext().length()),16), this.yyline+1, this.yycolumn+1)); }
+{tagoctal}{octal}           { mvp.setLexic("Literal octal -> "+this.yytext()+"\n"); return symbol(ParserSym.l_int, new LiteralWrapper (Integer.parseInt(this.yytext().substring(2, this.yytext().length()),8), this.yyline+1, this.yycolumn+1)); }
 
-{singleLnComment}           { System.out.println("singleLnComment "+this.yytext());}
-{multiLnComment}            { System.out.println("multiLnComment "+this.yytext());}
+{singleLnComment}           { mvp.setLexic("Símbol '//' -> "+this.yytext()+"\n"); }
+{multiLnComment}            { mvp.setLexic("Símbol '/**/' -> "+this.yytext()+"\n"); }
 
-{l_char}                    { System.out.println("char "+this.yytext());}
-{l_string}                  { System.out.println("string "+this.yytext());}
+{l_char}                    { mvp.setLexic("Literal character -> "+this.yytext()+"\n"); return symbol(ParserSym.l_char, new LiteralWrapper (this.yytext(), this.yyline+1, this.yycolumn+1)); }
+{l_string}                  { mvp.setLexic("Literal string -> "+this.yytext()+"\n"); return symbol(ParserSym.l_string, new LiteralWrapper (this.yytext(), this.yyline+1, this.yycolumn+1)); }
 
-{ws}                        { System.out.println("ws "+this.yytext());}
-{newline}                   { /* No fer res amb els espais */  }
+{ws}                        { mvp.setLexic("White space '}' -> "+this.yytext()+"\n"); }
+{newline}                   { mvp.setLexic("New line -> "+this.yytext()+"\n"); }
 
-[^]                         { System.err.println(this.yytext() + ", corregido: " + u.Levenshtein((this.yytext()).toString())); }
+[^]                         { mvp.setLexic("Símbol desconegut -> "+this.yytext()+"\n"); return symbol(ParserSym.error); }
 
 /****************************************************************************/

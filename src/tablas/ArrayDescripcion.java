@@ -1,0 +1,58 @@
+package tablas;
+
+import types.TypeEnum;
+
+public class ArrayDescripcion extends IdDescripcion {
+    
+    private final int variableNumber;
+    private final TypeEnum type;
+    private final boolean isVar;
+    private int size;
+    private boolean init;
+    
+    public ArrayDescripcion(int variableNumber, TypeEnum type, boolean isVar, boolean init) {
+        super(TipoDescripcion.darray);
+        this.variableNumber = variableNumber;
+        this.type = type;
+        this.isVar = isVar;
+        this.size = -1;
+        this.init = init;
+    }
+
+    public int getVariableNumber() {
+        return variableNumber;
+    }
+
+    public TypeEnum getType() {
+        return type;
+    }
+    
+    public boolean isVar() {
+        return isVar;
+    }
+
+    public int getSize() {
+        return size;
+    }
+
+    public boolean isInit() {
+        return init;
+    }
+    
+    public void setInit(Boolean init) {
+        this.init = init;
+    }
+    
+    public void setSize(int size) {
+        this.size = size;
+    }
+    
+    public boolean isSizeSet() {
+        return size != -1;
+    }
+
+    @Override
+    public String toString() {
+        return "ArrayDescription{" + "variableNumber=" + variableNumber + ", type=" + type + ", isVar=" + isVar + ", size=" + size + '}';
+    }
+}
