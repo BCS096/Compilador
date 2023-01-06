@@ -31,6 +31,10 @@ public class Variable {
         this.isArray = isArray;
         this.isTupel = isTupel;
     }
+
+    public boolean isTupel() {
+        return isTupel;
+    }
     
     public TipoVariable getTipoVariable() {
         return this.tipoVar;

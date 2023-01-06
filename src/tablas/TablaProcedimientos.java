@@ -15,11 +15,11 @@ import java.util.Set;
 public class TablaProcedimientos {
 
     private final HashMap<String, Procedimiento> tp;
-    private int numProcedimientos;
+    private int numProcedimiento;
 
     public TablaProcedimientos() {
         this.tp = new HashMap<>();
-        this.numProcedimientos = 0;
+        this.numProcedimiento = 0;
     }
 
     /**
@@ -49,16 +49,16 @@ public class TablaProcedimientos {
         }
 
         tp.put(id, proc);
-        this.numProcedimientos++;
+        this.numProcedimiento++;
         return true;
     }
 
     public int getContador() {
-        return numProcedimientos;
+        return numProcedimiento;
     }
 
-    public void decrementCounter() {
-        this.numProcedimientos--;
+    public void decrement() {
+        this.numProcedimiento--;
     }
 
 }

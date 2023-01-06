@@ -39,6 +39,7 @@ public class analisisSemantico {
     }
 
     private void initTablaSimbolos() {
+        /*
         IdDescripcion nulo = new IdDescripcion(IdDescripcion.TipoDescripcion.dnula);
         ts.poner("if", nulo);
         ts.poner("elif", nulo);
@@ -57,7 +58,7 @@ public class analisisSemantico {
         ts.poner("const", nulo);
         ts.poner("array", nulo);
         ts.poner("tupel", nulo);
-
+        */
         TypeDescripcion tipo = new TypeDescripcion(TypeDescripcion.TSB.tsb_int, Integer.MIN_VALUE, Integer.MAX_VALUE);
         ts.poner("int", tipo);
         tipo = new TypeDescripcion(TypeDescripcion.TSB.tsb_char, Character.MIN_VALUE, Character.MAX_VALUE);
