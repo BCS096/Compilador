@@ -28,9 +28,4 @@ public class TablaAmbitos {
     public int get(int n){ //ta[n]
         return ambitos.get(n);
     }
-    
-    public void cambioAmbito(int n){
-        ambitos.add((n + 1),ambitos.get(n) + 1);
-    }
-    
 }
