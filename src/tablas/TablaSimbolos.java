@@ -122,6 +122,57 @@ public class TablaSimbolos {
         return null;
     }
     
+    public void ponerIndice(String id, IdDescripcion d){
+        if(td.existe(id)){
+            throw new UnsupportedOperationException("No existe el array con este nombre: "+id);
+        }
+        IdDescripcion darray = td.get(id).getDescripcion();
+        if(darray.getTipoDescripcion() != IdDescripcion.TipoDescripcion.darray){
+            throw new UnsupportedOperationException("No es un array");
+        }
+        int idxe = td.get(id).getFirst();
+        int idxep = 0;
+        while(idxe != -1){
+            idxep = idxe;
+            idxe = te.get(idxe).getNext();
+        }
+        ta.nuevaEntrada(n);
+        Data data = new Data("", d, -1, -1, -1);
+        te.put(idxe + 1, data);
+        if(idxep == -1){
+            td.get(id).setFirst(idxe + 1);
+        }else{
+            te.get(idxep).setNext(idxe + 1);
+        }
+    }
+    
+    //OPERACIONES PROPIAS DE LOS INDICES
+    
+    public int first(String id){
+        if(td.existe(id)){
+            throw new UnsupportedOperationException("No existe el array con este nombre: "+id);
+        }
+        IdDescripcion darray = td.get(id).getDescripcion();
+        if(darray.getTipoDescripcion() != IdDescripcion.TipoDescripcion.darray){
+            throw new UnsupportedOperationException("No es un array");
+        }
+        return td.get(id).getFirst();
+    }
+    
+    public int next(int idx){
+        if(te.get(idx).getNext() == -1){
+            throw new UnsupportedOperationException("El indice actual es el último");
+        }
+        return te.get(idx).getNext();
+    }
+    
+    public boolean last(int idx){
+        return te.get(idx).getNext() == -1;
+    }
+    
+    public IdDescripcion consultarIndice(int idx){
+        return te.get(idx).getDescripcion();
+    }
     //    public void poner(String id, IdDescripcion desc) {
 //        Data d = td.get(id); //useless pero lo dejo por lo que sea (useless por si se da el caso de declarado en scope anterior)
 //        //Si existe la descripcion en la td, se hacen comprobaciones, si no es que simplemente es nueva y pasando de todo.
