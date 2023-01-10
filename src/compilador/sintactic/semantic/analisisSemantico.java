@@ -8,12 +8,7 @@ package compilador.sintactic.semantic;
 import compilador.sintactic.Parser;
 import compilador.sintactic.ParserSym;
 import compilador.sintactic.nodes.*;
-import tablas.ConstDescripcion;
-import tablas.Data;
-import tablas.IdDescripcion;
-import tablas.ProcDescripcion;
-import tablas.TablaSimbolos;
-import tablas.TypeDescripcion;
+import tablas.*;
 import types.TypeEnum;
 
 /**
@@ -26,13 +21,17 @@ public class analisisSemantico {
     private final ProgramNode programNode;
 
     private final TablaSimbolos ts;
-    //private final CodeGeneration3Address codeGeneration3Address;
+    private final TablaVariables tv;
+    private final TablaProcedimientos tp;
+    private final CodeGeneration3Address gc;
 
     public analisisSemantico(ProgramNode program, Parser parser) {
         this.programNode = program;
         this.parser = parser;
         this.ts = new TablaSimbolos();
-        //this.codeGeneration3Address = new CodeGeneration3Address(variableTable, procedureTable);
+        this.tv = new TablaVariables();
+        this.tp = new TablaProcedimientos();
+        this.gc = new CodeGeneration3Address(tv, tp);
 
         initTablaSimbolos();
 
@@ -76,7 +75,7 @@ public class analisisSemantico {
         /* Para que las palabras reservadas queden en el ámbito 1 de forma exclusiva */
         ts.entrarBloque();
         //coti : no se deberia poner dentro de la tabla de procedimientos y que la tabla de procedimientos te proporciona el número de procedimiento
-        // y no un -1 por la cara (y por tant devolveria 0)????????? Creo que debemos saber en todo momento donde estamos.
+        // y no un -1 por la cara (y por tanto devolveria 0)????????? Creo que debemos saber en todo momento donde estamos.
         ProcDescripcion mainDescription = new ProcDescripcion(-1); 
         ts.poner("main", mainDescription);
     }
@@ -92,6 +91,32 @@ public class analisisSemantico {
             }
         }
     }
+    // COTI
+    public void handleMethodList(MethodListNode node){
+        if(node.getMethod() != null){
+            handleMethod(node.getMethod());
+        }
+        if(node.getMethodList() != null && !(node.getMethodList().isEmpty()) ){
+            handleMethodList(node.getMethodList());
+        }
+    }
+    
+    public void handleMethod(MethodNode node){
+        if(node.getProc() != null){
+            handleProc(node.getProc());
+        }
+        if(node.getFunc() != null){
+            handleFunc(node.getFunc());
+        }
+    }
+    
+    public void handleProc(ProcNode node){
+        
+    }
+    
+    public void handleFunc(FuncNode node){
+        
+    }
     
 /**   
  * @Manu
@@ -100,9 +125,6 @@ DECL_LIST;
 DECL;
 ACTUAL_DECL;
 DECL_ELEM;
-TYPE_ID;
-ELEM_LIST;
-ELEM_ID_ASSIG;
 DECL_ARRAY;
 DIM_ARRAY;
 ARRAY_DECL;
@@ -111,9 +133,10 @@ DECL_TUPEL;
 TUPEL_DECL;
 INIT_TUPEL;
 EXP;
+SIMPLE_VALUE;
+GEST_IDX;
+GESTOR;
 * @Coti
-METHOD_LIST;
-METHOD;
 PROC;
 FUNC;
 PARAM_LIST;
@@ -130,9 +153,9 @@ METHOD_CALL;
 * @Constantino
 PARAM_IN;
 ASSIG;
-SIMPLE_VALUE;
-GEST_IDX;
-GESTOR;
+TYPE_ID;
+ELEM_LIST;
+ELEM_ID_ASSIG;
 LITERAL;
 BINARY_OP;
 REL_OP;
