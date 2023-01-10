@@ -76,9 +76,11 @@ public class Variable {
     public void setOffset(int offset) {
         this.offset = offset;
     }
-}
-
-enum TipoVariable {
+    
+    public enum TipoVariable {
     PARAM,
     VARIABLE
 }
+    
+}
+

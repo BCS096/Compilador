@@ -13,7 +13,7 @@ import types.TypeEnum;
  * @author emanu
  */
 //Un procedimiento contiene (o no) parámetros que vienen definidos por una variable con su tipo (necesario más adelante) -> Objeto Parámetro
-class Procedimiento {
+public class Procedimiento {
     private final int ambito;
     private final String etiquetaInicial;
     private final ArrayList<ObjetoParametro> parametros;

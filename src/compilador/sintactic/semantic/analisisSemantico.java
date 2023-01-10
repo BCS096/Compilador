@@ -59,6 +59,8 @@ public class analisisSemantico {
         ts.poner("array", nulo);
         ts.poner("tupel", nulo);
         */
+        //TypeDescripcion no sirve para nada porque ya tenemos TypeEnum, pero diria que lo suyo y lo màs adecuado es usar TypeDescripcion
+        //y borrar typeEnum
         TypeDescripcion tipo = new TypeDescripcion(TypeDescripcion.TSB.tsb_int, Integer.MIN_VALUE, Integer.MAX_VALUE);
         ts.poner("int", tipo);
         tipo = new TypeDescripcion(TypeDescripcion.TSB.tsb_char, Character.MIN_VALUE, Character.MAX_VALUE);
@@ -73,7 +75,9 @@ public class analisisSemantico {
 
         /* Para que las palabras reservadas queden en el ámbito 1 de forma exclusiva */
         ts.entrarBloque();
-        ProcDescripcion mainDescription = new ProcDescripcion(-1);
+        //coti : no se deberia poner dentro de la tabla de procedimientos y que la tabla de procedimientos te proporciona el número de procedimiento
+        // y no un -1 por la cara (y por tant devolveria 0)????????? Creo que debemos saber en todo momento donde estamos.
+        ProcDescripcion mainDescription = new ProcDescripcion(-1); 
         ts.poner("main", mainDescription);
     }
 
