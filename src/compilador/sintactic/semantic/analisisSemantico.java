@@ -8,7 +8,11 @@ package compilador.sintactic.semantic;
 import compilador.sintactic.Parser;
 import compilador.sintactic.ParserSym;
 import compilador.sintactic.nodes.*;
+import compilador.sintactic.semantic.Operator3Address.CastType;
 import tablas.*;
+import tablas.IdDescripcion.TipoDescripcion;
+import types.SentenceType;
+import types.SpecialOpType;
 import types.TypeEnum;
 
 /**
@@ -57,7 +61,7 @@ public class analisisSemantico {
         ts.poner("const", nulo);
         ts.poner("array", nulo);
         ts.poner("tupel", nulo);
-        */
+         */
         //TypeDescripcion no sirve para nada porque ya tenemos TypeEnum, pero diria que lo suyo y lo màs adecuado es usar TypeDescripcion
         //y borrar typeEnum
         TypeDescripcion tipo = new TypeDescripcion(TypeDescripcion.TSB.tsb_int, Integer.MIN_VALUE, Integer.MAX_VALUE);
@@ -76,7 +80,7 @@ public class analisisSemantico {
         ts.entrarBloque();
         //coti : no se deberia poner dentro de la tabla de procedimientos y que la tabla de procedimientos te proporciona el número de procedimiento
         // y no un -1 por la cara (y por tanto devolveria 0)????????? Creo que debemos saber en todo momento donde estamos.
-        ProcDescripcion mainDescription = new ProcDescripcion(-1); 
+        ProcDescripcion mainDescription = new ProcDescripcion(-1);
         ts.poner("main", mainDescription);
     }
 
@@ -86,87 +90,326 @@ public class analisisSemantico {
             DeclListNode declList = programNode.getDeclList();
             if (declList != null && !declList.isEmpty()) {
                 System.out.println("AVANZANDO CHAVALES");
-            }else{
+            } else {
                 System.out.println("La declList está vacía pero avanzando igual jeje");
             }
         }
     }
+
     // COTI
-    public void handleMethodList(MethodListNode node){
-        if(node.getMethod() != null){
+    public void handleMethodList(MethodListNode node) {
+        if (node.getMethod() != null) {
             handleMethod(node.getMethod());
         }
-        if(node.getMethodList() != null && !(node.getMethodList().isEmpty()) ){
+        if (node.getMethodList() != null && !(node.getMethodList().isEmpty())) {
             handleMethodList(node.getMethodList());
         }
     }
-    
-    public void handleMethod(MethodNode node){
-        if(node.getProc() != null){
+
+    public void handleMethod(MethodNode node) {
+        if (node.getProc() != null) {
             handleProc(node.getProc());
         }
-        if(node.getFunc() != null){
+        if (node.getFunc() != null) {
             handleFunc(node.getFunc());
         }
     }
-    
-    public void handleProc(ProcNode node){
-        
+
+    public void handleProc(ProcNode node) {
+        String idProc = node.getIdentifier().getIdentifierLiteral();
+        gc.addFunctionId(idProc); //ponemos el procedimiento en la cima de la pila de procedimientos activos
+        String label = gc.newLabel();
+        int numProc = gc.newProcedure(idProc, ts.getActual(), label, 0);
+        ProcDescripcion d = new ProcDescripcion(numProc);
+        try {
+            ts.poner(idProc, d);
+        } catch (IllegalArgumentException e) {
+            parser.report_error("Procedimiento " + idProc + " ya está definido", node);
+            tp.decrement();
+        }
+
+        ts.entrarBloque();
+
+        if (node.getParamList() != null && !(node.getParamList().isEmpty())) {
+            handleParamList(node.getParamList(), idProc);
+        }
+
+        gc.generate(InstructionType.SKIP, null, null, new Operator3Address(label)); //generamos SKIP para saber donde saltar al hacer call de este procedimiento
+        gc.generate(InstructionType.PMB, null, null, new Operator3Address(idProc));
+
+        if (node.getSentenceList() != null) {
+            handleSentenceList(node.getSentenceList());
+        }
+
+        gc.removeFunctionId(); //quitamos el procedimiento de la pila de procedimientos activos
+
+        gc.generate(InstructionType.RETURN, new Operator3Address(idProc), null, null);
+
+        ts.salirBloque();
+    }
+
+    public void handleFunc(FuncNode node) {
+        TypeEnum tipo = node.getTypeId().getType();
+        String idProc = node.getId().getIdentifierLiteral();
+        gc.addFunctionId(idProc); //ponemos el procedimiento en la cima de la pila de procedimientos activos
+        String label = gc.newLabel();
+        int numProc = gc.newProcedure(idProc, ts.getActual(), label, 0);
+        ProcDescripcion d = new ProcDescripcion(numProc);
+        try {
+            ts.poner(idProc, d);
+        } catch (IllegalArgumentException e) {
+            parser.report_error("Función " + idProc + " ya está definido", node);
+            tp.decrement();
+        }
+
+        ts.entrarBloque();
+
+        if (node.getParamList() != null && !(node.getParamList().isEmpty())) {
+            handleParamList(node.getParamList().getActualParamList());
+        }
+
+        gc.generate(InstructionType.SKIP, null, null, new Operator3Address(label)); //generamos SKIP para saber donde saltar al hacer call de este procedimiento
+        gc.generate(InstructionType.PMB, null, null, new Operator3Address(idProc));
+
+        if (node.getSentenceList() != null) {
+            handleSentenceList(node.getSentenceList());
+        }
+
+        gc.removeFunctionId(); //quitamos el procedimiento de la pila de procedimientos activos
+
+        handleExpresion(node.getExp());
+        if (tipo != node.getExp().getType()) {
+            parser.report_error("Se intenta devolver un dato cuyo tipo no es el mismo que el definido por la función", node);
+        }
+        gc.generate(InstructionType.RETURN, new Operator3Address(idProc), null, new Operator3Address(node.getExp().getReference()));
+
+        ts.salirBloque();
+    }
+
+    public void handleParamList(ActualParamListNode node) {
+        if (node.getParam() != null) {
+            handleParam(node.getParam());
+        }
+        if (node.getActualParamList() != null) {
+            handleParamList(node.getActualParamList());
+        }
+    }
+
+    public void handleParam(ParamNode node) {
+        String actualProc = gc.getCurrentFunction();
+        String id = node.getId().getIdentifierLiteral();
+        TypeEnum tipo = TypeEnum.NULL;
+        boolean isArray = false;
+        boolean isTupel = false;
+        if (node.getSpecialParam() == null) {
+            tipo = node.getTypeId().getType();
+        } else {
+            if (node.getSpecialParam().getTypeId() == null) {
+                isTupel = true;
+            } else {
+                isArray = true;
+                tipo = node.getSpecialParam().getTypeId().getType();
+            }
+        }
+        // metemos dentro de la tabla de expansión el paràmetro
+        ArgDescripcion d = new ArgDescripcion(tipo, id);
+        ts.ponerParam(actualProc, id, d);
+        tp.get(actualProc).setNumberParameters(tp.get(actualProc).getNumberParameters() + 1);
+
+        //metemos en la tabla de descripción dicho parametro para ser usado cuando se invoque el programa asociado
+        int numParam = gc.newVar(Variable.TipoVariable.PARAM, tipo, isArray, isTupel);
+        VarDescripcion dvar = new VarDescripcion(numParam, tipo);
+        try {
+            ts.poner(id, dvar);
+        } catch (IllegalArgumentException e) {
+            parser.report_error("Variable " + id + " ya está definida", node);
+            tp.decrement();
+        }
+    }
+
+    public void handleSentenceList(SentenceListNode node) {
+        if (node.getSentence() != null) {
+            handleSentence(node.getSentence());
+        }
+        if (node.getSentenceList() != null && !(node.getSentenceList().isEmpty())) {
+            handleSentenceList(node.getSentenceList());
+        }
+    }
+
+    public void handleSentence(SentenceNode node) {
+        switch (node.getSentenceType()) {
+            case IF:
+                handleExpresion(node.getExpression());
+                if (node.getExpression().getType() != TypeEnum.BOOL) {
+                    parser.report_error("La expressión a evaluar en el condicional no és booleana", node.getExpression());
+                }
+                String et = gc.newLabel();
+                gc.generate(InstructionType.IFEQ, new Operator3Address(node.getExpression().getReference()), new Operator3Address(0, CastType.INT), new Operator3Address(et));
+                if (node.getSentenceList() != null) {
+                    handleSentenceList(node.getSentenceList());
+                }
+                String eti = gc.newLabel();
+                gc.generate(InstructionType.GOTO, null, null, new Operator3Address(eti));
+                gc.generate(InstructionType.SKIP, null, null, new Operator3Address(et));
+                if (node.getNextIf() != null) {
+                    handleNextIf(node.getNextIf());
+                }
+                gc.generate(InstructionType.SKIP, null, null, new Operator3Address(eti));
+
+                break;
+            case WHILE:
+                String againWhile = gc.newLabel();
+                gc.generate(InstructionType.SKIP, null, null, new Operator3Address(againWhile));
+                handleExpresion(node.getExpression());
+                if (node.getExpression().getType() != TypeEnum.BOOL) {
+                    parser.report_error("La expressión a evaluar en el condicional no és booleana", node.getExpression());
+                }
+                String finalWhile = gc.newLabel();
+                gc.generate(InstructionType.IFEQ, new Operator3Address(node.getExpression().getReference()), new Operator3Address(0, CastType.INT), new Operator3Address(finalWhile));
+                if (node.getSentenceList() != null) {
+                    handleSentenceList(node.getSentenceList());
+                }
+                gc.generate(InstructionType.GOTO, null, null, new Operator3Address(againWhile));
+                gc.generate(InstructionType.SKIP, null, null, new Operator3Address(finalWhile));
+                break;
+            case DECL:
+                handleDecl(node.getDecl());
+                break;
+            case INST:
+                handleInst(node.getInst());
+                break;
+            case FOR:
+                if (node.getDecl() != null) {
+                    handleDecl(node.getDecl());
+                }
+                String againFor = gc.newLabel();
+                gc.generate(InstructionType.SKIP, null, null, new Operator3Address(againFor));
+                handleExpresion(node.getExpression());
+                if (node.getExpression().getType() != TypeEnum.BOOL) {
+                    parser.report_error("La expressión a evaluar en el condicional no és booleana", node.getExpression());
+                }
+                String finalFor = gc.newLabel();
+                gc.generate(InstructionType.IFEQ, new Operator3Address(node.getExpression().getReference()), new Operator3Address(0, CastType.INT), new Operator3Address(finalFor));
+                if (node.getSentenceList() != null) {
+                    handleSentenceList(node.getSentenceList());
+                }
+                if (node.getForInst() != null) {
+                    String id = node.getForInst().getIdentifier().getIdentifierLiteral();
+                    IdDescripcion d = ts.consultaId(id);
+                    
+                    if (node.getExpression() == null) {
+                        handleSpecialOp(node.getForInst().getSpecialOp(), node.getForInst().getIdentifier());
+                    }else{ // ID = EXP
+                        handleExpresionAssig(node.getForInst().getExpression(), node.getForInst().getIdentifier());
+                    }
+                }
+                gc.generate(InstructionType.GOTO, null, null, new Operator3Address(againFor));
+                gc.generate(InstructionType.SKIP, null, null, new Operator3Address(finalFor));
+                break;
+            case REPEAT:
+                String againRepeat = gc.newLabel();
+                gc.generate(InstructionType.SKIP, null, null, new Operator3Address(againRepeat));
+                if (node.getSentenceList() != null) {
+                    handleSentenceList(node.getSentenceList());
+                }
+                handleExpresion(node.getExpression());
+                if (node.getExpression().getType() != TypeEnum.BOOL) {
+                    parser.report_error("La expressión a evaluar en el condicional no és booleana", node.getExpression());
+                }
+                String finalRepeat = gc.newLabel();
+                gc.generate(InstructionType.IFEQ, new Operator3Address(node.getExpression().getReference()), new Operator3Address(0, CastType.INT), new Operator3Address(finalRepeat));
+                if (node.getSentenceList() != null) {
+                    handleSentenceList(node.getSentenceList());
+                }
+                gc.generate(InstructionType.GOTO, null, null, new Operator3Address(againRepeat));
+                gc.generate(InstructionType.SKIP, null, null, new Operator3Address(finalRepeat));
+                break;
+            case NONE:
+                //no hacer nada dado que se trata de un error que se gestiona más tarde
+                break;
+        }
+    }
+
+    public void handleSpecialOp(SpecialOpNode node, IdentifierNode id){
+        IdDescripcion d = ts.consultaId(id.getIdentifierLiteral());
+        if (d.getTipoDescripcion() == TipoDescripcion.dvar) {
+                            VarDescripcion dvar = (VarDescripcion) d;
+                            if (dvar.getType() == TypeEnum.INT) {
+                                int result = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
+                                if (node.getType() == SpecialOpType.INCREMENT) {
+                                    gc.generate(InstructionType.ADD,  new Operator3Address(dvar.getVariableNumber()),  new Operator3Address(1,CastType.INT),  new Operator3Address(result));
+                                }else{
+                                    //decrement
+                                    gc.generate(InstructionType.SUB,  new Operator3Address(dvar.getVariableNumber()),  new Operator3Address(1,CastType.INT),  new Operator3Address(result));
+                                }
+                                gc.generate(InstructionType.CLONE, new Operator3Address(result), null, new Operator3Address(dvar.getVariableNumber()));
+                            }else{
+                                parser.report_error("La variable a incrementar/decrementar no es de tipo entero", id);
+                            }
+                        } else {
+                            parser.report_error("El identificador no es una variable", id);
+                        }
+    }
+    public void handleNextIf(NextIfNode node) {
+        if (node.getExpression() == null) { // else
+            if (node.getSentenceList() != null) {
+                handleSentenceList(node.getSentenceList());
+            }
+        } else { // elif
+            handleExpresion(node.getExpression());
+            if (node.getExpression().getType() != TypeEnum.BOOL) {
+                parser.report_error("La expressión a evaluar en el condicional no és booleana", node.getExpression());
+            }
+            String et = gc.newLabel();
+            gc.generate(InstructionType.IFEQ, new Operator3Address(node.getExpression().getReference()), new Operator3Address(0, CastType.INT), new Operator3Address(et));
+            if (node.getSentenceList() != null) {
+                handleSentenceList(node.getSentenceList());
+            }
+            String eti = gc.newLabel();
+            gc.generate(InstructionType.GOTO, null, null, new Operator3Address(eti));
+            gc.generate(InstructionType.SKIP, null, null, new Operator3Address(et));
+            if (node.getNextIf() != null) {
+                handleNextIf(node.getNextIf());
+            }
+            gc.generate(InstructionType.SKIP, null, null, new Operator3Address(eti));
+        }
     }
     
-    public void handleFunc(FuncNode node){
-        
+    public void handleInst(InstNode node){
+        switch(node.getInstType()){
+            case EXP:
+                if(node.getInstExp() != null){
+                    handleInstExp(node.getInstExp());
+                }
+            break;
+            case ASSIG:
+                if(node.getAssig() != null){
+                    handleAssig(node.getAssig());
+                }
+            break;
+            case PRINT:
+                handleExpresion(node.getPrintExpression());
+                if(node.getPrintExpression().getType() == TypeEnum.NULL){
+                    parser.report_error("Expresion no válida para hacer print", node.getPrintExpression());
+                }
+                gc.generate(InstructionType.PRINT, new Operator3Address(node.getPrintExpression().getReference()), null, null);
+            break;
+            case PRINTLN:
+                handleExpresion(node.getPrintExpression());
+                if(node.getPrintExpression().getType() == TypeEnum.NULL){
+                    parser.report_error("Expresion no válida para hacer print", node.getPrintExpression());
+                }
+                gc.generate(InstructionType.PRINTLN, new Operator3Address(node.getPrintExpression().getReference()), null, null);
+            break;
+        }
     }
-    
-/**   
- * @Manu
-PROGRAM;
-DECL_LIST;
-DECL;
-ACTUAL_DECL;
-DECL_ELEM;
-DECL_ARRAY;
-DIM_ARRAY;
-ARRAY_DECL;
-INIT_ARRAY;
-DECL_TUPEL;
-TUPEL_DECL;
-INIT_TUPEL;
-EXP;
-SIMPLE_VALUE;
-GEST_IDX;
-GESTOR;
-* @Coti
-PROC;
-FUNC;
-PARAM_LIST;
-ACTUAL_PARAM_LIST;
-PARAM;
-SPECIAL_PARAM; 
-SENTENCE_LIST;
-SENTENCE;
-FOR_INST;
-NEXT_IF;
-INST;
-INST_EXP;
-METHOD_CALL;
-* @Constantino
-PARAM_IN;
-ASSIG;
-TYPE_ID;
-ELEM_LIST;
-ELEM_ID_ASSIG;
-LITERAL;
-BINARY_OP;
-REL_OP;
-LOGIC_OP;
-ARIT_OP;
-NEG_OP;
-SPECIAL_OP;
-MAIN;
-MODIFIER;
-ID;
-*/
-    
+    /**
+     * @Manu PROGRAM; DECL_LIST; DECL; ACTUAL_DECL; DECL_ELEM; DECL_ARRAY; DIM_ARRAY; ARRAY_DECL; INIT_ARRAY; DECL_TUPEL; TUPEL_DECL; INIT_TUPEL; EXP;
+     * SIMPLE_VALUE; GEST_IDX; GESTOR;
+     * @Coti INST_EXP; METHOD_CALL;
+     * @Constantino PARAM_IN; ASSIG; TYPE_ID; // COTI : no necesita método ELEM_LIST; ELEM_ID_ASSIG; LITERAL; BINARY_OP; REL_OP; LOGIC_OP; ARIT_OP; NEG_OP;
+     * SPECIAL_OP //COTI : lo he hecho sin querer xd; MAIN; MODIFIER; ID;
+     */
+
     //DEADLINE: 14-01-2023 -> Tenerlos hechos (no hace falta que bien), quedar y arreglarlos (si hace falta).
 }

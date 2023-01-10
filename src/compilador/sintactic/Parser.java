@@ -1355,7 +1355,7 @@ class CUP$Parser$actions {
 		int tleft = ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()).left;
 		int tright = ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()).right;
 		ComplexSymbol t = (ComplexSymbol)((java_cup.runtime.Symbol) CUP$Parser$stack.peek()).value;
-		 RESULT = new SpecialParamNode(TypeEnum.TUPEL, extractLine(t), extractColumn(t));                             
+		 RESULT = new SpecialParamNode(TypeEnum.TUPEL, null, extractLine(t), extractColumn(t));                             
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("SPECIAL_PARAM",23, ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
           return CUP$Parser$result;
@@ -1370,7 +1370,7 @@ class CUP$Parser$actions {
 		int tidleft = ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()).left;
 		int tidright = ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()).right;
 		TypeIdNode tid = (TypeIdNode)((java_cup.runtime.Symbol) CUP$Parser$stack.peek()).value;
-		 RESULT = new SpecialParamNode(TypeEnum.ARRAY, extractLine(t), extractColumn(t));                             
+		 RESULT = new SpecialParamNode(TypeEnum.ARRAY, tid, extractLine(t), extractColumn(t));                             
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("SPECIAL_PARAM",23, ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-1)), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
           return CUP$Parser$result;
