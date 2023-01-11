@@ -9,6 +9,7 @@ import compilador.sintactic.Parser;
 import compilador.sintactic.ParserSym;
 import compilador.sintactic.nodes.*;
 import compilador.sintactic.semantic.Operator3Address.CastType;
+import java.util.ArrayList;
 import tablas.*;
 import tablas.IdDescripcion.TipoDescripcion;
 import types.SentenceType;
@@ -296,10 +297,10 @@ public class analisisSemantico {
                 if (node.getForInst() != null) {
                     String id = node.getForInst().getIdentifier().getIdentifierLiteral();
                     IdDescripcion d = ts.consultaId(id);
-                    
+
                     if (node.getExpression() == null) {
                         handleSpecialOp(node.getForInst().getSpecialOp(), node.getForInst().getIdentifier());
-                    }else{ // ID = EXP
+                    } else { // ID = EXP
                         handleExpresionAssig(node.getForInst().getExpression(), node.getForInst().getIdentifier());
                     }
                 }
@@ -330,26 +331,28 @@ public class analisisSemantico {
         }
     }
 
-    public void handleSpecialOp(SpecialOpNode node, IdentifierNode id){
+    public void handleSpecialOp(SpecialOpNode node, IdentifierNode id) {
         IdDescripcion d = ts.consultaId(id.getIdentifierLiteral());
         if (d.getTipoDescripcion() == TipoDescripcion.dvar) {
-                            VarDescripcion dvar = (VarDescripcion) d;
-                            if (dvar.getType() == TypeEnum.INT) {
-                                int result = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
-                                if (node.getType() == SpecialOpType.INCREMENT) {
-                                    gc.generate(InstructionType.ADD,  new Operator3Address(dvar.getVariableNumber()),  new Operator3Address(1,CastType.INT),  new Operator3Address(result));
-                                }else{
-                                    //decrement
-                                    gc.generate(InstructionType.SUB,  new Operator3Address(dvar.getVariableNumber()),  new Operator3Address(1,CastType.INT),  new Operator3Address(result));
-                                }
-                                gc.generate(InstructionType.CLONE, new Operator3Address(result), null, new Operator3Address(dvar.getVariableNumber()));
-                            }else{
-                                parser.report_error("La variable a incrementar/decrementar no es de tipo entero", id);
-                            }
-                        } else {
-                            parser.report_error("El identificador no es una variable", id);
-                        }
+            VarDescripcion dvar = (VarDescripcion) d;
+            if (dvar.getType() == TypeEnum.INT) {
+                int result = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
+                if (node.getType() == SpecialOpType.INCREMENT) {
+                    gc.generate(InstructionType.ADD, new Operator3Address(dvar.getVariableNumber()), new Operator3Address(1, CastType.INT), new Operator3Address(result));
+                } else {
+                    //decrement
+                    gc.generate(InstructionType.SUB, new Operator3Address(dvar.getVariableNumber()), new Operator3Address(1, CastType.INT), new Operator3Address(result));
+                }
+                gc.generate(InstructionType.CLONE, new Operator3Address(result), null, new Operator3Address(dvar.getVariableNumber()));
+                node.setReference(result);
+            } else {
+                parser.report_error("La variable a incrementar/decrementar no es de tipo entero", id);
+            }
+        } else {
+            parser.report_error("El identificador no es una variable", id);
+        }
     }
+
     public void handleNextIf(NextIfNode node) {
         if (node.getExpression() == null) { // else
             if (node.getSentenceList() != null) {
@@ -374,42 +377,104 @@ public class analisisSemantico {
             gc.generate(InstructionType.SKIP, null, null, new Operator3Address(eti));
         }
     }
-    
-    public void handleInst(InstNode node){
-        switch(node.getInstType()){
+
+    public void handleInst(InstNode node) {
+        switch (node.getInstType()) {
             case EXP:
-                if(node.getInstExp() != null){
+                if (node.getInstExp() != null) {
                     handleInstExp(node.getInstExp());
                 }
-            break;
+                break;
             case ASSIG:
-                if(node.getAssig() != null){
+                if (node.getAssig() != null) {
                     handleAssig(node.getAssig());
                 }
-            break;
+                break;
             case PRINT:
                 handleExpresion(node.getPrintExpression());
-                if(node.getPrintExpression().getType() == TypeEnum.NULL){
+                if (node.getPrintExpression().getType() == TypeEnum.NULL) {
                     parser.report_error("Expresion no válida para hacer print", node.getPrintExpression());
                 }
                 gc.generate(InstructionType.PRINT, new Operator3Address(node.getPrintExpression().getReference()), null, null);
-            break;
+                break;
             case PRINTLN:
                 handleExpresion(node.getPrintExpression());
-                if(node.getPrintExpression().getType() == TypeEnum.NULL){
+                if (node.getPrintExpression().getType() == TypeEnum.NULL) {
                     parser.report_error("Expresion no válida para hacer print", node.getPrintExpression());
                 }
                 gc.generate(InstructionType.PRINTLN, new Operator3Address(node.getPrintExpression().getReference()), null, null);
-            break;
+                break;
         }
     }
+
+    private void handleInstExp(InstExpNode node) {
+        if (node.getSpecialOp() != null) {
+            handleSpecialOp(node.getSpecialOp(), node.getIdentifier());
+            node.setReference(node.getSpecialOp().getReference());
+        } else if (node.getMethodCall() != null) {
+            handleMethodCall(node.getMethodCall());
+            if(node.getMethodCall().getReference() != -1){
+                //FUNC
+                node.setReference(node.getMethodCall().getReference());
+            } 
+        } else {
+            int var = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.CHAR, false, false);
+            gc.generate(InstructionType.READ, null, null, new Operator3Address(var));
+            node.setReference(var);
+        }
+    }
+  
+    public void handleMethodCall(MethodCallNode node) {
+        IdDescripcion d = ts.consultaId(node.getIdentifier().getIdentifierLiteral());
+        if (d.getTipoDescripcion() == TipoDescripcion.dproc || d.getTipoDescripcion() == TipoDescripcion.dfunc) {
+            ArrayList <ArgDescripcion> param = ts.consultarParams(node.getIdentifier().getIdentifierLiteral());
+            if(node.getParamIn() != null && !(node.getParamIn().isEmpty()) ){             
+                ArrayList <ExpressionNode> paramIn = new ArrayList<>();
+                handleParamIn(node.getParamIn(), paramIn);
+                if(param.size() != paramIn.size()){
+                    parser.report_error("No se han escrito el número de parámetros correspondientes", node.getParamIn());
+                }
+                for (int i = 0; i < param.size(); i++) {
+                    if(param.get(i).getType() != paramIn.get(i).getType()){
+                        parser.report_error("Uno de los parámetros introducido no tiene el tipo correspondiente", node.getParamIn());
+                    }
+                    gc.generate(InstructionType.SIMPLEPARAM, null, null, new Operator3Address(node.getParamIn().getExpression().getReference()));
+                }
+            }else{
+                //la llamada no tiene parámetros
+                if(param != null){
+                    parser.report_error("La llamada requiere de parámetros", node.getParamIn());
+                }     
+            }
+            int res = -1;
+            if (d.getTipoDescripcion() == TipoDescripcion.dfunc) {
+                    FuncDescripcion dfunc = (FuncDescripcion) d;
+                    res = gc.newVar(Variable.TipoVariable.VARIABLE, dfunc.getType(), false, false);
+                    gc.generate(InstructionType.CALL, new Operator3Address(node.getIdentifier().getIdentifierLiteral()), null, new Operator3Address(res));
+                } else {
+                    ProcDescripcion dproc = (ProcDescripcion) d;
+                    gc.generate(InstructionType.CALL, new Operator3Address(node.getIdentifier().getIdentifierLiteral()), null, null);
+                }
+            node.setReference(res);
+        }else{
+            parser.report_error("Este identificador no corresponde a ningún subprograma", node.getIdentifier());
+        }
+    }
+    
+    public void handleParamIn(ParamInNode node, ArrayList <ExpressionNode> res){
+        res.add(node.getExpression());
+        if(node.getParamIn() != null){
+            handleParamIn(node.getParamIn(), res);
+        }
+    }
+
     /**
-     * @Manu PROGRAM; DECL_LIST; DECL; ACTUAL_DECL; DECL_ELEM; DECL_ARRAY; DIM_ARRAY; ARRAY_DECL; INIT_ARRAY; DECL_TUPEL; TUPEL_DECL; INIT_TUPEL; EXP;
-     * SIMPLE_VALUE; GEST_IDX; GESTOR;
-     * @Coti INST_EXP; METHOD_CALL;
-     * @Constantino PARAM_IN; ASSIG; TYPE_ID; // COTI : no necesita método ELEM_LIST; ELEM_ID_ASSIG; LITERAL; BINARY_OP; REL_OP; LOGIC_OP; ARIT_OP; NEG_OP;
+     * @Manu 
+     * PROGRAM; DECL_LIST; DECL; ACTUAL_DECL; DECL_ELEM; DECL_ARRAY; DIM_ARRAY; ARRAY_DECL; INIT_ARRAY; DECL_TUPEL; TUPEL_DECL; INIT_TUPEL; EXP;
+     * SIMPLE_VALUE; GEST_IDX; GESTOR;  COTI : handleExpression debe poner el resultado como referencia en el nodo porfa jej , màs que nada todo nodo y derivados que se usa en assig deberá hacerse esto
+     * @Constantino 
+     * ; ASSIG; TYPE_ID; // COTI : no necesita método ELEM_LIST; ELEM_ID_ASSIG; LITERAL; BINARY_OP; REL_OP; LOGIC_OP; ARIT_OP; NEG_OP;
      * SPECIAL_OP //COTI : lo he hecho sin querer xd; MAIN; MODIFIER; ID;
      */
-
     //DEADLINE: 14-01-2023 -> Tenerlos hechos (no hace falta que bien), quedar y arreglarlos (si hace falta).
 }
