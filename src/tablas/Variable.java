@@ -12,7 +12,6 @@ import types.TypeEnum;
  * @author emanu
  */
 public class Variable {
-
     private final String id;
     private final TipoVariable tipoVar;
     private final String idProc;
@@ -22,11 +21,6 @@ public class Variable {
     private final boolean isTupel;
 
     private int offset;
-
-    public enum TipoVariable {
-        PARAM,
-        VARIABLE
-    }
 
     public Variable(String id, TipoVariable tipoVar, TypeEnum tipo, String idProc, int bytes, boolean isArray, boolean isTupel) {
         this.id = id;
@@ -41,7 +35,7 @@ public class Variable {
     public boolean isTupel() {
         return isTupel;
     }
-
+    
     public TipoVariable getTipoVariable() {
         return this.tipoVar;
     }
@@ -49,7 +43,7 @@ public class Variable {
     public TypeEnum getTipo() {
         return tipo;
     }
-
+    
     public String getId() {
         return id;
     }
@@ -65,20 +59,28 @@ public class Variable {
     public String getIdProcedimiento() {
         return idProc;
     }
-
+    
     public boolean isArray() {
         return this.isArray;
     }
 
     /**
-     * Modify current variable offset
+     * Modify current variable offset 
      *
-     * - Passed as parameter: positive value - Passed as variable: negative
-     * value - Passed as constant: Current value
+     *  - Passed as parameter: positive value
+     *  - Passed as variable: negative value
+     *  - Passed as constant: Current value
      *
      * Para bloques dinámicos
-     */
+    */
     public void setOffset(int offset) {
         this.offset = offset;
     }
+    
+    public enum TipoVariable {
+    PARAM,
+    VARIABLE
 }
+    
+}
+
