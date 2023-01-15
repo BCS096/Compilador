@@ -1,18 +1,18 @@
-package sintactic.semantic;
+package compilador.sintactic.semantic;
 
 import java.util.ArrayList;
 import java.util.Stack;
-import sintactic.TypeEnum;
-import sintactic.tables.*;
+import types.TypeEnum;
+import tablas.*;
 
 public class CodeGeneration3Address {
 
-    private final VariableTable variableTable;
-    private final ProcedureTable procedureTable;
+    private final TablaVariables variableTable;
+    private final TablaProcedimientos procedureTable;
     private final Stack<String> procedureStack;
     private final ArrayList<Instruction3Address> instructions;
 
-    public CodeGeneration3Address(VariableTable variableTable, ProcedureTable procedureTable) {
+    public CodeGeneration3Address(TablaVariables variableTable, TablaProcedimientos procedureTable) {
         this.variableTable = variableTable;
         this.procedureTable = procedureTable;
         this.instructions = new ArrayList<>();
@@ -27,10 +27,10 @@ public class CodeGeneration3Address {
         return LABEL + labelCounter++;
     }
 
-    public int newVar(VariableType varType, TypeEnum type, boolean isArray) {
-        variableTable.put(new VariableData((VAR + variableTable.getCounter()), varType, type, getCurrentFunction(), type.getBytes(), isArray));
+    public int newVar(Variable.TipoVariable varType, TypeEnum type, boolean isArray, boolean isTupel) {
+        variableTable.put(new Variable((VAR + variableTable.getContador()), varType, type, getCurrentFunction(), type.getBytes(), isArray, isTupel));
         //Counter automatically increments one to preapre for next variable. We want the one we just inserted (counter-1)
-        return variableTable.getCounter() - 1;
+        return variableTable.getContador() - 1;
     }
 
     public String getCurrentFunction() {
@@ -49,13 +49,13 @@ public class CodeGeneration3Address {
         procedureStack.push(id);
     }
 
-    public int newProcedure(String procedureId, int scope, String firstLabel) {
-        procedureTable.put(procedureId, new ProcedureData(scope, firstLabel, -1, -1));
+    public int newProcedure(String procedureId, int scope, String firstLabel, int params) {
+        procedureTable.put(procedureId, new Procedimiento(scope, firstLabel, params));
         //Counter automatically increments one to preapre for next procedure. We want the one we just inserted (counter-1)
-        return procedureTable.getCounter() - 1;
+        return procedureTable.getContador() - 1;
     }
 
-    public ProcedureData getProcedure(String procedureId) {
+    public Procedimiento getProcedure(String procedureId) {
         return procedureTable.get(procedureId);
     }
 

@@ -99,15 +99,15 @@ public class analisisSemantico {
                 handleMethodList(methodList);
             }
 
-            CG3A.generate(InstructionType.CALL, new Operator3Address("main"), null, null);
+            gc.generate(InstructionType.CALL, new Operator3Address("main"), null, null);
             handleMain(main);
         } else {
             parser.report_error("ERROR - No se ha declarado 'main'", programNode);
         }
-        StringBuilder printCG3A = new StringBuilder();
-        printCG3A.append("instructionType |            operator1             |           operator2           |          result            ");
-        CG3A.getInstruccions().forEach(ins -> {
-            printCG3A.append(ins);
+        StringBuilder printgc = new StringBuilder();
+        printgc.append("instructionType |            operator1             |           operator2           |          result            ");
+        gc.getInstruccions().forEach(ins -> {
+            printgc.append(ins);
         });
     }
 
@@ -169,7 +169,7 @@ public class analisisSemantico {
         ExpressionNode expression = elemIdAssig.getExp();
         int expResultVarNumber = -9;
         if (expression != null) {
-            handleExpression(expression);
+            handleExpresion(expression);
             expResultVarNumber = expression.getReference();
             if (type != expression.getType()) {
                 parser.report_error("Identificador no coincide con la exp", expression);
@@ -180,7 +180,7 @@ public class analisisSemantico {
         switch (modifier) {
             case dvar:
                 if (type != TypeEnum.STRING) {
-                    nVar = CG3A.newVar(Variable.TipoVariable.VARIABLE, type, false, false);
+                    nVar = gc.newVar(Variable.TipoVariable.VARIABLE, type, false, false);
                     VarDescripcion var = new VarDescripcion(nVar, type);
                     try {
                         ts.poner(id, var);
@@ -189,7 +189,7 @@ public class analisisSemantico {
                         tv.decrement();
                     }
                 } else {
-                    nVar = CG3A.newVar(Variable.TipoVariable.VARIABLE, type, false, false);
+                    nVar = gc.newVar(Variable.TipoVariable.VARIABLE, type, false, false);
                     StringDescripcion var = new StringDescripcion(nVar, true, expression != null);
                     try {
                         ts.poner(id, var);
@@ -201,12 +201,12 @@ public class analisisSemantico {
 
                 // If expression given, make the assignation
                 if (expResultVarNumber != -9) {
-                    CG3A.generate(InstructionType.CLONE, new Operator3Address(expResultVarNumber), null, new Operator3Address(nVar));
+                    gc.generate(InstructionType.CLONE, new Operator3Address(expResultVarNumber), null, new Operator3Address(nVar));
                 }
                 break;
             case dconst:
                 if (type != TypeEnum.STRING) {
-                    nVar = CG3A.newVar(Variable.TipoVariable.VARIABLE, type, false, false);
+                    nVar = gc.newVar(Variable.TipoVariable.VARIABLE, type, false, false);
                     ConstDescripcion constant = new ConstDescripcion(nVar, type, expression != null);
                     try {
                         ts.poner(id, constant);
@@ -215,7 +215,7 @@ public class analisisSemantico {
                         tv.decrement();
                     }
                 } else {
-                    nVar = CG3A.newVar(Variable.TipoVariable.VARIABLE, type, false, false);
+                    nVar = gc.newVar(Variable.TipoVariable.VARIABLE, type, false, false);
                     StringDescripcion var = new StringDescripcion(nVar, false, expression != null);
                     try {
                         ts.poner(id, var);
@@ -227,7 +227,7 @@ public class analisisSemantico {
 
                 // If expression given, make the assignation
                 if (expResultVarNumber != -9) {
-                    CG3A.generate(InstructionType.CLONE, new Operator3Address(expResultVarNumber), null, new Operator3Address(nVar));
+                    gc.generate(InstructionType.CLONE, new Operator3Address(expResultVarNumber), null, new Operator3Address(nVar));
                 }
                 break;
             default:
@@ -244,7 +244,7 @@ public class analisisSemantico {
         ArrayDescripcion arr;
         switch (modifier) {
             case dvar:
-                int nVar = CG3A.newVar(Variable.TipoVariable.VARIABLE, tipo, true, false);
+                int nVar = gc.newVar(Variable.TipoVariable.VARIABLE, tipo, true, false);
 
                 arr = new ArrayDescripcion(nVar, tipo, true, initialized);
                 try {
@@ -254,7 +254,7 @@ public class analisisSemantico {
                 }
                 break;
             case dconst:
-                nVar = CG3A.newVar(Variable.TipoVariable.VARIABLE, tipo, true, false);
+                nVar = gc.newVar(Variable.TipoVariable.VARIABLE, tipo, true, false);
 
                 arr = new ArrayDescripcion(nVar, tipo, false, initialized);
                 try {
@@ -274,13 +274,13 @@ public class analisisSemantico {
     }
     
     public void handleDimArray(DimArrayNode dimArray, ExpressionNode exp){
-        //TODO: Poner []? en CG3A me refiero, por discutir
+        //TODO: Poner []? en gc me refiero, por discutir
         if(dimArray.getNextDim() != null && !dimArray.getNextDim().isEmpty()){
             handleDimArray(dimArray.getNextDim(), dimArray.getDim());
         }
         
         if(dimArray.getDim() != null){
-            handleExpression(dimArray.getDim());
+            handleExpresion(dimArray.getDim());
         }
     }
 
@@ -301,12 +301,12 @@ public class analisisSemantico {
         }
     }
 
-    public void handleExpression(ExpressionNode expressionNode) {
+    public void handleExpresion(ExpressionNode expressionNode) {
         if (expressionNode != null) {
             //Si tenemos alguna expresion en el lado izquierdo, pero no en el derecho
             if (expressionNode.getExp1() != null && expressionNode.getExp2() == null) {
                 //Analizamos la expresion (analizaremos hacia la izquierda y abajo todo lo posible primero)
-                handleExpression(expressionNode.getExp1());
+                handleExpresion(expressionNode.getExp1());
                 //Si tenemos un operador de negacion ("not")
                 if (expressionNode.getNegOp() != null) {
                     //Si queremos negar, tendremos que negar un booleano, no puede ser otra cosa
@@ -316,8 +316,8 @@ public class analisisSemantico {
                     //Entonces nuestra expresion será booleana
                     expressionNode.setType(TypeEnum.BOOL);
 
-                    int var = CG3A.newVar(Variable.TipoVariable.VARIABLE, expressionNode.getType(), false, false);
-                    CG3A.generate(InstructionType.NOT, new Operator3Address(expressionNode.getExp1().getReference()),
+                    int var = gc.newVar(Variable.TipoVariable.VARIABLE, expressionNode.getType(), false, false);
+                    gc.generate(InstructionType.NOT, new Operator3Address(expressionNode.getExp1().getReference()),
                             null,
                             new Operator3Address(var));
 
@@ -330,9 +330,9 @@ public class analisisSemantico {
                 //Si no tenemos solamente una expresion en la izquierda, sino que tambien una a la derecha
             } else if (expressionNode.getExp1() != null && expressionNode.getExp2() != null) {
                 //Examinamos primero el lado izquierdo
-                handleExpression(expressionNode.getExp1());
+                handleExpresion(expressionNode.getExp1());
                 //Y luego el derecho
-                handleExpression(expressionNode.getExp2());
+                handleExpresion(expressionNode.getExp2());
                 //Si se trata de una operación aritmética...
                 if (expressionNode.getBinOp().getArit() != null) {
                     //Si las dos expresiones tienen un tipo asignado (si no pasa, error)
@@ -351,9 +351,9 @@ public class analisisSemantico {
                         }
 
                         // Generate resulting code
-                        int var = CG3A.newVar(Variable.TipoVariable.VARIABLE, expressionNode.getType(), false, false);
+                        int var = gc.newVar(Variable.TipoVariable.VARIABLE, expressionNode.getType(), false, false);
                         InstructionType operation = InstructionType.valueOf(expressionNode.getBinOp().getArit().getType().name());
-                        CG3A.generate(operation, new Operator3Address(expressionNode.getExp1().getReference()),
+                        gc.generate(operation, new Operator3Address(expressionNode.getExp1().getReference()),
                                 new Operator3Address(expressionNode.getExp2().getReference()),
                                 new Operator3Address(var));
 
@@ -369,32 +369,32 @@ public class analisisSemantico {
                         if (expressionNode.getExp1().getType().equals(expressionNode.getExp2().getType())) {
                             expressionNode.setType(TypeEnum.BOOL);
 
-                            Integer var = CG3A.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.BOOL, false, false);
-                            String label1 = CG3A.newLabel();
-                            String label2 = CG3A.newLabel();
-                            CG3A.generate(
+                            Integer var = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.BOOL, false, false);
+                            String label1 = gc.newLabel();
+                            String label2 = gc.newLabel();
+                            gc.generate(
                                     InstructionTypeUtils.getRelationalIf(expressionNode.getBinOp().getRel().getType()),
                                     new Operator3Address(expressionNode.getExp1().getReference()),
                                     new Operator3Address(expressionNode.getExp2().getReference()),
                                     new Operator3Address(label1));
 
-                            CG3A.generate(
+                            gc.generate(
                                     InstructionType.CLONE,
                                     new Operator3Address(false, CastType.BOOL),
                                     null,
                                     new Operator3Address(var));
 
-                            CG3A.generate(InstructionType.GOTO, null, null, new Operator3Address(label2));
+                            gc.generate(InstructionType.GOTO, null, null, new Operator3Address(label2));
 
-                            CG3A.generate(InstructionType.SKIP, null, null, new Operator3Address(label1));
+                            gc.generate(InstructionType.SKIP, null, null, new Operator3Address(label1));
 
-                            CG3A.generate(
+                            gc.generate(
                                     InstructionType.CLONE,
                                     new Operator3Address(true, CastType.BOOL),
                                     null,
                                     new Operator3Address(var));
 
-                            CG3A.generate(InstructionType.SKIP, null, null, new Operator3Address(label2));
+                            gc.generate(InstructionType.SKIP, null, null, new Operator3Address(label2));
                             expressionNode.setReference(var);
                         } else {
                             parser.report_error("EXP error: El tipo de los operadores no coincide: " + expressionNode.getExp1().getType() + " y " + expressionNode.getExp2().getType() + " difieren.", expressionNode.getExp1());
@@ -413,9 +413,9 @@ public class analisisSemantico {
                         }
 
                         // Generate resulting code
-                        int var = CG3A.newVar(Variable.TipoVariable.VARIABLE, expressionNode.getType(), false, false);
+                        int var = gc.newVar(Variable.TipoVariable.VARIABLE, expressionNode.getType(), false, false);
                         InstructionType operation = InstructionType.valueOf(expressionNode.getBinOp().getArit().getType().name());
-                        CG3A.generate(operation, new Operator3Address(expressionNode.getExp1().getReference()),
+                        gc.generate(operation, new Operator3Address(expressionNode.getExp1().getReference()),
                                 new Operator3Address(expressionNode.getExp2().getReference()),
                                 new Operator3Address(var));
 
@@ -438,13 +438,14 @@ public class analisisSemantico {
         }
     }
     
-    public void handleDeclTupel(DeclTupelNode declTupel){
+    //SE PUEDE OBVIAR EL TIPO DE DESCRIPCIÓN
+    public void handleDeclTupel(DeclTupelNode declTupel, IdDescripcion.TipoDescripcion tipo){
         if(declTupel.getId() != null){
-            int nVar = CG3A.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.TUPEL, false, true);
+            int nVar = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.TUPEL, false, true);
             boolean init = declTupel.getTupeldecl() != null ? true : false;
             ts.poner(declTupel.getId().getIdentifierLiteral(), new TupelDescripcion(nVar, TypeEnum.TUPEL, true, init));
             if(declTupel.getParams() != null && !declTupel.getParams().isEmpty() && declTupel.getTupeldecl() != null){
-                handleParamList(declTupel.getParams());
+                handleParamList(declTupel.getParams().getActualParamList());
                 handleTupelDecl(declTupel.getTupeldecl());
             }
         }else{
@@ -463,7 +464,7 @@ public class analisisSemantico {
     public void handleInitTupel(InitTupelNode initTupel){
         //TODO: Completar método
     }
-    /**
+    /** COSAS MAL ORGANIZADAS SORRY
      * @Manu PROGRAM*; DECL_LIST*; DECL*; ACTUAL_DECL*; DECL_ELEM*; TYPE_ID? (if
      * not x, error?); ELEM_LIST*; ELEM_ID_ASSIG*; DECL_ARRAY*; DIM_ARRAY*;
      * ARRAY_DECL*; INIT_ARRAY*; DECL_TUPEL; TUPEL_DECL; INIT_TUPEL; EXP*;
@@ -515,7 +516,7 @@ public class analisisSemantico {
         }
 
         gc.generate(InstructionType.SKIP, null, null, new Operator3Address(label)); //generamos SKIP para saber donde saltar al hacer call de este procedimiento
-        gc.generate(InstructionType.PMB, null, null, new Operator3Address(idProc));
+        gc.generate(InstructionType.INIT, null, null, new Operator3Address(idProc));
 
         if (node.getSentenceList() != null) {
             handleSentenceList(node.getSentenceList());
@@ -549,7 +550,7 @@ public class analisisSemantico {
         }
 
         gc.generate(InstructionType.SKIP, null, null, new Operator3Address(label)); //generamos SKIP para saber donde saltar al hacer call de este procedimiento
-        gc.generate(InstructionType.PMB, null, null, new Operator3Address(idProc));
+        gc.generate(InstructionType.INIT, null, null, new Operator3Address(idProc));
 
         if (node.getSentenceList() != null) {
             handleSentenceList(node.getSentenceList());
@@ -862,7 +863,7 @@ public class analisisSemantico {
                             parser.report_error("Assig error: " + assigNode.getGestIdx().getId().getIdentifierLiteral() + " is an already declared constant", assigNode.getInitArray());
                         } else {
                             darray.setInit(true);
-                            handleInitArray(assigNode.getInitArray(), darray.getType(), darray);
+                            handleInitArray(assigNode.getInitArray());
                             gc.generate(InstructionType.CLONE, new Operator3Address(assigNode.getInitArray().getReference()), null, new Operator3Address(assigNode.getGestIdx().getReference()));
                         }
                     }
@@ -877,7 +878,7 @@ public class analisisSemantico {
                             parser.report_error("Assig error: " + assigNode.getGestIdx().getId().getIdentifierLiteral() + " is an already declared constant", assigNode.getInitArray());
                         } else {
                             dtupel.setInit(true);
-                            handleInitTupel(assigNode.getInitArray(), dtupel.getType(), dtupel);
+                            handleInitTupel(assigNode.getInitTupel());
                             gc.generate(InstructionType.CLONE, new Operator3Address(assigNode.getInitTupel().getReference()), null, new Operator3Address(assigNode.getGestIdx().getReference()));
                         }
                     }
@@ -906,95 +907,6 @@ public class analisisSemantico {
                     parser.report_error("El tipo del identificador no puede ser usado para una asignación",assigNode.getGestIdx());
             } 
         }
-    }
-
-    public void handleElemList(ElemListNode elemList, TipoDescripcion td, TypeEnum tipo) {
-
-        ElemListNode elemListNode = elemList.getElemList();
-
-        if (elemListNode != null) {
-            handleElemList(elemListNode, td, tipo);
-        }
-
-        handleElemIdAssig(elemList.getElemIdAssig(), td, tipo);
-    }
-
-    public void handleElemIdAssig(ElemIdAssigNode elemIdAssig, TipoDescripcion td, TypeEnum tipo) {
-
-        String id = (String) elemIdAssig.getIdentifier().getIdentifierLiteral();
-        ExpressionNode exp = elemIdAssig.getExp();
-
-        int resultVarExp = -9; //ns por la vd
-
-        if (exp != null) {
-            handleExpression(exp);
-            resultVarExp = exp.getReference();
-            if (tipo != exp.getType()) {
-                parser.report_error("Expression does not match the identifier type", exp);
-            }
-        }
-
-        int varNum;
-
-        switch (td) {
-            case dvar:
-
-                if (tipo != TypeEnum.STRING) {
-                    varNum = gc.newVar(Variable.TipoVariable.VARIABLE, tipo, false, false);
-                    VarDescripcion var = new VarDescripcion(varNum, tipo);
-                    try {
-                        ts.poner(id, var);
-                    } catch (IllegalArgumentException e) {
-                        parser.report_error("Variable " + id + " is already defined", elemIdAssig);
-                        tv.decrement();
-                    }
-                } else {
-                    varNum = gc.newVar(Variable.TipoVariable.VARIABLE, tipo, false, false);
-                    StringDescripcion var = new StringDescripcion(varNum, true, exp != null);
-                    try {
-                        ts.poner(id, var);
-                    } catch (IllegalArgumentException e) {
-                        parser.report_error("Variable " + id + " is already defined", elemIdAssig);
-                        tv.decrement();
-                    }
-                }
-
-                //Si asignacion dada
-                if (resultVarExp != -9) {
-                    gc.generate(InstructionType.CLONE, new Operator3Address(resultVarExp), null, new Operator3Address(varNum));
-                }
-                break;
-            case dconst:
-                if (tipo != TypeEnum.STRING) {
-                    varNum = gc.newVar(Variable.TipoVariable.VARIABLE, tipo, false, false);
-                    ConstDescripcion constante = new ConstDescripcion(varNum, tipo, exp != null);
-                    try {
-                        ts.poner(id, constante);
-                    } catch (IllegalArgumentException e) {
-                        parser.report_error("Constant " + id + " is already defined", elemIdAssig);
-                        tv.decrement();
-                    }
-                } else {
-                    varNum = gc.newVar(Variable.TipoVariable.VARIABLE, tipo, false, false);
-                    StringDescripcion var = new StringDescripcion(varNum, false, exp != null);
-                    try {
-                        ts.poner(id, var);
-                    } catch (IllegalArgumentException e) {
-                        parser.report_error("Constant " + id + " is already defined", elemIdAssig);
-                        tv.decrement();
-                    }
-                }
-
-                // If expression given, make the assignation
-                if (resultVarExp != -9) {
-                    gc.generate(InstructionType.CLONE, new Operator3Address(resultVarExp), null, new Operator3Address(varNum));
-                }
-                break;
-            default:
-                break;
-
-        }
-
     }
 
     private int handleLiteral(String value, TypeEnum tipo) {
@@ -1043,7 +955,7 @@ public class analisisSemantico {
     }
     /**
      * @Manu PROGRAM; DECL_LIST; DECL; ACTUAL_DECL; DECL_ELEM; DECL_ARRAY; DIM_ARRAY; ARRAY_DECL; INIT_ARRAY; DECL_TUPEL; TUPEL_DECL; INIT_TUPEL; EXP;
-     * SIMPLE_VALUE; GEST_IDX; GESTOR; COTI : handleExpression debe poner el resultado como referencia en el nodo porfa jej , màs que nada todo nodo y derivados
+     * SIMPLE_VALUE; GEST_IDX; GESTOR; COTI : handleExpresion debe poner el resultado como referencia en el nodo porfa jej , màs que nada todo nodo y derivados
      * que se usa en assig deberá hacerse esto
      
      * @Constantino BINARY_OP; REL_OP; LOGIC_OP; ARIT_OP; NEG_OP; MODIFIER; ID;

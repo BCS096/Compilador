@@ -1,4 +1,4 @@
-package sintactic.semantic;
+package compilador.sintactic.semantic;
 
 public class Instruction3Address {
 
