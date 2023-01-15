@@ -5,6 +5,8 @@
  */
 package tablas;
 
+import java.util.ArrayList;
+
 /**
  *
  * @author Bartomeu
@@ -168,6 +170,22 @@ public class TablaSimbolos {
         return td.get(id).getFirst();
     }
     
+    public ArrayList <ArgDescripcion> consultarParams (String id){
+        ArrayList <ArgDescripcion> res = new ArrayList <>();
+        int actual = firstParam(id);
+        if(actual == -1){
+            //sin parametros
+            return null;
+        }
+        while(!last(actual)){
+            actual = next(actual);
+            res.add((ArgDescripcion)consultarTe(actual));
+        }
+        //ponemos el último param
+        res.add((ArgDescripcion)consultarTe(actual));
+        return res;
+    }
+    
     public int next(int idx){ //puede servir tanto para indices,campos,parametros
         if(te.get(idx).getNext() == -1){
             throw new UnsupportedOperationException("El indice/campo/parametro actual es el último");
@@ -217,4 +235,5 @@ public class TablaSimbolos {
     public int getActual(){
         return this.n;
     }
+    
 }

@@ -9,11 +9,13 @@ import types.TypeEnum;
 
 public class SpecialParamNode extends BaseNode {
     
-    private final TypeEnum type;
+    private final TypeEnum tsb;
+    private final TypeIdNode type;
 
-    public SpecialParamNode(TypeEnum type, int line, int column) {
+    public SpecialParamNode(TypeEnum tsb, TypeIdNode type, int line, int column) {
         super("SPECIAL_PARAM", false, line, column);
         this.type = type;
+        this.tsb = tsb;
     }
 
     public Location getXleft() {
@@ -24,7 +26,11 @@ public class SpecialParamNode extends BaseNode {
         return xright;
     }
     
-    public TypeEnum getType() {
+    public TypeEnum getTSB() {
+        return tsb;
+    }
+    
+    public TypeIdNode getTypeId(){
         return type;
     }
 }

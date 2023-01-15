@@ -16,7 +16,8 @@ import types.TypeEnum;
 public class Procedimiento {
     private final int ambito;
     private final String etiquetaInicial;
-    private final ArrayList<ObjetoParametro> parametros;
+    //Coti : esto lo he comentado porque se puede ir a buscar la lista de parametros que tiene un procedimiento en la tabla de expansion
+    //private final ArrayList<ObjetoParametro> parametros;
     private int numParams;
     private int localVariablesSize;
 
@@ -36,7 +37,7 @@ public class Procedimiento {
     public Procedimiento(int ambito, String etiquetaInicial, int numParams) {
         this.ambito = ambito;
         this.etiquetaInicial = etiquetaInicial;
-        this.parametros = new ArrayList<>();
+        //this.parametros = new ArrayList<>();
         this.numParams = numParams;
     }
 
@@ -48,17 +49,17 @@ public class Procedimiento {
         return etiquetaInicial;
     }
 
-    public ArrayList<ObjetoParametro> getParametros() {
-        return parametros;
-    }
+//    public ArrayList<ObjetoParametro> getParametros() {
+//        return parametros;
+//    }
 
     public int getNumberParameters() {
         return numParams;
     }
 
-    public void addParam(ObjetoParametro parametro) {
-        this.parametros.add(parametro);
-    }
+//    public void addParam(ObjetoParametro parametro) {
+//        this.parametros.add(parametro);
+//    }
 
     public void setNumberParameters(int numParams) {
         this.numParams = numParams;
