@@ -79,9 +79,9 @@ public class analisisSemantico {
 
         /* Para que las palabras reservadas queden en el ámbito 1 de forma exclusiva */
         ts.entrarBloque();
-        //coti : no se deberia poner dentro de la tabla de procedimientos y que la tabla de procedimientos te proporciona el número de procedimiento
-        // y no un -1 por la cara (y por tanto devolveria 0)????????? Creo que debemos saber en todo momento donde estamos.
+        
         ProcDescripcion mainDescription = new ProcDescripcion(-1);
+        
         ts.poner("main", mainDescription);
     }
 
@@ -413,68 +413,261 @@ public class analisisSemantico {
             node.setReference(node.getSpecialOp().getReference());
         } else if (node.getMethodCall() != null) {
             handleMethodCall(node.getMethodCall());
-            if(node.getMethodCall().getReference() != -1){
+            if (node.getMethodCall().getReference() != -1) {
                 //FUNC
                 node.setReference(node.getMethodCall().getReference());
-            } 
+            }
         } else {
             int var = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.CHAR, false, false);
             gc.generate(InstructionType.READ, null, null, new Operator3Address(var));
             node.setReference(var);
         }
     }
-  
+
     public void handleMethodCall(MethodCallNode node) {
         IdDescripcion d = ts.consultaId(node.getIdentifier().getIdentifierLiteral());
         if (d.getTipoDescripcion() == TipoDescripcion.dproc || d.getTipoDescripcion() == TipoDescripcion.dfunc) {
-            ArrayList <ArgDescripcion> param = ts.consultarParams(node.getIdentifier().getIdentifierLiteral());
-            if(node.getParamIn() != null && !(node.getParamIn().isEmpty()) ){             
-                ArrayList <ExpressionNode> paramIn = new ArrayList<>();
+            ArrayList<ArgDescripcion> param = ts.consultarParams(node.getIdentifier().getIdentifierLiteral());
+            if (node.getParamIn() != null && !(node.getParamIn().isEmpty())) {
+                ArrayList<ExpressionNode> paramIn = new ArrayList<>();
                 handleParamIn(node.getParamIn(), paramIn);
-                if(param.size() != paramIn.size()){
+                if (param.size() != paramIn.size()) {
                     parser.report_error("No se han escrito el número de parámetros correspondientes", node.getParamIn());
                 }
                 for (int i = 0; i < param.size(); i++) {
-                    if(param.get(i).getType() != paramIn.get(i).getType()){
+                    if (param.get(i).getType() != paramIn.get(i).getType()) {
                         parser.report_error("Uno de los parámetros introducido no tiene el tipo correspondiente", node.getParamIn());
                     }
                     gc.generate(InstructionType.SIMPLEPARAM, null, null, new Operator3Address(node.getParamIn().getExpression().getReference()));
                 }
-            }else{
+            } else {
                 //la llamada no tiene parámetros
-                if(param != null){
+                if (param != null) {
                     parser.report_error("La llamada requiere de parámetros", node.getParamIn());
-                }     
+                }
             }
             int res = -1;
             if (d.getTipoDescripcion() == TipoDescripcion.dfunc) {
-                    FuncDescripcion dfunc = (FuncDescripcion) d;
-                    res = gc.newVar(Variable.TipoVariable.VARIABLE, dfunc.getType(), false, false);
-                    gc.generate(InstructionType.CALL, new Operator3Address(node.getIdentifier().getIdentifierLiteral()), null, new Operator3Address(res));
-                } else {
-                    ProcDescripcion dproc = (ProcDescripcion) d;
-                    gc.generate(InstructionType.CALL, new Operator3Address(node.getIdentifier().getIdentifierLiteral()), null, null);
-                }
+                FuncDescripcion dfunc = (FuncDescripcion) d;
+                res = gc.newVar(Variable.TipoVariable.VARIABLE, dfunc.getType(), false, false);
+                gc.generate(InstructionType.CALL, new Operator3Address(node.getIdentifier().getIdentifierLiteral()), null, new Operator3Address(res));
+            } else {
+                ProcDescripcion dproc = (ProcDescripcion) d;
+                gc.generate(InstructionType.CALL, new Operator3Address(node.getIdentifier().getIdentifierLiteral()), null, null);
+            }
             node.setReference(res);
-        }else{
+        } else {
             parser.report_error("Este identificador no corresponde a ningún subprograma", node.getIdentifier());
         }
     }
-    
-    public void handleParamIn(ParamInNode node, ArrayList <ExpressionNode> res){
+
+    public void handleParamIn(ParamInNode node, ArrayList<ExpressionNode> res) {
         res.add(node.getExpression());
-        if(node.getParamIn() != null){
+        if (node.getParamIn() != null) {
             handleParamIn(node.getParamIn(), res);
         }
     }
 
+// CONSTANTIN
+    public void handleAssig(AssigNode assigNode) {
+        IdDescripcion d = ts.consultaId(assigNode.getGestIdx().getId().getIdentifierLiteral());
+        handleGestIdx(assigNode.getGestIdx());
+        if (assigNode.getInitArray() != null || assigNode.getInitTupel() != null) {
+            if (assigNode.getInitArray() != null) {
+                if (d.getTipoDescripcion() != TipoDescripcion.darray) {
+                    parser.report_error("Declaration error in assign handler: id is not an array", assigNode.getInitArray());
+                } else {
+                    ArrayDescripcion darray = (ArrayDescripcion) d;
+                    if (!darray.isVar()) {
+                        if (darray.isInit()) {
+                            parser.report_error("Assig error: " + assigNode.getGestIdx().getId().getIdentifierLiteral() + " is an already declared constant", assigNode.getInitArray());
+                        } else {
+                            darray.setInit(true);
+                            handleInitArray(assigNode.getInitArray(), darray.getType(), darray);
+                            gc.generate(InstructionType.CLONE, new Operator3Address(assigNode.getInitArray().getReference()), null, new Operator3Address(assigNode.getGestIdx().getReference()));
+                        }
+                    }
+                }
+            } else {
+                if (d.getTipoDescripcion() != TipoDescripcion.dtupel) {
+                    parser.report_error("Declaration error in assign handler: id is not a tuple", assigNode.getInitTupel());
+                } else {
+                    TupelDescripcion dtupel = (TupelDescripcion) d;
+                    if (!dtupel.isVar()) {
+                        if (dtupel.isInit()) {
+                            parser.report_error("Assig error: " + assigNode.getGestIdx().getId().getIdentifierLiteral() + " is an already declared constant", assigNode.getInitArray());
+                        } else {
+                            dtupel.setInit(true);
+                            handleInitTupel(assigNode.getInitArray(), dtupel.getType(), dtupel);
+                            gc.generate(InstructionType.CLONE, new Operator3Address(assigNode.getInitTupel().getReference()), null, new Operator3Address(assigNode.getGestIdx().getReference()));
+                        }
+                    }
+                }
+            }
+        } else {
+            handleExpresion(assigNode.getExpression1());
+            if(d.getTipoDescripcion() == TipoDescripcion.dconst){
+                parser.report_error("Se intenta asignar un valor a una constante",assigNode.getGestIdx());
+            }
+            switch(d.getTipoDescripcion()){
+                case dvar:
+                    VarDescripcion dvar = (VarDescripcion) d;
+                    if(dvar.getType() != assigNode.getExpression1().getType()){
+                        parser.report_error("El tipo subyacente no coincide con el de la expresión",assigNode.getGestIdx());
+                    }
+                    gc.generate(InstructionType.CLONE, new Operator3Address(assigNode.getExpression1().getReference()), null, new Operator3Address(assigNode.getGestIdx().getReference()));
+                break;
+                case darray: // indexacion  se tiene que terminar
+                    ArrayDescripcion darray = (ArrayDescripcion) d;
+                break;
+                case dtupel: // indexacion se tiene que terminar
+                    TupelDescripcion dtupel = (TupelDescripcion) d;
+                break;
+                default:
+                    parser.report_error("El tipo del identificador no puede ser usado para una asignación",assigNode.getGestIdx());
+            } 
+        }
+    }
+
+    public void handleElemList(ElemListNode elemList, TipoDescripcion td, TypeEnum tipo) {
+
+        ElemListNode elemListNode = elemList.getElemList();
+
+        if (elemListNode != null) {
+            handleElemList(elemListNode, td, tipo);
+        }
+
+        handleElemIdAssig(elemList.getElemIdAssig(), td, tipo);
+    }
+
+    public void handleElemIdAssig(ElemIdAssigNode elemIdAssig, TipoDescripcion td, TypeEnum tipo) {
+
+        String id = (String) elemIdAssig.getIdentifier().getIdentifierLiteral();
+        ExpressionNode exp = elemIdAssig.getExp();
+
+        int resultVarExp = -9; //ns por la vd
+
+        if (exp != null) {
+            handleExpression(exp);
+            resultVarExp = exp.getReference();
+            if (tipo != exp.getType()) {
+                parser.report_error("Expression does not match the identifier type", exp);
+            }
+        }
+
+        int varNum;
+
+        switch (td) {
+            case dvar:
+
+                if (tipo != TypeEnum.STRING) {
+                    varNum = gc.newVar(Variable.TipoVariable.VARIABLE, tipo, false, false);
+                    VarDescripcion var = new VarDescripcion(varNum, tipo);
+                    try {
+                        ts.poner(id, var);
+                    } catch (IllegalArgumentException e) {
+                        parser.report_error("Variable " + id + " is already defined", elemIdAssig);
+                        tv.decrement();
+                    }
+                } else {
+                    varNum = gc.newVar(Variable.TipoVariable.VARIABLE, tipo, false, false);
+                    StringDescripcion var = new StringDescripcion(varNum, true, exp != null);
+                    try {
+                        ts.poner(id, var);
+                    } catch (IllegalArgumentException e) {
+                        parser.report_error("Variable " + id + " is already defined", elemIdAssig);
+                        tv.decrement();
+                    }
+                }
+
+                //Si asignacion dada
+                if (resultVarExp != -9) {
+                    gc.generate(InstructionType.CLONE, new Operator3Address(resultVarExp), null, new Operator3Address(varNum));
+                }
+                break;
+            case dconst:
+                if (tipo != TypeEnum.STRING) {
+                    varNum = gc.newVar(Variable.TipoVariable.VARIABLE, tipo, false, false);
+                    ConstDescripcion constante = new ConstDescripcion(varNum, tipo, exp != null);
+                    try {
+                        ts.poner(id, constante);
+                    } catch (IllegalArgumentException e) {
+                        parser.report_error("Constant " + id + " is already defined", elemIdAssig);
+                        tv.decrement();
+                    }
+                } else {
+                    varNum = gc.newVar(Variable.TipoVariable.VARIABLE, tipo, false, false);
+                    StringDescripcion var = new StringDescripcion(varNum, false, exp != null);
+                    try {
+                        ts.poner(id, var);
+                    } catch (IllegalArgumentException e) {
+                        parser.report_error("Constant " + id + " is already defined", elemIdAssig);
+                        tv.decrement();
+                    }
+                }
+
+                // If expression given, make the assignation
+                if (resultVarExp != -9) {
+                    gc.generate(InstructionType.CLONE, new Operator3Address(resultVarExp), null, new Operator3Address(varNum));
+                }
+                break;
+            default:
+                break;
+
+        }
+
+    }
+
+    private int handleLiteral(String value, TypeEnum tipo) {
+        //temporalPointer for latter assignment of reference if needed
+        int varRef = gc.newVar(Variable.TipoVariable.VARIABLE, tipo, false, false);
+        Operator3Address opValue;
+        switch (tipo) {
+            case INT:
+                //Code generation for int literal
+                opValue = new Operator3Address(Integer.parseInt(value), CastType.INT);
+                break;
+            case CHAR:
+                //Code generation for char literal
+                opValue = new Operator3Address(value.charAt(0), CastType.CHAR);
+                break;
+            case BOOL:
+                //Code generation for bool literal
+                opValue = new Operator3Address(Boolean.parseBoolean(value), CastType.BOOL);
+                break;
+            case STRING:
+                //Code generation for string literal
+                opValue = new Operator3Address(value, CastType.STRING);
+                break;
+            default:
+                parser.report_error("Trying to generate code for literal type: " + tipo.getTypeString(), null);
+                opValue = new Operator3Address(value);
+                break;
+        }
+        //Code generation for an assignment of a variable
+        gc.generate(InstructionType.CLONE, opValue, null, new Operator3Address(varRef));
+
+        return varRef;
+    }
+
+    private void handleMain(MainNode mainNode) {
+        // TODO: A better solution would be to attach each variable in descriptionTable
+        // to a procedure, so we can have the same var, in the same scope, for different procedures
+        ts.entrarBloque();
+        ts.entrarBloque();
+        if (mainNode.getSentenceList() != null && !mainNode.getSentenceList().isEmpty()) {
+            handleSentenceList(mainNode.getSentenceList());
+        }
+        gc.generate(InstructionType.RETURN, new Operator3Address("main"), null, null);
+        ts.salirBloque();
+        ts.salirBloque();
+    }
     /**
-     * @Manu 
-     * PROGRAM; DECL_LIST; DECL; ACTUAL_DECL; DECL_ELEM; DECL_ARRAY; DIM_ARRAY; ARRAY_DECL; INIT_ARRAY; DECL_TUPEL; TUPEL_DECL; INIT_TUPEL; EXP;
-     * SIMPLE_VALUE; GEST_IDX; GESTOR;  COTI : handleExpression debe poner el resultado como referencia en el nodo porfa jej , màs que nada todo nodo y derivados que se usa en assig deberá hacerse esto
-     * @Constantino 
-     * ; ASSIG; TYPE_ID; // COTI : no necesita método ELEM_LIST; ELEM_ID_ASSIG; LITERAL; BINARY_OP; REL_OP; LOGIC_OP; ARIT_OP; NEG_OP;
-     * SPECIAL_OP //COTI : lo he hecho sin querer xd; MAIN; MODIFIER; ID;
+     * @Manu PROGRAM; DECL_LIST; DECL; ACTUAL_DECL; DECL_ELEM; DECL_ARRAY; DIM_ARRAY; ARRAY_DECL; INIT_ARRAY; DECL_TUPEL; TUPEL_DECL; INIT_TUPEL; EXP;
+     * SIMPLE_VALUE; GEST_IDX; GESTOR; COTI : handleExpression debe poner el resultado como referencia en el nodo porfa jej , màs que nada todo nodo y derivados
+     * que se usa en assig deberá hacerse esto
+     * @Constantino ; ASSIG; TYPE_ID; // COTI : no necesita método ELEM_LIST; ELEM_ID_ASSIG; LITERAL; BINARY_OP; REL_OP; LOGIC_OP; ARIT_OP; NEG_OP; SPECIAL_OP
+     * //COTI : lo he hecho sin querer xd; MAIN; MODIFIER; ID;
      */
     //DEADLINE: 14-01-2023 -> Tenerlos hechos (no hace falta que bien), quedar y arreglarlos (si hace falta).
 }
