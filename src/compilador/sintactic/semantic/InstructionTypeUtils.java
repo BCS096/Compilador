@@ -1,6 +1,6 @@
-package compilador.sintactic.semantic;
+package sintactic.semantic;
 
-import types.RelOpType;
+import sintactic.RelOpType;
 
 public class InstructionTypeUtils {
     public static InstructionType getRelationalIf(RelOpType relType) {

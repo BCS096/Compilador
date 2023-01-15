@@ -1,4 +1,4 @@
-package compilador.sintactic.semantic;
+package sintactic.semantic;
 
 public enum InstructionType{
     CLONE("clone"), 
@@ -21,7 +21,7 @@ public enum InstructionType{
     IFGE("ifge"),
     IFEQ("ifeq"),
     IFNE("ifne"),
-    PMB("preamble"),
+    INIT("preamble"),
     CALL("call"), 
     RETURN("return"),
     SIMPLEPARAM("simpleParam"), 

@@ -1,4 +1,4 @@
-package compilador.sintactic.semantic;
+package sintactic.semantic;
 
 public class Operator3Address {
 
