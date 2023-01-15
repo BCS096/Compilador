@@ -884,22 +884,22 @@ public class analisisSemantico {
                 }
             }
         } else {
-            handleExpresion(assigNode.getExpression1());
+            handleExpresion(assigNode.getExpression());
             if(d.getTipoDescripcion() == TipoDescripcion.dconst){
                 parser.report_error("Se intenta asignar un valor a una constante",assigNode.getGestIdx());
             }
             switch(d.getTipoDescripcion()){
                 case dvar:
                     VarDescripcion dvar = (VarDescripcion) d;
-                    if(dvar.getType() != assigNode.getExpression1().getType()){
+                    if(dvar.getType() != assigNode.getExpression().getType()){
                         parser.report_error("El tipo subyacente no coincide con el de la expresión",assigNode.getGestIdx());
                     }
-                    gc.generate(InstructionType.CLONE, new Operator3Address(assigNode.getExpression1().getReference()), null, new Operator3Address(assigNode.getGestIdx().getReference()));
+                    gc.generate(InstructionType.CLONE, new Operator3Address(assigNode.getExpression().getReference()), null, new Operator3Address(assigNode.getGestIdx().getReference()));
                 break;
-                case darray: // indexacion  se tiene que terminar
+                case darray: // indexacion  se tiene que terminar  a[4].c = 5; !!!!
                     ArrayDescripcion darray = (ArrayDescripcion) d;
                 break;
-                case dtupel: // indexacion se tiene que terminar
+                case dtupel: // indexacion se tiene que terminar t.a = c; !!!!!
                     TupelDescripcion dtupel = (TupelDescripcion) d;
                 break;
                 default:
@@ -1045,8 +1045,8 @@ public class analisisSemantico {
      * @Manu PROGRAM; DECL_LIST; DECL; ACTUAL_DECL; DECL_ELEM; DECL_ARRAY; DIM_ARRAY; ARRAY_DECL; INIT_ARRAY; DECL_TUPEL; TUPEL_DECL; INIT_TUPEL; EXP;
      * SIMPLE_VALUE; GEST_IDX; GESTOR; COTI : handleExpression debe poner el resultado como referencia en el nodo porfa jej , màs que nada todo nodo y derivados
      * que se usa en assig deberá hacerse esto
-     * @Constantino ; ASSIG; TYPE_ID; // COTI : no necesita método ELEM_LIST; ELEM_ID_ASSIG; LITERAL; BINARY_OP; REL_OP; LOGIC_OP; ARIT_OP; NEG_OP; SPECIAL_OP
-     * //COTI : lo he hecho sin querer xd; MAIN; MODIFIER; ID;
+     
+     * @Constantino BINARY_OP; REL_OP; LOGIC_OP; ARIT_OP; NEG_OP; MODIFIER; ID;
      */
     //DEADLINE: 14-01-2023 -> Tenerlos hechos (no hace falta que bien), quedar y arreglarlos (si hace falta).
 }
