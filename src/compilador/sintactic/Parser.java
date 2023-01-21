@@ -647,6 +647,10 @@ public class Parser extends java_cup.runtime.lr_parser {
     public int getNumberErrors() {
         return numberErrors;
     }
+    
+    public MVP getMVP(){
+        return this.mvp;
+    }
 
     @Override
     public void report_error(String message, Object info) {

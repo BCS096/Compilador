@@ -5,6 +5,7 @@
  */
 package compilador.sintactic.semantic;
 
+import compilador.main.MVP;
 import compilador.sintactic.Parser;
 import compilador.sintactic.ParserSym;
 import compilador.sintactic.nodes.*;
@@ -25,7 +26,7 @@ public class analisisSemantico {
 
     private final Parser parser;
     private final ProgramNode programNode;
-
+    private final MVP mvp;
     private final TablaSimbolos ts;
     private final TablaVariables tv;
     private final TablaProcedimientos tp;
@@ -38,7 +39,8 @@ public class analisisSemantico {
         this.tv = new TablaVariables();
         this.tp = new TablaProcedimientos();
         this.gc = new CodeGeneration3Address(tv, tp);
-
+        this.mvp = parser.getMVP();
+        
         initTablaSimbolos();
 
     }
@@ -67,7 +69,7 @@ public class analisisSemantico {
         //TypeDescripcion no sirve para nada porque ya tenemos TypeEnum, pero diria que lo suyo y lo màs adecuado es usar TypeDescripcion
         //y borrar typeEnum
         TypeDescripcion tipo = new TypeDescripcion(TypeDescripcion.TSB.tsb_int, Integer.MIN_VALUE, Integer.MAX_VALUE);
-        ts.poner("int", tipo);
+         ts.poner("int", tipo);
         tipo = new TypeDescripcion(TypeDescripcion.TSB.tsb_char, Character.MIN_VALUE, Character.MAX_VALUE);
         ts.poner("char", tipo);
         tipo = new TypeDescripcion(TypeDescripcion.TSB.tsb_boolean, 0, 1);
@@ -80,9 +82,9 @@ public class analisisSemantico {
 
         /* Para que las palabras reservadas queden en el ámbito 1 de forma exclusiva */
         ts.entrarBloque();
-        
+
         ProcDescripcion mainDescription = new ProcDescripcion(-1);
-        
+
         ts.poner("main", mainDescription);
     }
 
@@ -104,10 +106,9 @@ public class analisisSemantico {
         } else {
             parser.report_error("ERROR - No se ha declarado 'main'", programNode);
         }
-        StringBuilder printgc = new StringBuilder();
-        printgc.append("instructionType |            operator1             |           operator2           |          result            ");
+        mvp.semanticCode(new StringBuilder("instructionType |            operator1             |           operator2           |          result            "));
         gc.getInstruccions().forEach(ins -> {
-            printgc.append(ins);
+            mvp.semanticCode(new StringBuilder(ins.toString()));
         });
     }
 
@@ -136,7 +137,7 @@ public class analisisSemantico {
         DeclTupelNode declTupel = actualDecl.getDeclTupel();
         //Tenemos elementos
         if (declElem != null) {
-            handleDeclElem(declElem, modifier);
+            handleDeclElem(declElem);
             //O bien tenemos array
         } else if (declArray != null) {
             handleDeclArray(declArray, modifier);
@@ -148,25 +149,27 @@ public class analisisSemantico {
             parser.report_error("Actual decl no contiene elementos, arrays o tuplas!", actualDecl);
         }
     }
+//Sin pasar type desde aquí no se puede saber luego
 
-    public void handleDeclElem(DeclElemNode declElem, IdDescripcion.TipoDescripcion modifier) {
+    public void handleDeclElem(DeclElemNode declElem) {
         TypeEnum type = declElem.getTypeId().getType();
         //Una lista de elementos
-        handleElemList(declElem.getElemList(), modifier, type);
+        handleElemList(declElem.getElemList(), type);
     }
 
-    public void handleElemList(ElemListNode elemList, IdDescripcion.TipoDescripcion modifier, TypeEnum type) {
+    public void handleElemList(ElemListNode elemList, TypeEnum type) {
         ElemListNode listaElementos = elemList.getElemList();
         if (listaElementos != null) {
-            handleElemList(listaElementos, modifier, type);
+            handleElemList(listaElementos, type);
         }
         //Es un solo elemento, o final de lista
-        handleElemIdAssig(elemList.getElemIdAssig(), modifier, type);
+        handleElemIdAssig(elemList.getElemIdAssig(), type);
     }
 
-    public void handleElemIdAssig(ElemIdAssigNode elemIdAssig, IdDescripcion.TipoDescripcion modifier, TypeEnum type) {
+    public void handleElemIdAssig(ElemIdAssigNode elemIdAssig, TypeEnum type) {
         String id = (String) elemIdAssig.getIdentifier().getIdentifierLiteral();
         ExpressionNode expression = elemIdAssig.getExp();
+        IdDescripcion.TipoDescripcion modifier = ts.consultaId(elemIdAssig.getIdentifier().getIdentifierLiteral()).getTipoDescripcion();
         int expResultVarNumber = -9;
         if (expression != null) {
             handleExpresion(expression);
@@ -238,7 +241,6 @@ public class analisisSemantico {
     public void handleDeclArray(DeclArrayNode declArray, IdDescripcion.TipoDescripcion modifier) {
         TypeEnum tipo = declArray.getTypeId().getType();
         String id = (String) declArray.getIdentifier().getIdentifierLiteral();
-
         ArrayDeclNode init = declArray.getArrayDecl();
         Boolean initialized = (init != null && !init.isEmpty());
         ArrayDescripcion arr;
@@ -272,20 +274,21 @@ public class analisisSemantico {
             handleInitArray(declArray.getArrayDecl().getInitArrayNode());
         }
     }
-    
-    public void handleDimArray(DimArrayNode dimArray, ExpressionNode exp){
+
+    public void handleDimArray(DimArrayNode dimArray) {
         //TODO: Poner []? en gc me refiero, por discutir
-        if(dimArray.getNextDim() != null && !dimArray.getNextDim().isEmpty()){
-            handleDimArray(dimArray.getNextDim(), dimArray.getDim());
+        if (dimArray.getNextDim() != null && !dimArray.getNextDim().isEmpty()) {
+            handleDimArray(dimArray.getNextDim());
         }
-        
-        if(dimArray.getDim() != null){
+
+        if (dimArray.getDim() != null) {
             handleExpresion(dimArray.getDim());
+        } else {
+            parser.report_error("No valid dimension found!", dimArray);
         }
     }
 
     public void handleInitArray(InitArrayNode initArray) {
-        TypeEnum assigType = initArray.getTypeId().getType();
         //Comprobación de tipo ya no es posible, no está en la producción. Pasarla como parámetro de alguna manera?????
 
         if (initArray.getDimArray() != null) {
@@ -295,7 +298,7 @@ public class analisisSemantico {
         }
     }
 
-    public void handleArrayDecl(InitArrayNode initArray, TypeEnum type, ArrayDescripcion arrayDesc) {
+    public void handleArrayDecl(InitArrayNode initArray) {
         if (!initArray.isEmpty()) {
             handleInitArray(initArray);
         }
@@ -437,34 +440,111 @@ public class analisisSemantico {
             parser.report_error("Trying to handle assignation with null expression", expressionNode);
         }
     }
+
+    /**
+     * GEST_IDX ::= ID:id GESTOR:gest {: RESULT = new
+     * GestIdxNode(id, gest, extractLine(id), extractColumn(id)); :} ;
+     *
+     * GESTOR ::= sym_lbracket:v EXP:exp sym_rbracket GESTOR:gest 
+     *          | sym_dot:v GEST_IDX:gidx
+     *          |
+     *          ;
+     *
+     */
+    public void handleGestorIdx(GestIdxNode gestIdx, TypeEnum type){
+        if(gestIdx.getId() != null){
+            int var = gc.newVar(Variable.TipoVariable.VARIABLE, type, false, false);
+            gestIdx.setReference(var);
+            handleGestor(gestIdx.getGest());
+        }else{
+            parser.report_error("No suitable continuation for tupel or array found! Check your indexing...", gestIdx);
+        }
+    }
     
+    public void handleGestor(GestorNode gestor){
+        //hmmmmmmmmmmmmmmmmmm, check if INT?¿?
+        if(gestor.getExp() != null){
+            handleExpresion(gestor.getExp());
+            if(gestor.getGestIdx() != null){
+                //no seguro de este tipo, puede que sea otro
+                handleGestorIdx(gestor.getGestIdx(), gestor.getExp().getType());
+            }else{
+                parser.report_error("Indexing not found after expression!", gestor);
+            }
+        }
+    }
+    
+    public void handleSimpleValue(SimpleValueNode simpleValue) {
+        if (simpleValue.getGestor() != null) {
+            //Caso queremos .algo[].algo2.algo3[etc].ejemplo
+            //no se genera código aún, todo va en gestor. No hay otra forma de conocer el tipo
+            handleGestorIdx(simpleValue.getGestor(), simpleValue.getType());
+        } else if (simpleValue.getSimpl() != null) {
+            //?
+            //Si no es INT no se puede negar
+            if (simpleValue.getType() == TypeEnum.INT) {
+                //generamos variable para negar adecuada (negaremos una referencia claro)
+                int var = gc.newVar(Variable.TipoVariable.VARIABLE, simpleValue.getType(), false, false);
+                //generamos la referencia y la negamos
+                gc.generate(InstructionType.NEG, new Operator3Address(simpleValue.getReference()), null, new Operator3Address(var));
+                //le pasamos la referencia a simpleValue para que la use en futuro handler
+                simpleValue.setReference(var);
+            } else {
+                parser.report_error("No se ha encontrado un valor adecuado, " + simpleValue.getType().getTypeString() + " encontrado y se esperaba " + TypeEnum.INT.getTypeString(), this);
+            }
+        } else if (simpleValue.getInstExp() != null) {
+            handleInstExp(simpleValue.getInstExp());
+            if (simpleValue.getType() != null && simpleValue.getType() == TypeEnum.VOID) {
+                parser.report_error("Method does not return anything", simpleValue.getInstExp());
+            } else if (simpleValue.getType() == TypeEnum.NULL) {
+                parser.report_error("Invalid expression", simpleValue.getInstExp());
+            } else {
+                simpleValue.setReference(simpleValue.getInstExp().getReference());
+            }
+        } else {
+            parser.report_error("No suitable development found!", simpleValue);
+        }
+    }
+
     //SE PUEDE OBVIAR EL TIPO DE DESCRIPCIÓN
-    public void handleDeclTupel(DeclTupelNode declTupel, IdDescripcion.TipoDescripcion tipo){
-        if(declTupel.getId() != null){
+    public void handleDeclTupel(DeclTupelNode declTupel, IdDescripcion.TipoDescripcion tipo) {
+        if (declTupel.getId() != null) {
             int nVar = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.TUPEL, false, true);
             boolean init = declTupel.getTupeldecl() != null ? true : false;
             ts.poner(declTupel.getId().getIdentifierLiteral(), new TupelDescripcion(nVar, TypeEnum.TUPEL, true, init));
-            if(declTupel.getParams() != null && !declTupel.getParams().isEmpty() && declTupel.getTupeldecl() != null){
+            if (declTupel.getParams() != null && !declTupel.getParams().isEmpty() && declTupel.getTupeldecl() != null) {
                 handleParamList(declTupel.getParams().getActualParamList());
                 handleTupelDecl(declTupel.getTupeldecl());
             }
-        }else{
+        } else {
             parser.report_error("La tupla no tiene un identificador definido!", declTupel);
         }
     }
-    
-    public void handleTupelDecl(TupelDeclNode tupelDecl){
-        if(tupelDecl.getInit() != null){
+
+    public void handleTupelDecl(TupelDeclNode tupelDecl) {
+        if (tupelDecl.getInit() != null) {
             handleInitTupel(tupelDecl.getInit());
-        }else{
+        } else {
             parser.report_error("La tupla no está inicializada o hay otro error de inicialización!", tupelDecl);
         }
     }
-    
-    public void handleInitTupel(InitTupelNode initTupel){
+    /**
+     * INIT_TUPEL ::= sym_eq r_new r_tupel:r sym_lparen PARAM_IN:pi sym_rparen                                                                                                            {: RESULT = new  InitTupelNode(pi, extractLine(r), extractColumn(r));                                   :}
+                    ;
+     */
+
+    public void handleInitTupel(InitTupelNode initTupel) {
         //TODO: Completar método
+        if (initTupel.getParams() != null) {
+            handleParamIn(initTupel.getParams(), new ArrayList<ExpressionNode>());
+        } else {
+            parser.report_error("No se ha encontrado la dimensión del array!", initTupel);
+        }
     }
-    /** COSAS MAL ORGANIZADAS SORRY
+
+    /**
+     * COSAS MAL ORGANIZADAS SORRY
+     *
      * @Manu PROGRAM*; DECL_LIST*; DECL*; ACTUAL_DECL*; DECL_ELEM*; TYPE_ID? (if
      * not x, error?); ELEM_LIST*; ELEM_ID_ASSIG*; DECL_ARRAY*; DIM_ARRAY*;
      * ARRAY_DECL*; INIT_ARRAY*; DECL_TUPEL; TUPEL_DECL; INIT_TUPEL; EXP*;
@@ -476,7 +556,6 @@ public class analisisSemantico {
      * ID;
      */
 //DEADLINE: 14-01-2023 -> Tenerlos hechos (no hace falta que bien), quedar y arreglarlos (si hace falta).
-
     // COTI
     public void handleMethodList(MethodListNode node) {
         if (node.getMethod() != null) {
@@ -512,7 +591,7 @@ public class analisisSemantico {
         ts.entrarBloque();
 
         if (node.getParamList() != null && !(node.getParamList().isEmpty())) {
-            handleParamList(node.getParamList(), idProc);
+            handleParamList(node.getParamList().getActualParamList());
         }
 
         gc.generate(InstructionType.SKIP, null, null, new Operator3Address(label)); //generamos SKIP para saber donde saltar al hacer call de este procedimiento
@@ -681,7 +760,8 @@ public class analisisSemantico {
                     if (node.getExpression() == null) {
                         handleSpecialOp(node.getForInst().getSpecialOp(), node.getForInst().getIdentifier());
                     } else { // ID = EXP
-                        handleExpresionAssig(node.getForInst().getExpression(), node.getForInst().getIdentifier());
+                        //TODO: Que es esto, no existe este nodo broski, lo comento y ya
+                        //handleExpresionAssig(node.getForInst().getExpression(), node.getForInst().getIdentifier());
                     }
                 }
                 gc.generate(InstructionType.GOTO, null, null, new Operator3Address(againFor));
@@ -851,7 +931,7 @@ public class analisisSemantico {
 // CONSTANTIN
     public void handleAssig(AssigNode assigNode) {
         IdDescripcion d = ts.consultaId(assigNode.getGestIdx().getId().getIdentifierLiteral());
-        handleGestIdx(assigNode.getGestIdx());
+        handleGestorIdx(assigNode.getGestIdx(), assigNode.getExpression().getType());
         if (assigNode.getInitArray() != null || assigNode.getInitTupel() != null) {
             if (assigNode.getInitArray() != null) {
                 if (d.getTipoDescripcion() != TipoDescripcion.darray) {
@@ -886,26 +966,26 @@ public class analisisSemantico {
             }
         } else {
             handleExpresion(assigNode.getExpression());
-            if(d.getTipoDescripcion() == TipoDescripcion.dconst){
-                parser.report_error("Se intenta asignar un valor a una constante",assigNode.getGestIdx());
+            if (d.getTipoDescripcion() == TipoDescripcion.dconst) {
+                parser.report_error("Se intenta asignar un valor a una constante", assigNode.getGestIdx());
             }
-            switch(d.getTipoDescripcion()){
+            switch (d.getTipoDescripcion()) {
                 case dvar:
                     VarDescripcion dvar = (VarDescripcion) d;
-                    if(dvar.getType() != assigNode.getExpression().getType()){
-                        parser.report_error("El tipo subyacente no coincide con el de la expresión",assigNode.getGestIdx());
+                    if (dvar.getType() != assigNode.getExpression().getType()) {
+                        parser.report_error("El tipo subyacente no coincide con el de la expresión", assigNode.getGestIdx());
                     }
                     gc.generate(InstructionType.CLONE, new Operator3Address(assigNode.getExpression().getReference()), null, new Operator3Address(assigNode.getGestIdx().getReference()));
-                break;
+                    break;
                 case darray: // indexacion  se tiene que terminar  a[4].c = 5; !!!!
                     ArrayDescripcion darray = (ArrayDescripcion) d;
-                break;
+                    break;
                 case dtupel: // indexacion se tiene que terminar t.a = c; !!!!!
                     TupelDescripcion dtupel = (TupelDescripcion) d;
-                break;
+                    break;
                 default:
-                    parser.report_error("El tipo del identificador no puede ser usado para una asignación",assigNode.getGestIdx());
-            } 
+                    parser.report_error("El tipo del identificador no puede ser usado para una asignación", assigNode.getGestIdx());
+            }
         }
     }
 
@@ -954,10 +1034,12 @@ public class analisisSemantico {
         ts.salirBloque();
     }
     /**
-     * @Manu PROGRAM; DECL_LIST; DECL; ACTUAL_DECL; DECL_ELEM; DECL_ARRAY; DIM_ARRAY; ARRAY_DECL; INIT_ARRAY; DECL_TUPEL; TUPEL_DECL; INIT_TUPEL; EXP;
-     * SIMPLE_VALUE; GEST_IDX; GESTOR; COTI : handleExpresion debe poner el resultado como referencia en el nodo porfa jej , màs que nada todo nodo y derivados
-     * que se usa en assig deberá hacerse esto
-     
+     * @Manu PROGRAM; DECL_LIST; DECL; ACTUAL_DECL; DECL_ELEM; DECL_ARRAY;
+     * DIM_ARRAY; ARRAY_DECL; INIT_ARRAY; DECL_TUPEL; TUPEL_DECL; INIT_TUPEL;
+     * EXP; SIMPLE_VALUE; GEST_IDX; GESTOR; COTI : handleExpresion debe poner el
+     * resultado como referencia en el nodo porfa jej , màs que nada todo nodo y
+     * derivados que se usa en assig deberá hacerse esto
+     *
      * @Constantino BINARY_OP; REL_OP; LOGIC_OP; ARIT_OP; NEG_OP; MODIFIER; ID;
      */
     //DEADLINE: 14-01-2023 -> Tenerlos hechos (no hace falta que bien), quedar y arreglarlos (si hace falta).

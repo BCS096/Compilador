@@ -27,6 +27,10 @@ public class MVP extends javax.swing.JFrame {
     JTextArea[] sintPanes;
     private int currentSintTextIdx = -1;
     JScrollPane[] sintScrollPanes;
+    StringBuilder semanticText = new StringBuilder("");
+    JTextArea[] semPanes;
+    private int currentSemTextIdx = -1;
+    JScrollPane[] semScrollPanes;
     String carpeta = null;
 
     /**
@@ -59,6 +63,8 @@ public class MVP extends javax.swing.JFrame {
         jTabbedPane1 = new javax.swing.JTabbedPane();
         jPanel4 = new javax.swing.JPanel();
         jTabbedPane3 = new javax.swing.JTabbedPane();
+        jPanel5 = new javax.swing.JPanel();
+        jTabbedPane5 = new javax.swing.JTabbedPane();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -101,7 +107,7 @@ public class MVP extends javax.swing.JFrame {
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jButton1)
                     .addComponent(jLabel1))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 415, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 440, Short.MAX_VALUE)
                 .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
@@ -121,7 +127,7 @@ public class MVP extends javax.swing.JFrame {
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 535, Short.MAX_VALUE)
+                .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 560, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -140,11 +146,30 @@ public class MVP extends javax.swing.JFrame {
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel4Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jTabbedPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 535, Short.MAX_VALUE)
+                .addComponent(jTabbedPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 560, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
         jTabbedPane2.addTab("Sintactic", jPanel4);
+
+        javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
+        jPanel5.setLayout(jPanel5Layout);
+        jPanel5Layout.setHorizontalGroup(
+            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel5Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jTabbedPane5, javax.swing.GroupLayout.DEFAULT_SIZE, 1084, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+        jPanel5Layout.setVerticalGroup(
+            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel5Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jTabbedPane5, javax.swing.GroupLayout.PREFERRED_SIZE, 560, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        jTabbedPane2.addTab("Semantic", jPanel5);
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -185,6 +210,15 @@ public class MVP extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+        if(carpeta != null){
+            resetLexic();
+            Main2021.fileWait.release();
+        }else{
+            JOptionPane.showMessageDialog(null, "No files were selected!");
+        }
+    }//GEN-LAST:event_jButton2ActionPerformed
+
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         final JFileChooser fc = new JFileChooser(System.getProperty("user.dir"));
         fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -194,15 +228,6 @@ public class MVP extends javax.swing.JFrame {
             jLabel1.setText(carpeta);
         }
     }//GEN-LAST:event_jButton1ActionPerformed
-
-    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        if(carpeta != null){
-            resetLexic();
-            Main2021.fileWait.release();
-        }else{
-            JOptionPane.showMessageDialog(null, "No files were selected!");
-        }
-    }//GEN-LAST:event_jButton2ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -248,9 +273,11 @@ public class MVP extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
+    private javax.swing.JPanel jPanel5;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JTabbedPane jTabbedPane2;
     private javax.swing.JTabbedPane jTabbedPane3;
+    private javax.swing.JTabbedPane jTabbedPane5;
     // End of variables declaration//GEN-END:variables
 
     public void setLexic(String newText) {
@@ -288,12 +315,27 @@ public class MVP extends javax.swing.JFrame {
 
         jTabbedPane3.addTab(fileName, sintScrollPanes[currentSintTextIdx]);
     }
+    
+    public void addSemantic(String fileName) {
+        ++currentSemTextIdx;
+        this.semanticText = new StringBuilder("");
+        semPanes[currentSemTextIdx] = new JTextArea("No semantic errors for now...");
+        semPanes[currentSemTextIdx].setEditable(false);
+        semScrollPanes[currentSemTextIdx] = new JScrollPane();
+        semPanes[currentSemTextIdx].setColumns(20);
+        semPanes[currentSemTextIdx].setRows(5);
+        semScrollPanes[currentSemTextIdx].setViewportView(semPanes[currentSemTextIdx]);
+
+        jTabbedPane5.addTab(fileName, semScrollPanes[currentSemTextIdx]);
+    }
 
     void setFileCount() {
         lexicPanes = new JTextArea[Main2021.filesCount];
         lexicScrollPanes = new JScrollPane[Main2021.filesCount];
         sintPanes = new JTextArea[Main2021.filesCount];
         sintScrollPanes = new JScrollPane[Main2021.filesCount];
+        semPanes = new JTextArea[Main2021.filesCount];
+        semScrollPanes = new JScrollPane[Main2021.filesCount];
     }
 
     String getFolder() {
@@ -309,5 +351,19 @@ public class MVP extends javax.swing.JFrame {
         this.sintPanes[currentSintTextIdx].setFont(new Font("Verdana", Font.BOLD, 12));
         this.sintPanes[currentSintTextIdx].setForeground(Color.RED);
         this.sintPanes[currentSintTextIdx].setText(sintacticText.toString());
+    }
+    
+    public void semanticError(StringBuilder msg) {
+        semanticText.append(msg);
+        this.semPanes[currentSemTextIdx].setFont(new Font("Verdana", Font.BOLD, 12));
+        this.semPanes[currentSemTextIdx].setForeground(Color.RED);
+        this.semPanes[currentSemTextIdx].setText(semanticText.toString());
+    }
+    
+    public void semanticCode(StringBuilder msg) {
+        semanticText.append(msg);
+        this.semPanes[currentSemTextIdx].setFont(new Font("Verdana", Font.PLAIN, 12));
+        this.semPanes[currentSemTextIdx].setForeground(Color.BLACK);
+        this.semPanes[currentSemTextIdx].setText(semanticText.toString());
     }
 }

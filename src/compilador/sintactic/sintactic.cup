@@ -42,6 +42,10 @@ parser code {:
         return numberErrors;
     }
 
+    public MVP getMVP(){
+        return this.mvp;
+    }
+
     @Override
     public void report_error(String message, Object info) {
         numberErrors++;
