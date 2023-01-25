@@ -47,13 +47,11 @@ public class TablaSimbolos {
         this.ta.set(n, this.ta.get(n - 1));
     }
 
-    public void poner(String id, IdDescripcion d) {
+    public void ponerM(String id, IdDescripcion d) {
         //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        //mataré al que ha hecho esto sin pensar que la tabla al principio NO TIENE NADA por tanto guat de fuc. el else no estaba
-        //Natalia Quinata es una tonta que come mierda de burro sinselada, soy el fan numero una de Vegetea sietesietesiete (estoy mal)
-        int np = -1;
+        int np = td.get(id).getNp();
         if (td.existe(id)) {
-            np = td.get(id).getNp();
+
             if (np == n) {
                 throw new UnsupportedOperationException("Símbolo ya declarado en el ámbito actual");
             } else if (n > np) {
@@ -64,6 +62,19 @@ public class TablaSimbolos {
             Data data = new Data(id, d, n, -1, -1);
             td.put(id, data);
         }
+    }
+
+    //nunca habrá que controloar n< o n> ya que hacemos bien los entrar, salir bloque :)
+    public void poner(String id, IdDescripcion d) {
+        if (td.existe(id)) {
+            if (td.get(id).getNp() == n) {
+                throw new UnsupportedOperationException("Símbolo ya declarado en el ámbito actual");
+            }
+            ta.nuevaEntrada(n);
+            te.put(n, td.get(id));
+        }
+
+        td.put(id, new Data(id, d, n, -1, -1));
     }
 
     public void salirBloque() {
@@ -163,12 +174,12 @@ public class TablaSimbolos {
     }
 
     public int firstParam(String id) {
-        if (td.existe(id)) {
+        if (!td.existe(id)) {
             throw new UnsupportedOperationException("No existe el procedimiento/función con este nombre: " + id);
         }
         IdDescripcion dProc = td.get(id).getDescripcion();
         if (dProc.getTipoDescripcion() != IdDescripcion.TipoDescripcion.dproc
-                || dProc.getTipoDescripcion() != IdDescripcion.TipoDescripcion.dfunc) {
+                && dProc.getTipoDescripcion() != IdDescripcion.TipoDescripcion.dfunc) {
             throw new UnsupportedOperationException("No es un procedimiento/función");
         }
         return td.get(id).getFirst();
@@ -178,7 +189,7 @@ public class TablaSimbolos {
         ArrayList<ArgDescripcion> res = new ArrayList<>();
         int actual = firstParam(id);
         if (actual == -1) {
-            //sin parametros
+            //sin parametrosnononononononononono
             return null;
         }
         while (!last(actual)) {
@@ -214,7 +225,7 @@ public class TablaSimbolos {
         IdDescripcion dProc = td.get(idProc).getDescripcion();
         if (dProc.getTipoDescripcion() != IdDescripcion.TipoDescripcion.dproc
                 && dProc.getTipoDescripcion() != IdDescripcion.TipoDescripcion.dfunc) {
-            throw new UnsupportedOperationException("No es un array");
+            throw new UnsupportedOperationException("Intentando pasar parámetros a elemento que no es ni procedimiento ni función!");
         }
         int idxe = td.get(idProc).getFirst();
         int idxep = 0;
@@ -222,7 +233,7 @@ public class TablaSimbolos {
             idxep = idxe;
             idxe = te.get(idxe).getNext();
         }
-        if (idxe == -1) {
+        if (idxe != -1) {
             throw new UnsupportedOperationException("Ya hay un parámetro en este procedimiento/funcion con el mismo nombre");
         }
         ta.nuevaEntrada(n);

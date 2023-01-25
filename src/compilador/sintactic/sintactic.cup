@@ -70,7 +70,8 @@ parser code {:
                 .append("row: ")
                 .append(node.getLine())
                 .append(", column: ")
-                .append(node.getColumn());
+                .append(node.getColumn())
+                .append("\n");
         }
         //msg.append(": ").append(message);
 
@@ -87,7 +88,11 @@ parser code {:
         } catch (IOException ex) {
         }
 
-        mvp.sintacticError(msg);
+        if (mvp.semantic()) {
+            mvp.semanticError(msg);
+        } else {
+            mvp.sintacticError(msg);
+        }
     }
 
     @Override

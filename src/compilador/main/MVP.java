@@ -11,6 +11,7 @@ import java.io.File;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 
 /**
@@ -27,11 +28,15 @@ public class MVP extends javax.swing.JFrame {
     JTextArea[] sintPanes;
     private int currentSintTextIdx = -1;
     JScrollPane[] sintScrollPanes;
-    StringBuilder semanticText = new StringBuilder("");
-    JTextArea[] semPanes;
+    StringBuilder semanticCode = new StringBuilder("");
+    StringBuilder semanticError = new StringBuilder("");
+    JTextArea[] semPanesCode;
+    JTextArea[] semPanesError;
     private int currentSemTextIdx = -1;
-    JScrollPane[] semScrollPanes;
+    JScrollPane[] semScrollPanesC;
+    JScrollPane[] semScrollPanesE;
     String carpeta = null;
+    private boolean semantic = false;
 
     /**
      * Creates new form MVP
@@ -318,15 +323,25 @@ public class MVP extends javax.swing.JFrame {
     
     public void addSemantic(String fileName) {
         ++currentSemTextIdx;
-        this.semanticText = new StringBuilder("");
-        semPanes[currentSemTextIdx] = new JTextArea("No semantic errors for now...");
-        semPanes[currentSemTextIdx].setEditable(false);
-        semScrollPanes[currentSemTextIdx] = new JScrollPane();
-        semPanes[currentSemTextIdx].setColumns(20);
-        semPanes[currentSemTextIdx].setRows(5);
-        semScrollPanes[currentSemTextIdx].setViewportView(semPanes[currentSemTextIdx]);
-
-        jTabbedPane5.addTab(fileName, semScrollPanes[currentSemTextIdx]);
+        this.semanticCode = new StringBuilder("");
+        this.semanticError = new StringBuilder("");
+        semPanesError[currentSemTextIdx] = new JTextArea("No semantic errors for now...");
+        semPanesError[currentSemTextIdx].setEditable(false);
+        semPanesCode[currentSemTextIdx] = new JTextArea("Generating code...");
+        semPanesCode[currentSemTextIdx].setEditable(false);
+        semScrollPanesC[currentSemTextIdx] = new JScrollPane();
+        semScrollPanesE[currentSemTextIdx] = new JScrollPane();
+        semPanesCode[currentSemTextIdx].setColumns(20);
+        semPanesCode[currentSemTextIdx].setRows(5);
+        semPanesError[currentSemTextIdx].setColumns(20);
+        semPanesError[currentSemTextIdx].setRows(5);
+        semScrollPanesC[currentSemTextIdx].setViewportView(semPanesCode[currentSemTextIdx]);
+        semScrollPanesE[currentSemTextIdx].setViewportView(semPanesError[currentSemTextIdx]);
+        
+        JTabbedPane temp = new JTabbedPane();
+        jTabbedPane5.addTab(fileName, temp);
+        temp.addTab("C3@", semScrollPanesC[currentSemTextIdx]);
+        temp.addTab("Errors", semScrollPanesE[currentSemTextIdx]);
     }
 
     void setFileCount() {
@@ -334,8 +349,10 @@ public class MVP extends javax.swing.JFrame {
         lexicScrollPanes = new JScrollPane[Main2021.filesCount];
         sintPanes = new JTextArea[Main2021.filesCount];
         sintScrollPanes = new JScrollPane[Main2021.filesCount];
-        semPanes = new JTextArea[Main2021.filesCount];
-        semScrollPanes = new JScrollPane[Main2021.filesCount];
+        semPanesCode = new JTextArea[Main2021.filesCount];
+        semPanesError = new JTextArea[Main2021.filesCount];
+        semScrollPanesC = new JScrollPane[Main2021.filesCount];
+        semScrollPanesE = new JScrollPane[Main2021.filesCount];
     }
 
     String getFolder() {
@@ -354,16 +371,24 @@ public class MVP extends javax.swing.JFrame {
     }
     
     public void semanticError(StringBuilder msg) {
-        semanticText.append(msg);
-        this.semPanes[currentSemTextIdx].setFont(new Font("Verdana", Font.BOLD, 12));
-        this.semPanes[currentSemTextIdx].setForeground(Color.RED);
-        this.semPanes[currentSemTextIdx].setText(semanticText.toString());
+        semanticError.append(msg);
+        this.semPanesError[currentSemTextIdx].setFont(new Font("Verdana", Font.BOLD, 12));
+        this.semPanesError[currentSemTextIdx].setForeground(Color.RED);
+        this.semPanesError[currentSemTextIdx].setText(semanticError.toString());
     }
     
     public void semanticCode(StringBuilder msg) {
-        semanticText.append(msg);
-        this.semPanes[currentSemTextIdx].setFont(new Font("Verdana", Font.PLAIN, 12));
-        this.semPanes[currentSemTextIdx].setForeground(Color.BLACK);
-        this.semPanes[currentSemTextIdx].setText(semanticText.toString());
+        semanticCode.append(msg);
+        this.semPanesCode[currentSemTextIdx].setFont(new Font("Verdana", Font.PLAIN, 12));
+        this.semPanesCode[currentSemTextIdx].setForeground(Color.BLACK);
+        this.semPanesCode[currentSemTextIdx].setText(semanticCode.toString()+'\n');
+    }
+
+    public boolean semantic() {
+        return this.semantic;
+    }
+    
+    public void semantic(boolean semantic){
+        this.semantic = semantic;
     }
 }

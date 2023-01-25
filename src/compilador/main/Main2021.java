@@ -39,6 +39,7 @@ public class Main2021 {
             for (String fileName : files) {
                 mvp.addLexic(fileName);
                 mvp.addSintactic(fileName);
+                mvp.addSemantic(fileName);
                 System.out.println("======= Running " + fileName + " =======");
                 Thread.sleep(1000);
                 Scanner scanner = new Scanner(new FileReader(dirName + "/" + fileName), mvp);
