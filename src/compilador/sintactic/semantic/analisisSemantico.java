@@ -128,6 +128,8 @@ public class analisisSemantico {
         ModifierNode mod = decl.getModifier();
         if (mod == null) {
             mod = new ModifierNode(IdDescripcion.TipoDescripcion.dvar, false, 0, 0);
+        }else{
+            mod = new ModifierNode(IdDescripcion.TipoDescripcion.dconst, false, 0, 0);
         }
 
         handleActualDecl(decl.getActualDecl(), mod.getDescriptionType());
@@ -483,14 +485,19 @@ public class analisisSemantico {
     }
 
     public TypeEnum typeFromId(IdDescripcion desc) {
-        if (desc.getTipoDescripcion() == IdDescripcion.TipoDescripcion.dvar) {
-            return ((VarDescripcion) desc).getType();
-        } else if (desc.getTipoDescripcion() == IdDescripcion.TipoDescripcion.dconst) {
-            return ((ConstDescripcion) desc).getType();
-        } else if (desc.getTipoDescripcion() == IdDescripcion.TipoDescripcion.darray) {
-            return ((ArrayDescripcion) desc).getType();
-        } else {
+        if (null == desc.getTipoDescripcion()) {
             return null;
+        } else {
+            switch (desc.getTipoDescripcion()) {
+                case dvar:
+                    return ((VarDescripcion) desc).getType();
+                case dconst:
+                    return ((ConstDescripcion) desc).getType();
+                case darray:
+                    return ((ArrayDescripcion) desc).getType();
+                default:
+                    return null;
+            }
         }
     }
 
@@ -516,7 +523,8 @@ public class analisisSemantico {
         if (gestor.getGestArray() != null && ts.consultaId(id).getTipoDescripcion() == IdDescripcion.TipoDescripcion.darray) {
             ArrayList<Integer> dims = new ArrayList<>();
             handleGestArray(gestor.getGestArray(), dims);
-            ArrayList<Idloquesea> ts.consultaIndices(id);
+//            ArrayList<Idloquesea> ts
+//            .consultaIndices(id);
         } else if (gestor.getGestTupel() != null && ts.consultaId(id).getTipoDescripcion() == IdDescripcion.TipoDescripcion.dtupel) {
             ArrayList<String> campos = new ArrayList<>();
             handleGestTupel(gestor.getGestTupel(), campos);
@@ -563,7 +571,7 @@ public class analisisSemantico {
     public void handleDeclTupel(DeclTupelNode declTupel, IdDescripcion.TipoDescripcion tipo) {
         if (declTupel.getId() != null) {
             int nVar = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.TUPEL, false, true);
-            boolean init = declTupel.getTupeldecl() != null ? true : false;
+            boolean init = declTupel.getTupeldecl() != null;
             ts.poner(declTupel.getId().getIdentifierLiteral(), new TupelDescripcion(nVar, TypeEnum.TUPEL, true, init));
             if (declTupel.getParams() != null && !declTupel.getParams().isEmpty() && declTupel.getTupeldecl() != null) {
                 handleParamList(declTupel.getParams().getActualParamList());
@@ -583,8 +591,7 @@ public class analisisSemantico {
     }
 
     /**
-     * INIT_TUPEL ::= sym_eq r_new r_tupel:r sym_lparen PARAM_IN:pi sym_rparen
-     * {: RESULT = new InitTupelNode(pi, extractLine(r), extractColumn(r)); :} ;
+     * INIT_TUPEL ::= sym_eq r_new r_tupel:r sym_lparen PARAM_IN:pi sym_rparen {: RESULT = new InitTupelNode(pi, extractLine(r), extractColumn(r)); :} ;
      */
     public void handleInitTupel(InitTupelNode initTupel) {
         //TODO: Completar método
@@ -598,15 +605,12 @@ public class analisisSemantico {
     /**
      * COSAS MAL ORGANIZADAS SORRY
      *
-     * @Manu PROGRAM*; DECL_LIST*; DECL*; ACTUAL_DECL*; DECL_ELEM*; TYPE_ID? (if
-     * not x, error?); ELEM_LIST*; ELEM_ID_ASSIG*; DECL_ARRAY*; DIM_ARRAY*;
+     * @param node
+     * @Manu PROGRAM*; DECL_LIST*; DECL*; ACTUAL_DECL*; DECL_ELEM*; TYPE_ID? (if not x, error?); ELEM_LIST*; ELEM_ID_ASSIG*; DECL_ARRAY*; DIM_ARRAY*;
      * ARRAY_DECL*; INIT_ARRAY*; DECL_TUPEL; TUPEL_DECL; INIT_TUPEL; EXP*;
-     * @Coti METHOD_LIST; METHOD; PROC; FUNC; PARAM_LIST; ACTUAL_PARAM_LIST;
-     * PARAM; SPECIAL_PARAM; SENTENCE_LIST; SENTENCE; FOR_INST; NEXT_IF; INST;
-     * INST_EXP; METHOD_CALL;
-     * @Constantino PARAM_IN; ASSIG; SIMPLE_VALUE; GEST_IDX; GESTOR; LITERAL;
-     * BINARY_OP; REL_OP; LOGIC_OP; ARIT_OP; NEG_OP; SPECIAL_OP; MAIN; MODIFIER;
-     * ID;
+     * @Coti METHOD_LIST; METHOD; PROC; FUNC; PARAM_LIST; ACTUAL_PARAM_LIST; PARAM; SPECIAL_PARAM; SENTENCE_LIST; SENTENCE; FOR_INST; NEXT_IF; INST; INST_EXP;
+     * METHOD_CALL;
+     * @Constantino PARAM_IN; ASSIG; SIMPLE_VALUE; GEST_IDX; GESTOR; LITERAL; BINARY_OP; REL_OP; LOGIC_OP; ARIT_OP; NEG_OP; SPECIAL_OP; MAIN; MODIFIER; ID;
      */
 //DEADLINE: 14-01-2023 -> Tenerlos hechos (no hace falta que bien), quedar y arreglarlos (si hace falta).
     // COTI
@@ -692,7 +696,11 @@ public class analisisSemantico {
         gc.removeFunctionId(); //quitamos el procedimiento de la pila de procedimientos activos
 
         handleExpresion(node.getExp());
-        if (tipo != typeFromId(ts.consultaId(node.getExp().getSimplVal().getGestor().getId().getIdentifierLiteral()))) {
+         // maaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaal , aqui fuerzas que lo que se devuelva es un id que està en la tabla de simbolos !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//        if (tipo != typeFromId(ts.consultaId(node.getExp().getSimplVal().getGestor().getId().getIdentifierLiteral()))) {
+//            parser.report_error("Se intenta devolver un dato cuyo tipo no es el mismo que el definido por la función", node);
+//        }
+        if (tipo != node.getExp().getType()) {
             parser.report_error("Se intenta devolver un dato cuyo tipo no es el mismo que el definido por la función", node);
         }
         gc.generate(InstructionType.RETURN, new Operator3Address(idFunc), null, new Operator3Address(node.getExp().getReference()));
@@ -776,9 +784,11 @@ public class analisisSemantico {
                 gc.generate(InstructionType.SKIP, null, null, new Operator3Address(againWhile));
                 handleExpresion(node.getExpression());
                 TypeEnum type = node.getExpression().getType();
-                if (type == null) {
-                    type = typeFromId(ts.consultaId(node.getExpression().getSimplVal().getGestor().getId().getIdentifierLiteral()));
-                }
+                //MANUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU ESTO CREO QUE ESTÀ MAL
+                //ESTA ASIGNACION QUE HACES EN ESTE IF SE DEBERIA HACER EN EL HANDLEXPRESION
+//                if (type == null) {
+//                    type = typeFromId(ts.consultaId(node.getExpression().getSimplVal().getGestor().getId().getIdentifierLiteral()));
+//                }
                 if (type != TypeEnum.BOOL) {
                     parser.report_error("La expressión a evaluar en el condicional no és booleana", node.getExpression());
                 }
@@ -815,11 +825,24 @@ public class analisisSemantico {
                     String id = node.getForInst().getIdentifier().getIdentifierLiteral();
                     IdDescripcion d = ts.consultaId(id);
 
-                    if (node.getExpression() == null) {
+                    if (node.getForInst().getExpression() == null) {
                         handleSpecialOp(node.getForInst().getSpecialOp(), node.getForInst().getIdentifier());
                     } else { // ID = EXP
-                        //TODO: Que es esto, no existe este nodo broski, lo comento y ya
-                        //handleExpresionAssig(node.getForInst().getExpression(), node.getForInst().getIdentifier());
+                        handleExpresion(node.getExpression());
+                        IdDescripcion idd = ts.consultaId(node.getForInst().getIdentifier().getIdentifierLiteral());
+                        VarDescripcion dvar = null;
+                        if (d.getTipoDescripcion() == IdDescripcion.TipoDescripcion.dvar) {
+                            dvar = (VarDescripcion) idd;
+                        } else {
+                            parser.report_error("El identificador no es una variable", id);
+                        }
+                        if (dvar != null) {
+                            if (node.getForInst().getExpression().getType() != dvar.getType()) {
+                                parser.report_error("Se intenta hacer una asignación con diferentes tsb", id);
+                            }
+                            gc.generate(InstructionType.CLONE, new Operator3Address(node.getExpression().getReference()), null, new Operator3Address(dvar.getVariableNumber()));
+                        }
+
                     }
                 }
                 gc.generate(InstructionType.GOTO, null, null, new Operator3Address(againFor));
@@ -953,10 +976,11 @@ public class analisisSemantico {
                     parser.report_error("No se han escrito el número de parámetros correspondientes", node.getParamIn());
                 } else {
                     for (int i = 0; i < param.size(); i++) {
-                        if (param.get(i).getType() != typeFromId(ts.consultaId(paramIn.get(i).getSimplVal().getGestor().getId().getIdentifierLiteral()))) {
+                        if (param.get(i).getType() != paramIn.get(i).getType()) {
+//                        if (param.get(i).getType() != typeFromId(ts.consultaId(paramIn.get(i).getSimplVal().getGestor().getId().getIdentifierLiteral()))) {
                             parser.report_error("Uno de los parámetros introducido no tiene el tipo correspondiente", node.getParamIn());
                         }
-                        gc.generate(InstructionType.SIMPLEPARAM, null, null, new Operator3Address(node.getParamIn().getExpression().getReference()));
+                        gc.generate(InstructionType.SIMPLEPARAM, null, null, new Operator3Address(paramIn.get(i).getReference()));
                     }
                 }
             } else {
@@ -971,7 +995,6 @@ public class analisisSemantico {
                 res = gc.newVar(Variable.TipoVariable.VARIABLE, dfunc.getType(), false, false);
                 gc.generate(InstructionType.CALL, new Operator3Address(node.getIdentifier().getIdentifierLiteral()), null, new Operator3Address(res));
             } else {
-                ProcDescripcion dproc = (ProcDescripcion) d;
                 gc.generate(InstructionType.CALL, new Operator3Address(node.getIdentifier().getIdentifierLiteral()), null, null);
             }
             node.setReference(res);
@@ -981,6 +1004,7 @@ public class analisisSemantico {
     }
 
     public void handleParamIn(ParamInNode node, ArrayList<ExpressionNode> res) {
+        handleExpresion(node.getExpression());
         res.add(node.getExpression());
         if (node.getParamIn() != null) {
             handleParamIn(node.getParamIn(), res);
@@ -1094,29 +1118,27 @@ public class analisisSemantico {
     }
 
     private void handleGestArray(GestArrayNode gestArray, ArrayList<Integer> dim) {
-        if(gestArray.getExp() != null){
+        if (gestArray.getExp() != null) {
             handleExpresion(gestArray.getExp());
             dim.add(gestArray.getExp().getReference());
-            if(gestArray.getGestArray() != null){
+            if (gestArray.getGestArray() != null) {
                 handleGestArray(gestArray.getGestArray(), dim);
             }
         }
     }
 
     private void handleGestTupel(GestTupelNode gestTupel, ArrayList<String> dim) {
-        if(gestTupel.getIdentifier() != null){
+        if (gestTupel.getIdentifier() != null) {
             dim.add(gestTupel.getIdentifier().getIdentifierLiteral());
-            if(gestTupel.getTupel() != null){
+            if (gestTupel.getTupel() != null) {
                 handleGestTupel(gestTupel.getTupel(), dim);
             }
         }
     }
     /**
-     * @Manu PROGRAM; DECL_LIST; DECL; ACTUAL_DECL; DECL_ELEM; DECL_ARRAY;
-     * DIM_ARRAY; ARRAY_DECL; INIT_ARRAY; DECL_TUPEL; TUPEL_DECL; INIT_TUPEL;
-     * EXP; SIMPLE_VALUE; GEST_IDX; GESTOR; COTI : handleExpresion debe poner el
-     * resultado como referencia en el nodo porfa jej , màs que nada todo nodo y
-     * derivados que se usa en assig deberá hacerse esto
+     * @Manu PROGRAM; DECL_LIST; DECL; ACTUAL_DECL; DECL_ELEM; DECL_ARRAY; DIM_ARRAY; ARRAY_DECL; INIT_ARRAY; DECL_TUPEL; TUPEL_DECL; INIT_TUPEL; EXP;
+     * SIMPLE_VALUE; GEST_IDX; GESTOR; COTI : handleExpresion debe poner el resultado como referencia en el nodo porfa jej , màs que nada todo nodo y derivados
+     * que se usa en assig deberá hacerse esto
      *
      * @Constantino BINARY_OP; REL_OP; LOGIC_OP; ARIT_OP; NEG_OP; MODIFIER; ID;
      */

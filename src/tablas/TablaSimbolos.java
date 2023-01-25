@@ -216,23 +216,23 @@ public class TablaSimbolos {
         return te.get(idx).getDescripcion();
     }
 
-    public ArrayList<> consultaIndices(String id) {
-        if (td.get(id).getDescripcion().getTipoDescripcion() == IdDescripcion.TipoDescripcion.darray) {
-            int idx = td.get(id).getFirst();
-            ArrayList<ArgDescripcion> res = new ArrayList<>();
-            int actual = firstParam(id);
-            if (actual == -1) {
-                return null;
-            }
-            while (!last(actual)) {
-                actual = next(actual);
-                res.add((ArgDescripcion) consultarTe(actual));
-            }
-            //ponemos el último param
-            res.add((ArgDescripcion) consultarTe(actual));
-            return res;
-        }
-    }
+//    public ArrayList<> consultaIndices(String id) {
+//        if (td.get(id).getDescripcion().getTipoDescripcion() == IdDescripcion.TipoDescripcion.darray) {
+//            int idx = td.get(id).getFirst();
+//            ArrayList<ArgDescripcion> res = new ArrayList<>();
+//            int actual = firstParam(id);
+//            if (actual == -1) {
+//                return null;
+//            }
+//            while (!last(actual)) {
+//                actual = next(actual);
+//                res.add((ArgDescripcion) consultarTe(actual));
+//            }
+//            //ponemos el último param
+//            res.add((ArgDescripcion) consultarTe(actual));
+//            return res;
+//        }
+//    }
 
     public void ponerParam(String idProc, String idParam, IdDescripcion d) {
         //si existe, no existe GUAT
