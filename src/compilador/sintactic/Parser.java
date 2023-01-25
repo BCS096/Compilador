@@ -703,7 +703,7 @@ public class Parser extends java_cup.runtime.lr_parser {
         } catch (IOException ex) {
         }
 
-        if (mvp.semantic()) {
+        if (mvp.semantic() && !mvp.sintactic()) {
             mvp.semanticError(msg);
         } else {
             mvp.sintacticError(msg);
@@ -712,19 +712,25 @@ public class Parser extends java_cup.runtime.lr_parser {
 
     @Override
     public void report_fatal_error(String message, Object info) throws Exception {
+        mvp.sintactic(true);
         report_error("FATAL ERROR: ("+message+")"+'\n', info);
         done_parsing();
+        mvp.sintactic(false);
     }
 
     @Override
     public void unrecovered_syntax_error(java_cup.runtime.Symbol cur_token) throws Exception {
+        mvp.sintactic(true);
         report_error("FATAL SINTACTIC ERROR: unexpected "+ParserSym.terminalNames[cur_token.sym]+'\n', cur_token);
         done_parsing();
+        mvp.sintactic(false);
     }
 
     @Override
     public void syntax_error(java_cup.runtime.Symbol cur_token) {
+        mvp.sintactic(true);
         report_error("SINTACTIC ERROR: Unexpected "+ParserSym.terminalNames[cur_token.sym]+'\n', cur_token);
+        mvp.sintactic(false);
     }
 
     private int extractLine(ComplexSymbol symbol) {

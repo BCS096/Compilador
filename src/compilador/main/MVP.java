@@ -37,6 +37,7 @@ public class MVP extends javax.swing.JFrame {
     JScrollPane[] semScrollPanesE;
     String carpeta = null;
     private boolean semantic = false;
+    private boolean sintactic = false;
 
     /**
      * Creates new form MVP
@@ -388,7 +389,15 @@ public class MVP extends javax.swing.JFrame {
         return this.semantic;
     }
     
+    public boolean sintactic() {
+        return this.sintactic;
+    }
+    
     public void semantic(boolean semantic){
         this.semantic = semantic;
+    }
+    
+    public void sintactic(boolean sintactic){
+        this.sintactic = sintactic;
     }
 }
