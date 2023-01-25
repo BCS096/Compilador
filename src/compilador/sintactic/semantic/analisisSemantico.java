@@ -560,7 +560,6 @@ public class analisisSemantico {
         }
     }
 
-    //SE PUEDE OBVIAR EL TIPO DE DESCRIPCIÓN
     public void handleDeclTupel(DeclTupelNode declTupel, IdDescripcion.TipoDescripcion tipo) {
         if (declTupel.getId() != null) {
             int nVar = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.TUPEL, false, true);

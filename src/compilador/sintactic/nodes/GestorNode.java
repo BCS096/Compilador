@@ -9,13 +9,18 @@ package compilador.sintactic.nodes;
  * @author tomeu
  */
 public class GestorNode extends BaseNode {
+
     private GestArrayNode gestArray;
     private GestTupelNode gestTupel;
-    
-    public GestorNode (GestArrayNode gestArray, GestTupelNode gestTupel, int line, int column){
+
+    public GestorNode(GestArrayNode gestArray, GestTupelNode gestTupel, int line, int column) {
         super("IDX_ARRAY", false, line, column);
         this.gestArray = gestArray;
         this.gestTupel = gestTupel;
+    }
+
+    public GestorNode() {
+        super("IDX_ARRAY", true);
     }
 
     public GestArrayNode getGestArray() {

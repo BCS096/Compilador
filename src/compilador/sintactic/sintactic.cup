@@ -374,7 +374,7 @@ GESTOR             ::= GEST_ARRAY:gestArray                                     
                     ;
 
 
-GEST_ARRAY         ::= sym_lbracket:v EXP:exp sym_rbracket GEST_ARRAY:gest                                                                                                                {: RESULT = new GestArrayNode(exp, gestArray, extractLine(v), extractColumn(v));          :}
+GEST_ARRAY         ::= sym_lbracket:v EXP:exp sym_rbracket GEST_ARRAY:gestArray                                                                                                           {: RESULT = new GestArrayNode(exp, gestArray, extractLine(v), extractColumn(v));          :}
                     | sym_lbracket:v EXP:exp sym_rbracket                                                                                                                                 {: RESULT = new GestArrayNode(exp, null, extractLine(v), extractColumn(v));                                                  :}
                     ;
 
