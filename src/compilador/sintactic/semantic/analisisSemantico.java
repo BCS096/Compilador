@@ -347,9 +347,9 @@ public class analisisSemantico {
                     Este caso indica que es NULL, pero tiene que adoptar el mismo que el EXP2 o viceversa
                      */
                     if (expressionNode.getExp1().getType() == null) {
-                        expressionNode.getExp1().setType(expressionNode.getExp2().getType());
+                        expressionNode.getExp1().setType(TypeEnum.CHAR);
                     } else if (expressionNode.getExp2().getType() == null) {
-                        expressionNode.getExp2().setType(expressionNode.getExp1().getType());
+                        expressionNode.getExp2().setType(TypeEnum.CHAR);
                     }
                     //Si las dos expresiones tienen un tipo asignado (si no pasa, error)
                     if (expressionNode.getExp1().getType() != null && expressionNode.getExp2().getType() != null) {
