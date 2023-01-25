@@ -128,7 +128,7 @@ public class analisisSemantico {
         ModifierNode mod = decl.getModifier();
         if (mod == null) {
             mod = new ModifierNode(IdDescripcion.TipoDescripcion.dvar, false, 0, 0);
-        }else{
+        } else {
             mod = new ModifierNode(IdDescripcion.TipoDescripcion.dconst, false, 0, 0);
         }
 
@@ -318,7 +318,7 @@ public class analisisSemantico {
                 //Si tenemos un operador de negacion ("not")
                 if (expressionNode.getNegOp() != null) {
                     //Si queremos negar, tendremos que negar un booleano, no puede ser otra cosa
-                    if (typeFromId(ts.consultaId(expressionNode.getExp1().getSimplVal().getGestor().getId().getIdentifierLiteral())) != TypeEnum.BOOL) {
+                    if (expressionNode.getExp1().getType() != TypeEnum.BOOL) {
                         parser.report_error("Trying to apply not to a non boolean value, got type: " + expressionNode.getExp1().getType(), expressionNode.getNegOp());
                     }
                     //Entonces nuestra expresion será booleana
@@ -343,33 +343,23 @@ public class analisisSemantico {
                 handleExpresion(expressionNode.getExp2());
                 //Si se trata de una operación aritmética...
                 if (expressionNode.getBinOp().getArit() != null) {
+                    /*Aqui se puede dar un unico caso (si todo esta bien implementado) que es cuando hay un read. 
+                    Este caso indica que es NULL, pero tiene que adoptar el mismo que el EXP2 o viceversa
+                     */
+                    if (expressionNode.getExp1().getType() == null) {
+                        expressionNode.getExp1().setType(expressionNode.getExp2().getType());
+                    } else if (expressionNode.getExp2().getType() == null) {
+                        expressionNode.getExp2().setType(expressionNode.getExp1().getType());
+                    }
                     //Si las dos expresiones tienen un tipo asignado (si no pasa, error)
-                    TypeEnum type1 = expressionNode.getExp1().getType();
-                    TypeEnum type2 = expressionNode.getExp2().getType();
-                    if (expressionNode.getExp1().getSimplVal().getGestor() != null) {
-                        IdDescripcion desc1 = ts.consultaId(expressionNode.getExp1().getSimplVal().getGestor().getId().getIdentifierLiteral());
-                        type1 = typeFromId(desc1);
-                    } else if (expressionNode.getExp1().getSimplVal().getLiteral() != null) {
-                        type1 = expressionNode.getExp1().getSimplVal().getLiteral().getType();
-                    } else {
-                        type1 = TypeEnum.CHAR;
-                    }
-                    if (expressionNode.getExp2().getSimplVal().getGestor() != null) {
-                        IdDescripcion desc2 = ts.consultaId(expressionNode.getExp2().getSimplVal().getGestor().getId().getIdentifierLiteral());
-                        type2 = typeFromId(desc2);
-                    } else if (expressionNode.getExp2().getSimplVal().getLiteral() != null) {
-                        type2 = expressionNode.getExp2().getSimplVal().getLiteral().getType();
-                    } else {
-                        type2 = TypeEnum.CHAR;
-                    }
-                    if (type1 != null && type2 != null) {
+                    if (expressionNode.getExp1().getType() != null && expressionNode.getExp2().getType() != null) {
                         // TODO: Check if we can match by TSB instead of hardcoding combinations
-                        if (type1 == TypeEnum.CHAR && type2 == TypeEnum.INT) {
+                        if (expressionNode.getExp1().getType() == TypeEnum.CHAR && expressionNode.getExp2().getType() == TypeEnum.INT) {
                             expressionNode.setType(TypeEnum.INT);
                             //Si las dos expresiones son del mismo tipo (no sumas int a double...)
-                        } else if (type1.equals(type2)) {
+                        } else if (expressionNode.getExp1().getType().equals(expressionNode.getExp2().getType())) {
                             //Procedemos a poner el tipo de la expresion (tanto vale Exp1 o Exp2) y generamos código
-                            expressionNode.setType(type1);
+                            expressionNode.setType(expressionNode.getExp1().getType());
                         } else {
                             //One of types not declared error
                             parser.report_error("EXP error: El tipo de los operadores no coincide", expressionNode.getExp1());
@@ -390,19 +380,9 @@ public class analisisSemantico {
                     //Si no es aritmetico, es relacional?
                 } else if (expressionNode.getBinOp().getRel() != null) {
                     //Si es relacional, volvemos a comprobar que ambas expresiones tengan tipo
-                    TypeEnum type1 = expressionNode.getExp1().getType();
-                    TypeEnum type2 = expressionNode.getExp2().getType();
-                    if (expressionNode.getExp1().getSimplVal().getGestor() != null) {
-                        IdDescripcion desc1 = ts.consultaId(expressionNode.getExp1().getSimplVal().getGestor().getId().getIdentifierLiteral());
-                        type1 = typeFromId(desc1);
-                    }
-                    if (expressionNode.getExp2().getSimplVal().getGestor() != null) {
-                        IdDescripcion desc2 = ts.consultaId(expressionNode.getExp2().getSimplVal().getGestor().getId().getIdentifierLiteral());
-                        type2 = typeFromId(desc2);
-                    }
-                    if (type1 != null && type2 != null) {
+                    if (expressionNode.getExp1().getType() != null && expressionNode.getExp2().getType() != null) {
                         //Si pasa el check, miramos que sean del mismo tipo y la expresion será una comporbación, por tanto booleana
-                        if (type1.equals(type2)) {
+                        if (expressionNode.getExp1().getType().equals(expressionNode.getExp2().getType())) {
                             expressionNode.setType(TypeEnum.BOOL);
 
                             Integer var = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.BOOL, false, false);
@@ -440,19 +420,9 @@ public class analisisSemantico {
                     }
                     //Only logical operation left ("or" or "and")
                 } else { //Same as before
-                    TypeEnum type1 = expressionNode.getExp1().getType();
-                    TypeEnum type2 = expressionNode.getExp2().getType();
-                    if (expressionNode.getExp1().getSimplVal().getGestor() != null) {
-                        IdDescripcion desc1 = ts.consultaId(expressionNode.getExp1().getSimplVal().getGestor().getId().getIdentifierLiteral());
-                        type1 = typeFromId(desc1);
-                    }
-                    if (expressionNode.getExp2().getSimplVal().getGestor() != null) {
-                        IdDescripcion desc2 = ts.consultaId(expressionNode.getExp2().getSimplVal().getGestor().getId().getIdentifierLiteral());
-                        type2 = typeFromId(desc2);
-                    }
-                    if (type1 != null && type2 != null) {
+                    if (expressionNode.getExp1().getType() != null && expressionNode.getExp2().getType() != null) {
                         //Same as before, but we check if boolean and put type accordingly
-                        if (expressionNode.getExp1().getType() == TypeEnum.BOOL && expressionNode.getExp2().getType() == TypeEnum.BOOL) {
+                        if (expressionNode.getExp1().getType().equals(expressionNode.getExp2().getType())) {
                             expressionNode.setType(TypeEnum.BOOL);
                         } else {
                             parser.report_error("EXP error: Type of operators not matching or it should be \"boolean\"", expressionNode.getExp1());
@@ -534,14 +504,14 @@ public class analisisSemantico {
     }
 
     public void handleSimpleValue(SimpleValueNode simpleValue) {
-        TypeEnum type = simpleValue.getType();
         if (simpleValue.getGestor() != null) {
-            //Caso queremos .algo[].algo2.algo3[etc].ejemplo
-            //no se genera código aún, todo va en gestor.
-            handleGestorIdx(simpleValue.getGestor(), type);
+            //Caso que el tipo es de un id
+            simpleValue.setType(typeFromId(ts.consultaId(simpleValue.getGestor().getId().getIdentifierLiteral())));
+            handleGestorIdx(simpleValue.getGestor(), simpleValue.getType());
         } else if (simpleValue.getSimpl() != null) {
             //?
             //Si no es INT no se puede negar
+            handleSimpleValue(simpleValue.getSimpl());
             if (simpleValue.getType() == TypeEnum.INT) {
                 //generamos variable para negar adecuada (negaremos una referencia claro)
                 int var = gc.newVar(Variable.TipoVariable.VARIABLE, simpleValue.getType(), false, false);
@@ -562,7 +532,8 @@ public class analisisSemantico {
                 simpleValue.setReference(simpleValue.getInstExp().getReference());
             }
         } else if (simpleValue.getLiteral() != null) {
-            handleLiteral(simpleValue.getLiteral().getLiteral(), type);
+            //TODO: revisar si va benne
+            handleLiteral(simpleValue.getLiteral().getLiteral(), simpleValue.getLiteral().getType());
         } else {
             parser.report_error("No suitable development found!", simpleValue);
         }
@@ -591,7 +562,8 @@ public class analisisSemantico {
     }
 
     /**
-     * INIT_TUPEL ::= sym_eq r_new r_tupel:r sym_lparen PARAM_IN:pi sym_rparen {: RESULT = new InitTupelNode(pi, extractLine(r), extractColumn(r)); :} ;
+     * INIT_TUPEL ::= sym_eq r_new r_tupel:r sym_lparen PARAM_IN:pi sym_rparen
+     * {: RESULT = new InitTupelNode(pi, extractLine(r), extractColumn(r)); :} ;
      */
     public void handleInitTupel(InitTupelNode initTupel) {
         //TODO: Completar método
@@ -606,11 +578,15 @@ public class analisisSemantico {
      * COSAS MAL ORGANIZADAS SORRY
      *
      * @param node
-     * @Manu PROGRAM*; DECL_LIST*; DECL*; ACTUAL_DECL*; DECL_ELEM*; TYPE_ID? (if not x, error?); ELEM_LIST*; ELEM_ID_ASSIG*; DECL_ARRAY*; DIM_ARRAY*;
+     * @Manu PROGRAM*; DECL_LIST*; DECL*; ACTUAL_DECL*; DECL_ELEM*; TYPE_ID? (if
+     * not x, error?); ELEM_LIST*; ELEM_ID_ASSIG*; DECL_ARRAY*; DIM_ARRAY*;
      * ARRAY_DECL*; INIT_ARRAY*; DECL_TUPEL; TUPEL_DECL; INIT_TUPEL; EXP*;
-     * @Coti METHOD_LIST; METHOD; PROC; FUNC; PARAM_LIST; ACTUAL_PARAM_LIST; PARAM; SPECIAL_PARAM; SENTENCE_LIST; SENTENCE; FOR_INST; NEXT_IF; INST; INST_EXP;
-     * METHOD_CALL;
-     * @Constantino PARAM_IN; ASSIG; SIMPLE_VALUE; GEST_IDX; GESTOR; LITERAL; BINARY_OP; REL_OP; LOGIC_OP; ARIT_OP; NEG_OP; SPECIAL_OP; MAIN; MODIFIER; ID;
+     * @Coti METHOD_LIST; METHOD; PROC; FUNC; PARAM_LIST; ACTUAL_PARAM_LIST;
+     * PARAM; SPECIAL_PARAM; SENTENCE_LIST; SENTENCE; FOR_INST; NEXT_IF; INST;
+     * INST_EXP; METHOD_CALL;
+     * @Constantino PARAM_IN; ASSIG; SIMPLE_VALUE; GEST_IDX; GESTOR; LITERAL;
+     * BINARY_OP; REL_OP; LOGIC_OP; ARIT_OP; NEG_OP; SPECIAL_OP; MAIN; MODIFIER;
+     * ID;
      */
 //DEADLINE: 14-01-2023 -> Tenerlos hechos (no hace falta que bien), quedar y arreglarlos (si hace falta).
     // COTI
@@ -696,7 +672,7 @@ public class analisisSemantico {
         gc.removeFunctionId(); //quitamos el procedimiento de la pila de procedimientos activos
 
         handleExpresion(node.getExp());
-         // maaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaal , aqui fuerzas que lo que se devuelva es un id que està en la tabla de simbolos !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        // maaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaal , aqui fuerzas que lo que se devuelva es un id que està en la tabla de simbolos !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 //        if (tipo != typeFromId(ts.consultaId(node.getExp().getSimplVal().getGestor().getId().getIdentifierLiteral()))) {
 //            parser.report_error("Se intenta devolver un dato cuyo tipo no es el mismo que el definido por la función", node);
 //        }
@@ -1136,9 +1112,11 @@ public class analisisSemantico {
         }
     }
     /**
-     * @Manu PROGRAM; DECL_LIST; DECL; ACTUAL_DECL; DECL_ELEM; DECL_ARRAY; DIM_ARRAY; ARRAY_DECL; INIT_ARRAY; DECL_TUPEL; TUPEL_DECL; INIT_TUPEL; EXP;
-     * SIMPLE_VALUE; GEST_IDX; GESTOR; COTI : handleExpresion debe poner el resultado como referencia en el nodo porfa jej , màs que nada todo nodo y derivados
-     * que se usa en assig deberá hacerse esto
+     * @Manu PROGRAM; DECL_LIST; DECL; ACTUAL_DECL; DECL_ELEM; DECL_ARRAY;
+     * DIM_ARRAY; ARRAY_DECL; INIT_ARRAY; DECL_TUPEL; TUPEL_DECL; INIT_TUPEL;
+     * EXP; SIMPLE_VALUE; GEST_IDX; GESTOR; COTI : handleExpresion debe poner el
+     * resultado como referencia en el nodo porfa jej , màs que nada todo nodo y
+     * derivados que se usa en assig deberá hacerse esto
      *
      * @Constantino BINARY_OP; REL_OP; LOGIC_OP; ARIT_OP; NEG_OP; MODIFIER; ID;
      */
