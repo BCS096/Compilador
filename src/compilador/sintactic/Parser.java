@@ -1978,9 +1978,9 @@ class CUP$Parser$actions {
 		int expleft = ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-2)).left;
 		int expright = ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-2)).right;
 		ExpressionNode exp = (ExpressionNode)((java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-2)).value;
-		int gestleft = ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()).left;
-		int gestright = ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()).right;
-		GestArrayNode gest = (GestArrayNode)((java_cup.runtime.Symbol) CUP$Parser$stack.peek()).value;
+		int gestArrayleft = ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()).left;
+		int gestArrayright = ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()).right;
+		GestArrayNode gestArray = (GestArrayNode)((java_cup.runtime.Symbol) CUP$Parser$stack.peek()).value;
 		 RESULT = new GestArrayNode(exp, gestArray, extractLine(v), extractColumn(v));          
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("GEST_ARRAY",16, ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-3)), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
