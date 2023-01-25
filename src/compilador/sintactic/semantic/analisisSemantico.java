@@ -347,17 +347,17 @@ public class analisisSemantico {
                     if (expressionNode.getExp1().getSimplVal().getGestor() != null) {
                         IdDescripcion desc1 = ts.consultaId(expressionNode.getExp1().getSimplVal().getGestor().getId().getIdentifierLiteral());
                         type1 = typeFromId(desc1);
-                    }else if(expressionNode.getExp1().getSimplVal().getLiteral() != null){
+                    } else if (expressionNode.getExp1().getSimplVal().getLiteral() != null) {
                         type1 = expressionNode.getExp1().getSimplVal().getLiteral().getType();
-                    }else{
+                    } else {
                         type1 = TypeEnum.CHAR;
                     }
                     if (expressionNode.getExp2().getSimplVal().getGestor() != null) {
                         IdDescripcion desc2 = ts.consultaId(expressionNode.getExp2().getSimplVal().getGestor().getId().getIdentifierLiteral());
                         type2 = typeFromId(desc2);
-                    }else if(expressionNode.getExp2().getSimplVal().getLiteral() != null){
+                    } else if (expressionNode.getExp2().getSimplVal().getLiteral() != null) {
                         type2 = expressionNode.getExp2().getSimplVal().getLiteral().getType();
-                    }else{
+                    } else {
                         type2 = TypeEnum.CHAR;
                     }
                     if (type1 != null && type2 != null) {
@@ -487,6 +487,8 @@ public class analisisSemantico {
             return ((VarDescripcion) desc).getType();
         } else if (desc.getTipoDescripcion() == IdDescripcion.TipoDescripcion.dconst) {
             return ((ConstDescripcion) desc).getType();
+        } else if (desc.getTipoDescripcion() == IdDescripcion.TipoDescripcion.darray) {
+            return ((ArrayDescripcion) desc).getType();
         } else {
             return null;
         }
@@ -502,32 +504,36 @@ public class analisisSemantico {
                 int var = gc.newVar(Variable.TipoVariable.VARIABLE, type, false, false);
                 gestIdx.setReference(var);
             }
-            //Si no hay es solo el ID
-            if (gestIdx.getGest() != null) {
-                handleGestor(gestIdx.getGest());
-            }
+            if()
         } else {
             parser.report_error("No suitable continuation for tupel or array found! Check your indexing...", gestIdx);
         }
     }
 
-    public void handleGestor(GestorNode gestor) {
+    /*
+    public void handleGestor(GestorNode gestor, ArrayList<Integer> dims, String id) {
         if (gestor.getExp() != null) {
             handleExpresion(gestor.getExp());
-            if (gestor.getGestIdx() != null) {
+            //codigo
+            if (gestor.getGestor() != null) {
                 //no seguro de este tipo, puede que sea otro
-                handleGestorIdx(gestor.getGestIdx(), gestor.getExp().getType());
-            } else {
-                parser.report_error("Indexing not found after expression!", gestor);
+                handleGestor(gestor.getGestor());
             }
+
+        } else {
+            if (gestor.getGestIdx() != null) {
+                if()
+                handleGestorIdx(gestor.getGestIdx(), typeFromId(ts.consultaId(gestor.getGestIdx().getId().getIdentifierLiteral())));
+            }
+            //Si llega aquí sin entrar al if, es que derivó a lambda
         }
     }
-
+     */
     public void handleSimpleValue(SimpleValueNode simpleValue) {
         TypeEnum type = simpleValue.getType();
         if (simpleValue.getGestor() != null) {
             //Caso queremos .algo[].algo2.algo3[etc].ejemplo
-            //no se genera código aún, todo va en gestor. No hay otra forma de conocer el tipo
+            //no se genera código aún, todo va en gestor.
             handleGestorIdx(simpleValue.getGestor(), type);
         } else if (simpleValue.getSimpl() != null) {
             //?
@@ -774,7 +780,11 @@ public class analisisSemantico {
                 String againWhile = gc.newLabel();
                 gc.generate(InstructionType.SKIP, null, null, new Operator3Address(againWhile));
                 handleExpresion(node.getExpression());
-                if (node.getExpression().getType() != TypeEnum.BOOL) {
+                TypeEnum type = node.getExpression().getType();
+                if (type == null) {
+                    type = typeFromId(ts.consultaId(node.getExpression().getSimplVal().getGestor().getId().getIdentifierLiteral()));
+                }
+                if (type != TypeEnum.BOOL) {
                     parser.report_error("La expressión a evaluar en el condicional no és booleana", node.getExpression());
                 }
                 String finalWhile = gc.newLabel();
@@ -948,7 +958,7 @@ public class analisisSemantico {
                     parser.report_error("No se han escrito el número de parámetros correspondientes", node.getParamIn());
                 } else {
                     for (int i = 0; i < param.size(); i++) {
-                        if (param.get(i).getType() != paramIn.get(i).getType()) {
+                        if (param.get(i).getType() != typeFromId(ts.consultaId(paramIn.get(i).getSimplVal().getGestor().getId().getIdentifierLiteral()))) {
                             parser.report_error("Uno de los parámetros introducido no tiene el tipo correspondiente", node.getParamIn());
                         }
                         gc.generate(InstructionType.SIMPLEPARAM, null, null, new Operator3Address(node.getParamIn().getExpression().getReference()));

@@ -59,7 +59,8 @@ parser code {:
                    .append("row: ")
                    .append(l.getLine())
                    .append(", column: ")
-                   .append(l.getColumn());
+                   .append(l.getColumn())
+                   .append('\n');
             }
         }
         if ((info != null) && (info instanceof BaseNode)) {
@@ -97,19 +98,19 @@ parser code {:
 
     @Override
     public void report_fatal_error(String message, Object info) throws Exception {
-        report_error("FATAL ERROR: ("+message+")", info);
+        report_error("FATAL ERROR: ("+message+")"+'\n', info);
         done_parsing();
     }
 
     @Override
     public void unrecovered_syntax_error(java_cup.runtime.Symbol cur_token) throws Exception {
-        report_error("FATAL SINTACTIC ERROR: unexpected "+ParserSym.terminalNames[cur_token.sym], cur_token);
+        report_error("FATAL SINTACTIC ERROR: unexpected "+ParserSym.terminalNames[cur_token.sym]+'\n', cur_token);
         done_parsing();
     }
 
     @Override
     public void syntax_error(java_cup.runtime.Symbol cur_token) {
-        report_error("SINTACTIC ERROR: Unexpected "+ParserSym.terminalNames[cur_token.sym], cur_token);
+        report_error("SINTACTIC ERROR: Unexpected "+ParserSym.terminalNames[cur_token.sym]+'\n', cur_token);
     }
 
     private int extractLine(ComplexSymbol symbol) {
@@ -170,6 +171,8 @@ non terminal InitArrayNode        INIT_ARRAY;
 non terminal DeclTupelNode        DECL_TUPEL;
 non terminal TupelDeclNode        TUPEL_DECL;
 non terminal InitTupelNode        INIT_TUPEL;
+non terminal GestArrayNode        GEST_ARRAY;
+non terminal GestTupelNode        GEST_TUPEL;
 non terminal MethodListNode       METHOD_LIST;
 non terminal MethodNode           METHOD;
 non terminal ProcNode             PROC;
@@ -365,9 +368,18 @@ SIMPLE_VALUE      ::= LITERAL:l                                                 
 GEST_IDX           ::= ID:id GESTOR:gest                                                                                                                                                  {: RESULT = new GestIdxNode(id, gest, extractLine(id), extractColumn(id)); :}                                     
                     ;
 
-GESTOR             ::= sym_lbracket:v EXP:exp sym_rbracket GESTOR:gest                                                                                                                    {: RESULT = new GestorNode(exp, gest, null, extractLine(v), extractColumn(v));  :}
-                    | sym_dot:v GEST_IDX:gidx                                                                                                                                             {: RESULT = new GestorNode(null, null, gidx, extractLine(v), extractColumn(v));  :}
-                    |                                                                                                                                                                     {: RESULT = new GestorNode();  :}
+GESTOR             ::= GEST_ARRAY:gestArray                                                                                                                                               {: RESULT = new GestorNode(gestArray, null, extractLine(gestArray), extractColumn(gestArray)); :}
+                    | GEST_TUPEL:gtup                                                                                                                                                     {: RESULT = new GestorNode(null, gtup, extractLine(gtup), extractColumn(gtup)); :}      
+                    |                                                                                                                                                                     {: RESULT = new GestorNode(); :}
+                    ;
+
+
+GEST_ARRAY         ::= sym_lbracket:v EXP:exp sym_rbracket GEST_ARRAY:gest                                                                                                                {: RESULT = new GestArrayNode(exp, gestArray, extractLine(v), extractColumn(v));          :}
+                    | sym_lbracket:v EXP:exp sym_rbracket                                                                                                                                 {: RESULT = new GestArrayNode(exp, null, extractLine(v), extractColumn(v));                                                  :}
+                    ;
+
+GEST_TUPEL         ::= sym_dot:v ID:id GEST_TUPEL:gtup                                                                                                                                    {: RESULT = new GestTupelNode(id, gtup, extractLine(v), extractColumn(v));                :}
+                    | sym_dot:v ID:id                                                                                                                                                     {: RESULT = new GestTupelNode(id, null, extractLine(v), extractColumn(v));                :}
                     ;
 
 LITERAL           ::= l_int:l                                                                                                                                                             {: RESULT = new LiteralNode(Integer.toString((Integer)l.getLiteral()), TypeEnum.INT, l.getLine(), l.getColumn()); :}

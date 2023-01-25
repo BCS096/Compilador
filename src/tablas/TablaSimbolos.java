@@ -228,7 +228,7 @@ public class TablaSimbolos {
             throw new UnsupportedOperationException("Intentando pasar parámetros a elemento que no es ni procedimiento ni función!");
         }
         int idxe = td.get(idProc).getFirst();
-        int idxep = 0;
+        int idxep = -1;
         while (idxe != -1 && !(te.get(idxe).getId().equals(idParam))) {
             idxep = idxe;
             idxe = te.get(idxe).getNext();
