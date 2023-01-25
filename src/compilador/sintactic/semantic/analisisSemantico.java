@@ -504,31 +504,27 @@ public class analisisSemantico {
                 int var = gc.newVar(Variable.TipoVariable.VARIABLE, type, false, false);
                 gestIdx.setReference(var);
             }
-            if()
+            if (gestIdx.getGest() != null) {
+                handleGestor(gestIdx.getGest(), gestIdx.getId().getIdentifierLiteral());
+            }
         } else {
             parser.report_error("No suitable continuation for tupel or array found! Check your indexing...", gestIdx);
         }
     }
 
-    /*
-    public void handleGestor(GestorNode gestor, ArrayList<Integer> dims, String id) {
-        if (gestor.getExp() != null) {
-            handleExpresion(gestor.getExp());
-            //codigo
-            if (gestor.getGestor() != null) {
-                //no seguro de este tipo, puede que sea otro
-                handleGestor(gestor.getGestor());
-            }
-
+    public void handleGestor(GestorNode gestor, String id) {
+        if (gestor.getGestArray() != null && ts.consultaId(id).getTipoDescripcion() == IdDescripcion.TipoDescripcion.darray) {
+            ArrayList<Integer> dims = new ArrayList<>();
+            handleGestArray(gestor.getGestArray(), dims);
+            ArrayList<Idloquesea> ts.consultaIndices(id);
+        } else if (gestor.getGestTupel() != null && ts.consultaId(id).getTipoDescripcion() == IdDescripcion.TipoDescripcion.dtupel) {
+            ArrayList<String> campos = new ArrayList<>();
+            handleGestTupel(gestor.getGestTupel(), campos);
         } else {
-            if (gestor.getGestIdx() != null) {
-                if()
-                handleGestorIdx(gestor.getGestIdx(), typeFromId(ts.consultaId(gestor.getGestIdx().getId().getIdentifierLiteral())));
-            }
-            //Si llega aquí sin entrar al if, es que derivó a lambda
+            parser.report_error("No es ni una tupla ni un array", gestor);
         }
     }
-     */
+
     public void handleSimpleValue(SimpleValueNode simpleValue) {
         TypeEnum type = simpleValue.getType();
         if (simpleValue.getGestor() != null) {
@@ -1096,6 +1092,25 @@ public class analisisSemantico {
         gc.generate(InstructionType.RETURN, new Operator3Address("main"), null, null);
         ts.salirBloque();
         ts.salirBloque();
+    }
+
+    private void handleGestArray(GestArrayNode gestArray, ArrayList<Integer> dim) {
+        if(gestArray.getExp() != null){
+            handleExpresion(gestArray.getExp());
+            dim.add(gestArray.getExp().getReference());
+            if(gestArray.getGestArray() != null){
+                handleGestArray(gestArray.getGestArray(), dim);
+            }
+        }
+    }
+
+    private void handleGestTupel(GestTupelNode gestTupel, ArrayList<String> dim) {
+        if(gestTupel.getIdentifier() != null){
+            dim.add(gestTupel.getIdentifier().getIdentifierLiteral());
+            if(gestTupel.getTupel() != null){
+                handleGestTupel(gestTupel.getTupel(), dim);
+            }
+        }
     }
     /**
      * @Manu PROGRAM; DECL_LIST; DECL; ACTUAL_DECL; DECL_ELEM; DECL_ARRAY;

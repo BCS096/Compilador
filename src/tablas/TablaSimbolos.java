@@ -189,7 +189,6 @@ public class TablaSimbolos {
         ArrayList<ArgDescripcion> res = new ArrayList<>();
         int actual = firstParam(id);
         if (actual == -1) {
-            //sin parametrosnononononononononono
             return null;
         }
         while (!last(actual)) {
@@ -215,6 +214,24 @@ public class TablaSimbolos {
     //para consultar en la tabla de expansion los campos,indices y parametros que no se copian en la tabla de descripciones
     public IdDescripcion consultarTe(int idx) {
         return te.get(idx).getDescripcion();
+    }
+
+    public ArrayList<> consultaIndices(String id) {
+        if (td.get(id).getDescripcion().getTipoDescripcion() == IdDescripcion.TipoDescripcion.darray) {
+            int idx = td.get(id).getFirst();
+            ArrayList<ArgDescripcion> res = new ArrayList<>();
+            int actual = firstParam(id);
+            if (actual == -1) {
+                return null;
+            }
+            while (!last(actual)) {
+                actual = next(actual);
+                res.add((ArgDescripcion) consultarTe(actual));
+            }
+            //ponemos el último param
+            res.add((ArgDescripcion) consultarTe(actual));
+            return res;
+        }
     }
 
     public void ponerParam(String idProc, String idParam, IdDescripcion d) {
