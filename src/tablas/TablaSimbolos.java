@@ -121,7 +121,7 @@ public class TablaSimbolos {
     }
 
     public IdDescripcion consultarCampo(String idTupel, String idCampo) {
-        if (td.existe(idTupel)) {
+        if (!td.existe(idTupel)) {
             throw new UnsupportedOperationException("No existe la tupla con este nombre: " + idTupel);
         }
         IdDescripcion d = td.get(idTupel).getDescripcion();
