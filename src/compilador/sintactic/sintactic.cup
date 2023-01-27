@@ -275,7 +275,6 @@ DECL_TUPEL        ::= r_tupel:r ID:id sym_lparen PARAM_LIST:pl sym_rparen TUPEL_
                     ;
 
 TUPEL_DECL        ::= INIT_TUPEL:it                                                                                                                                                       {: RESULT = new TupelDeclNode(it, it.getLine(), it.getColumn());                                        :}
-                    |                                                                                                                                                                     {: RESULT = new TupelDeclNode();                                                                        :}
                     ;
 
 INIT_TUPEL        ::= sym_eq r_new r_tupel:r sym_lparen PARAM_IN:pi sym_rparen                                                                                                            {: RESULT = new  InitTupelNode(pi, extractLine(r), extractColumn(r));                                   :}
@@ -384,8 +383,7 @@ GEST_ARRAY         ::= sym_lbracket:v EXP:exp sym_rbracket GEST_ARRAY:gestArray 
                     | sym_lbracket:v EXP:exp sym_rbracket                                                                                                                                 {: RESULT = new GestArrayNode(exp, null, extractLine(v), extractColumn(v));                                                  :}
                     ;
 
-GEST_TUPEL         ::= sym_dot:v ID:id GEST_TUPEL:gtup                                                                                                                                    {: RESULT = new GestTupelNode(id, gtup, extractLine(v), extractColumn(v));                :}
-                    | sym_dot:v ID:id                                                                                                                                                     {: RESULT = new GestTupelNode(id, null, extractLine(v), extractColumn(v));                :}
+GEST_TUPEL         ::= sym_dot:v ID:id                                                                                                                                                     {: RESULT = new GestTupelNode(id, extractLine(v), extractColumn(v));                :}
                     ;
 
 LITERAL           ::= l_int:l                                                                                                                                                             {: RESULT = new LiteralNode(Integer.toString((Integer)l.getLiteral()), TypeEnum.INT, l.getLine(), l.getColumn()); :}

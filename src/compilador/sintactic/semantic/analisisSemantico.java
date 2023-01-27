@@ -522,61 +522,39 @@ public class analisisSemantico {
     }
 
     //TO DO: volver a hacer
-    public int handleGestTupel(GestTupelNode node, String id, Desplazamiento res) {
-        IdDescripcion dcampo = ts.consultarCampo(id, node.getIdentifier().getIdentifierLiteral());
+    public int handleGestTupel(GestTupelNode node, String idTupla, Desplazamiento res) {
+        IdDescripcion dcampo = ts.consultarCampo(idTupla, node.getIdentifier().getIdentifierLiteral());
         if (dcampo == null) {
-            parser.report_error("No existe dicho campo " + node.getIdentifier().getIdentifierLiteral() + " en la tupla " + id, node);
+            parser.report_error("No existe dicho campo " + node.getIdentifier().getIdentifierLiteral() + " en la tupla " + idTupla, node);
         }
         //si llego aqui es que existe dentro de la tupla id
         //ahora calcular el desplazamiento
         int desp = 0;
         if (dcampo.getTipoDescripcion() == TipoDescripcion.dcampo) {
             CampoDescripcion aux = (CampoDescripcion) dcampo;
-            switch (aux.getType()) {
-                case INT:
-                    desp = TypeEnum.INT.getBytes();
+            ArrayList <CampoDescripcion> campos = ts.consultarCampos(idTupla);
+            int i = 0;
+            for (i = 0; i < campos.size(); i++) {
+                if(campos.get(i).getName().equals(node.getIdentifier().getIdentifierLiteral())){
                     break;
-                case CHAR:
-                    desp = TypeEnum.CHAR.getBytes();
-                    break;
-                case BOOL:
-                    desp = TypeEnum.BOOL.getBytes();
-                    break;
-                case STRING:
-                    desp = TypeEnum.STRING.getBytes();
-                    break;
-                case TUPEL:
-                    // aqui node.getIdentifier().getIdentifierLiteral() no tiene porque tener el mismo valor que aux.getName()
-                    IdDescripcion d = ts.consultaId(aux.getName());
-                    if (d == null) {
-                        parser.report_error("El campo que se refiere a una tupla no existe dicha tupla", node.getIdentifier());
-                    }
-                    if (d.getTipoDescripcion() != TipoDescripcion.dtupel) {
-                        parser.report_error("El campo que se refiere no es una tupla", node.getIdentifier());
-                    }
-                    TupelDescripcion td = (TupelDescripcion) d;
-                    desp = td.getSize();
-                    break;
-                case ARRAY:
-                    IdDescripcion de = ts.consultaId(aux.getName());
-                    if (de == null) {
-                        parser.report_error("El campo que se refiere a una array no existe dicha array", node.getIdentifier());
-                    }
-                    if (de.getTipoDescripcion() != TipoDescripcion.darray) {
-                        parser.report_error("El campo que se refiere no es una array", node.getIdentifier());
-                    }
-                    ArrayDescripcion ad = (ArrayDescripcion) de;
-                    desp = ad.getSize();
-                    break;
+                }
+                switch (campos.get(i).getType()) {
+                        case INT:
+                            desp += TypeEnum.INT.getBytes();
+                            break;
+                        case CHAR:
+                            desp += TypeEnum.CHAR.getBytes();
+                            break;
+                        case BOOL:
+                            desp += TypeEnum.BOOL.getBytes();
+                            break;
+                        case STRING:
+                            desp += TypeEnum.STRING.getBytes();
+                            break;
+                }
             }
-            if (node.getTupel() == null) {
-                //TO DO: AQUI PONER EL TYPE DEL APUNTADOR
-                //type = aux.getType();
-                res.type = aux.getType();
-                return desp;
-            } else {
-                return desp + handleGestTupel(node.getTupel(), node.getIdentifier().getIdentifierLiteral(), res);
-            }
+            res.type = campos.get(i).getType();
+            return desp;
         } else {
             parser.report_error("error", node);
             return -1;
@@ -624,7 +602,7 @@ public class analisisSemantico {
 
     public void handleDeclTupel(DeclTupelNode declTupel, IdDescripcion.TipoDescripcion tipo) {
         boolean isVar = true;
-        if(tipo == TipoDescripcion.dconst){
+        if (tipo == TipoDescripcion.dconst) {
             isVar = false;
         }
         if (declTupel.getId() != null) {
@@ -638,20 +616,15 @@ public class analisisSemantico {
                     TypeEnum type = TypeEnum.NULL;
                     if (aux.getParam().getTypeId() != null) {
                         type = aux.getParam().getTypeId().getType();
+                        CampoDescripcion dcampo = new CampoDescripcion(type, aux.getParam().getId().getIdentifierLiteral());
+                        ts.ponerCampo(declTupel.getId().getIdentifierLiteral(), aux.getParam().getId().getIdentifierLiteral(), dcampo);
+                        aux = aux.getActualParamList();
                     } else if (aux.getParam().getSpecialParam() != null) {
-                        if (aux.getParam().getSpecialParam().getTSB() == TypeEnum.TUPEL) {
-                            type = TypeEnum.TUPEL;
-                        } else {
-                            parser.report_error("No se admite un array como campo de una tupla", aux.getParam());
-                        }
+                        parser.report_error("No se admite un array o una tupla como campo de una tupla", aux.getParam());
                     } else {
                         parser.report_error("No se ha indicado el tipo del campo", aux.getParam());
                     }
-                    CampoDescripcion dcampo = new CampoDescripcion(type, "");
-                    ts.ponerCampo(declTupel.getId().getIdentifierLiteral(), aux.getParam().getId().getIdentifierLiteral(), dcampo);
-                    aux = aux.getActualParamList();
                 }
-
                 if (declTupel.getTupeldecl() != null) {
                     handleTupelDecl(declTupel.getTupeldecl(), declTupel.getId().getIdentifierLiteral());
                 }
@@ -673,7 +646,6 @@ public class analisisSemantico {
     }
 
     public void handleInitTupel(InitTupelNode initTupel, String id) {
-        //TODO: Completar método
         if (initTupel.getParams() != null) {
             ArrayList<ExpressionNode> paramsIn = new ArrayList<>();
             handleParamIn(initTupel.getParams(), paramsIn);
@@ -704,22 +676,6 @@ public class analisisSemantico {
                             break;
                         case STRING:
                             desp += TypeEnum.STRING.getBytes();
-                            break;
-                        case TUPEL:
-                            //TO DO: necesito el id :(
-                            // paramsIn.get(i).getSimplVal().getId() legal ?
-                            
-                            
-                            // aqui node.getIdentifier().getIdentifierLiteral() no tiene porque tener el mismo valor que aux.getName()
-//                            IdDescripcion d = ts.consultaId(params.getName());
-//                            if (d == null) {
-//                                parser.report_error("El campo que se refiere a una tupla no existe dicha tupla", node.getIdentifier());
-//                            }
-//                            if (d.getTipoDescripcion() != TipoDescripcion.dtupel) {
-//                                parser.report_error("El campo que se refiere no es una tupla", node.getIdentifier());
-//                            }
-//                            TupelDescripcion td = (TupelDescripcion) d;
-//                            desp = td.getSize();
                             break;
                     }
                 }
@@ -814,7 +770,7 @@ public class analisisSemantico {
         gc.removeFunctionId(); //quitamos el procedimiento de la pila de procedimientos activos
 
         handleExpresion(node.getExp());
-        
+
         if (tipo != node.getExp().getType()) {
             parser.report_error("Se intenta devolver un dato cuyo tipo no es el mismo que el definido por la función", node);
         }
@@ -1228,11 +1184,9 @@ public class analisisSemantico {
     }
 
     /**
-     * @Manu PROGRAM; DECL_LIST; DECL; ACTUAL_DECL; DECL_ELEM; DECL_ARRAY;
-     * DIM_ARRAY; ARRAY_DECL; INIT_ARRAY; DECL_TUPEL; TUPEL_DECL; INIT_TUPEL;
-     * EXP; SIMPLE_VALUE; GEST_IDX; GESTOR; COTI : handleExpresion debe poner el
-     * resultado como referencia en el nodo porfa jej , màs que nada todo nodo y
-     * derivados que se usa en assig deberá hacerse esto
+     * @Manu PROGRAM; DECL_LIST; DECL; ACTUAL_DECL; DECL_ELEM; DECL_ARRAY; DIM_ARRAY; ARRAY_DECL; INIT_ARRAY; DECL_TUPEL; TUPEL_DECL; INIT_TUPEL; EXP;
+     * SIMPLE_VALUE; GEST_IDX; GESTOR; COTI : handleExpresion debe poner el resultado como referencia en el nodo porfa jej , màs que nada todo nodo y derivados
+     * que se usa en assig deberá hacerse esto
      *
      * @Constantino BINARY_OP; REL_OP; LOGIC_OP; ARIT_OP; NEG_OP; MODIFIER; ID;
      */
