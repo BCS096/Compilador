@@ -483,21 +483,24 @@ public class analisisSemantico {
                 if (desc.getTipoDescripcion() == TipoDescripcion.dvar || desc.getTipoDescripcion() == TipoDescripcion.dconst) {
                     if (gestIdx.getGest() != null) {
                         parser.report_error("Se ha intentado indexar una variable que no es un array o una tupla", gestIdx);
+                    } else {
+                        type = typeFromId(desc);
                     }
-                    type = typeFromId(desc);
                 } else if (desc.getTipoDescripcion() == TipoDescripcion.darray || desc.getTipoDescripcion() == TipoDescripcion.dtupel) {
                     if (gestIdx.getGest() != null) {
                         //va a devolver el desplazamiento
                         desp = handleGestor(gestIdx.getGest(), gestIdx.getId().getIdentifierLiteral(), res);
                         type = res.type;
                     } else {
-                        //handleGestorIdx tiene que devolver el id de la array o tupla sin desplazamiento
+                        type = typeFromId(desc);
                     }
                 }
                 int nv = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
                 gc.generate(InstructionType.CLONE, new Operator3Address(desp, CastType.INT), null, new Operator3Address(nv));
                 res = new Desplazamiento(nv, gestIdx.getId().getIdentifierLiteral(), type);
             }
+        } else {
+            parser.report_error("No se ha puesto un identificador", gestIdx.getId());
         }
     }
 
@@ -521,24 +524,23 @@ public class analisisSemantico {
         return -1;
     }
 
-    //TO DO: volver a hacer
     public int handleGestTupel(GestTupelNode node, String idTupla, Desplazamiento res) {
         IdDescripcion dcampo = ts.consultarCampo(idTupla, node.getIdentifier().getIdentifierLiteral());
         if (dcampo == null) {
             parser.report_error("No existe dicho campo " + node.getIdentifier().getIdentifierLiteral() + " en la tupla " + idTupla, node);
-        }
-        //si llego aqui es que existe dentro de la tupla id
-        //ahora calcular el desplazamiento
-        int desp = 0;
-        if (dcampo.getTipoDescripcion() == TipoDescripcion.dcampo) {
-            CampoDescripcion aux = (CampoDescripcion) dcampo;
-            ArrayList <CampoDescripcion> campos = ts.consultarCampos(idTupla);
-            int i = 0;
-            for (i = 0; i < campos.size(); i++) {
-                if(campos.get(i).getName().equals(node.getIdentifier().getIdentifierLiteral())){
-                    break;
-                }
-                switch (campos.get(i).getType()) {
+            return -1;
+        } else {
+            //ahora calcular el desplazamiento
+            int desp = 0;
+            if (dcampo.getTipoDescripcion() == TipoDescripcion.dcampo) {
+                CampoDescripcion aux = (CampoDescripcion) dcampo;
+                ArrayList<CampoDescripcion> campos = ts.consultarCampos(idTupla);
+                int i = 0;
+                for (i = 0; i < campos.size(); i++) {
+                    if (campos.get(i).getName().equals(node.getIdentifier().getIdentifierLiteral())) {
+                        break;
+                    }
+                    switch (campos.get(i).getType()) {
                         case INT:
                             desp += TypeEnum.INT.getBytes();
                             break;
@@ -551,13 +553,14 @@ public class analisisSemantico {
                         case STRING:
                             desp += TypeEnum.STRING.getBytes();
                             break;
+                    }
                 }
+                res.type = campos.get(i).getType();
+                return desp;
+            } else {
+                parser.report_error("error", node);
+                return -1;
             }
-            res.type = campos.get(i).getType();
-            return desp;
-        } else {
-            parser.report_error("error", node);
-            return -1;
         }
     }
 
@@ -652,36 +655,38 @@ public class analisisSemantico {
             ArrayList<CampoDescripcion> params = ts.consultarCampos(id);
             if (paramsIn.size() != params.size()) {
                 parser.report_error("No se han añadido el número correcto de parámetros", initTupel);
-            }
-            int desp = 0;
-            IdDescripcion aux = ts.consultaId(id);
-            if (aux.getTipoDescripcion() == TipoDescripcion.dtupel) {
-                TupelDescripcion td = (TupelDescripcion) aux;
-                for (int i = 0; i < params.size(); i++) {
-                    if (params.get(i).getType() != paramsIn.get(i).getType()) {
-                        parser.report_error("No coinciden los tipos del valor pasado con el tipo del campo", initTupel.getParams());
-                    }
-                    //calcular desplazamientos
-                    // id[desp] = expressionNode.getReference
-                    gc.generate(InstructionType.ASSINDEX, new Operator3Address(paramsIn.get(i).getReference()), new Operator3Address(desp, CastType.INT), new Operator3Address(td.getVariableNumber()));
-                    switch (params.get(i).getType()) {
-                        case INT:
-                            desp += TypeEnum.INT.getBytes();
-                            break;
-                        case CHAR:
-                            desp += TypeEnum.CHAR.getBytes();
-                            break;
-                        case BOOL:
-                            desp += TypeEnum.BOOL.getBytes();
-                            break;
-                        case STRING:
-                            desp += TypeEnum.STRING.getBytes();
-                            break;
-                    }
-                }
-                td.setSize(desp);
             } else {
-                parser.report_error("No es una tupla", initTupel);
+                int desp = 0;
+                IdDescripcion aux = ts.consultaId(id);
+                if (aux.getTipoDescripcion() == TipoDescripcion.dtupel) {
+                    TupelDescripcion td = (TupelDescripcion) aux;
+                    for (int i = 0; i < params.size(); i++) {
+                        if (params.get(i).getType() != paramsIn.get(i).getType()) {
+                            parser.report_error("No coinciden los tipos del valor pasado con el tipo del campo", initTupel.getParams());
+                        } else {
+                            //calcular desplazamientos
+                            // id[desp] = expressionNode.getReference
+                            gc.generate(InstructionType.ASSINDEX, new Operator3Address(paramsIn.get(i).getReference()), new Operator3Address(desp, CastType.INT), new Operator3Address(td.getVariableNumber()));
+                            switch (params.get(i).getType()) {
+                                case INT:
+                                    desp += TypeEnum.INT.getBytes();
+                                    break;
+                                case CHAR:
+                                    desp += TypeEnum.CHAR.getBytes();
+                                    break;
+                                case BOOL:
+                                    desp += TypeEnum.BOOL.getBytes();
+                                    break;
+                                case STRING:
+                                    desp += TypeEnum.STRING.getBytes();
+                                    break;
+                            }
+                        }
+                    }
+                    td.setSize(desp);
+                } else {
+                    parser.report_error("No es una tupla", initTupel);
+                }
             }
         } else {
             parser.report_error("No se han incorporado valores para assignar a la tupla!", initTupel);
@@ -738,7 +743,6 @@ public class analisisSemantico {
 
         ts.salirBloque();
     }
-//COMO QUE NEW PROC, OS MATO XD es una funcion caps de suro (osea en el gc si pero por lo demas nein nein nein)
 
     public void handleFunc(FuncNode node) {
         TypeEnum tipo = node.getTypeId().getType();
