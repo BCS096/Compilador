@@ -298,4 +298,19 @@ public class TablaSimbolos {
         return this.n;
     }
 
+    public ArrayList<IndexDescripcion> consultarIndices(String idArray) {
+        ArrayList<IndexDescripcion> res = new ArrayList<>();
+        int actual = firstIndice(idArray);
+        if (actual == -1) {
+            return null;
+        }
+        while (!last(actual)) {
+            actual = next(actual);
+            res.add((IndexDescripcion) consultarTe(actual));
+        }
+        //ponemos el último campo
+        res.add((IndexDescripcion) consultarTe(actual));
+        return res;
+    }
+
 }

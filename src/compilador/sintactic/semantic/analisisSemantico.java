@@ -291,7 +291,7 @@ public class analisisSemantico {
                 if (dimArray.getNextDim() != null && !dimArray.getNextDim().isEmpty()) {
                     handleDimArray(dimArray.getNextDim(), id);
                 }
-            }else{
+            } else {
                 parser.report_error("El tipo de la expresión que representa la dimensión no es un entero", dimArray.getDim());
             }
 
@@ -475,8 +475,29 @@ public class analisisSemantico {
                     return ((ConstDescripcion) desc).getType();
                 case darray:
                     return ((ArrayDescripcion) desc).getType();
+                case dtupel:
+                    return ((TupelDescripcion) desc).getType();
                 default:
                     return null;
+            }
+        }
+    }
+
+    public int idFromDesc(IdDescripcion desc) {
+        if (null == desc.getTipoDescripcion()) {
+            return -1;
+        } else {
+            switch (desc.getTipoDescripcion()) {
+                case dvar:
+                    return ((VarDescripcion) desc).getVariableNumber();
+                case dconst:
+                    return ((ConstDescripcion) desc).getVariableNumber();
+                case darray:
+                    return ((ArrayDescripcion) desc).getVariableNumber();
+                case dtupel:
+                    return ((TupelDescripcion) desc).getVariableNumber();
+                default:
+                    return -1;
             }
         }
     }
@@ -500,14 +521,21 @@ public class analisisSemantico {
                     if (gestIdx.getGest() != null) {
                         //va a devolver el desplazamiento
                         desp = handleGestor(gestIdx.getGest(), gestIdx.getId().getIdentifierLiteral(), res);
-                        type = res.type;
+                        if (desc.getTipoDescripcion() == IdDescripcion.TipoDescripcion.dtupel) {
+                            type = res.type;
+                        } else {
+                            ArrayDescripcion d = (ArrayDescripcion) desc;
+                            type = d.getType();
+                        }
                     } else {
                         type = typeFromId(desc);
                     }
                 }
                 int nv = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
                 gc.generate(InstructionType.CLONE, new Operator3Address(desp, CastType.INT), null, new Operator3Address(nv));
-                res = new Desplazamiento(nv, gestIdx.getId().getIdentifierLiteral(), type);
+                res.desp = nv;
+                res.id = gestIdx.getId().getIdentifierLiteral();
+                res.type = type;
             }
         } else {
             parser.report_error("No se ha puesto un identificador", gestIdx.getId());
@@ -521,7 +549,7 @@ public class analisisSemantico {
             if (!a.isInit()) {
                 parser.report_error("Array no inicializada", node);
             } else {
-                return handleGestArray(node.getGestArray(), id);
+                return handleGestArray(node.getGestArray(), id, res);
             }
         } else if (node.getGestTupel() != null) {
             TupelDescripcion a = (TupelDescripcion) ts.consultaId(id);
@@ -534,10 +562,48 @@ public class analisisSemantico {
         return -1;
     }
 
-    public int handleGestArray(GestArrayNode arrayNode, String idArray, Desplazamiento res){
-        
+    public int handleGestArray(GestArrayNode arrayNode, String idArray, Desplazamiento res) {
+        if (arrayNode.getExp() != null) {
+            handleExpresion(arrayNode.getExp());
+            if (arrayNode.getGestArray() != null) {
+                int var = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
+                gc.generate(InstructionType.CLONE, new Operator3Address(arrayNode.getExp().getReference()), null, new Operator3Address(var));
+                return handleGestArrayRecur(arrayNode.getGestArray().getGestArray(), idArray, res, var, 1);
+            } else {
+                int var = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
+                int nbytes = ((ArrayDescripcion) ts.consultaId(idArray)).getType().getBytes();
+                gc.generate(InstructionType.MUL, new Operator3Address(arrayNode.getExp().getReference()), new Operator3Address(nbytes, CastType.INT), new Operator3Address(var));
+                return var;
+            }
+        } else {
+            parser.report_error("No se ha encontrado ninguna expresion para el array", arrayNode);
+            return -1;
+        }
+
     }
-    
+
+    public int handleGestArrayRecur(GestArrayNode arrayNode, String idArray, Desplazamiento res, int ref, int posArray) {
+        if (arrayNode.getExp() != null) {
+            handleExpresion(arrayNode.getExp());
+            if (arrayNode.getGestArray() != null) {
+                int var = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
+                ArrayList<IndexDescripcion> indices = ts.consultarIndices(idArray);
+                gc.generate(InstructionType.MUL, new Operator3Address(ref), new Operator3Address(indices.get(posArray).getDim()), new Operator3Address(var));
+                int var1 = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
+                gc.generate(InstructionType.ADD, new Operator3Address(var), new Operator3Address(arrayNode.getExp().getReference()), new Operator3Address(var1));
+                return handleGestArrayRecur(arrayNode.getGestArray(), idArray, res, var1, posArray + 1);
+            } else {
+                int var = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
+                int nbytes = ((ArrayDescripcion) ts.consultaId(idArray)).getType().getBytes();
+                gc.generate(InstructionType.MUL, new Operator3Address(ref), new Operator3Address(nbytes, CastType.INT), new Operator3Address(var));
+                return var;
+            }
+        } else {
+            parser.report_error("No se ha encontrado ninguna expresión para el array", arrayNode);
+            return -1;
+        }
+    }
+
     public int handleGestTupel(GestTupelNode node, String idTupla, Desplazamiento res) {
         IdDescripcion dcampo = ts.consultarCampo(idTupla, node.getIdentifier().getIdentifierLiteral());
         if (dcampo == null) {
@@ -584,8 +650,13 @@ public class analisisSemantico {
             //COTI : ESTO AHORA LO PASARÀ EL GESTIDX
             //simpleValue.setType(typeFromId(ts.consultaId(simpleValue.getGestor().getId().getIdentifierLiteral())));
             //TO DO : CAMBIAR 
-            handleGestorIdx(simpleValue.getGestor(), simpleValue.getType());
+            Desplazamiento des = new Desplazamiento();
+            handleGestorIdx(simpleValue.getGestor(), des);
             //TO DO : aqui asignar el tipo a simpleValue
+            simpleValue.setType(des.type);
+            int nv = idFromDesc(ts.consultaId(des.id));
+            int var = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
+            gc.generate(InstructionType.INDVALUE, new Operator3Address(nv), new Operator3Address(des.desp, CastType.INT), new Operator3Address(var));
         } else if (simpleValue.getSimpl() != null) {
             //?
             //Si no es INT no se puede negar
@@ -1094,7 +1165,7 @@ public class analisisSemantico {
         }
     }
 
-// CONSTANTIN
+    //TODO:
     public void handleAssig(AssigNode assigNode) {
         IdDescripcion d = ts.consultaId(assigNode.getGestIdx().getId().getIdentifierLiteral());
         Desplazamiento desp = null;
@@ -1110,7 +1181,7 @@ public class analisisSemantico {
                             parser.report_error("Assig error: " + assigNode.getGestIdx().getId().getIdentifierLiteral() + " is an already declared constant", assigNode.getInitArray());
                         } else {
                             darray.setInit(true);
-                            handleInitArray(assigNode.getInitArray());
+                            //handleInitArray(assigNode.getInitArray());
                             gc.generate(InstructionType.CLONE, new Operator3Address(assigNode.getInitArray().getReference()), null, new Operator3Address(assigNode.getGestIdx().getReference()));
                         }
                     }
@@ -1125,7 +1196,7 @@ public class analisisSemantico {
                             parser.report_error("Assig error: " + assigNode.getGestIdx().getId().getIdentifierLiteral() + " is an already declared constant", assigNode.getInitArray());
                         } else {
                             dtupel.setInit(true);
-                            handleInitTupel(assigNode.getInitTupel());
+                            //handleInitTupel(assigNode.getInitTupel());
                             gc.generate(InstructionType.CLONE, new Operator3Address(assigNode.getInitTupel().getReference()), null, new Operator3Address(assigNode.getGestIdx().getReference()));
                         }
                     }
@@ -1202,9 +1273,11 @@ public class analisisSemantico {
     }
 
     /**
-     * @Manu PROGRAM; DECL_LIST; DECL; ACTUAL_DECL; DECL_ELEM; DECL_ARRAY; DIM_ARRAY; ARRAY_DECL; INIT_ARRAY; DECL_TUPEL; TUPEL_DECL; INIT_TUPEL; EXP;
-     * SIMPLE_VALUE; GEST_IDX; GESTOR; COTI : handleExpresion debe poner el resultado como referencia en el nodo porfa jej , màs que nada todo nodo y derivados
-     * que se usa en assig deberá hacerse esto
+     * @Manu PROGRAM; DECL_LIST; DECL; ACTUAL_DECL; DECL_ELEM; DECL_ARRAY;
+     * DIM_ARRAY; ARRAY_DECL; INIT_ARRAY; DECL_TUPEL; TUPEL_DECL; INIT_TUPEL;
+     * EXP; SIMPLE_VALUE; GEST_IDX; GESTOR; COTI : handleExpresion debe poner el
+     * resultado como referencia en el nodo porfa jej , màs que nada todo nodo y
+     * derivados que se usa en assig deberá hacerse esto
      *
      * @Constantino BINARY_OP; REL_OP; LOGIC_OP; ARIT_OP; NEG_OP; MODIFIER; ID;
      */
