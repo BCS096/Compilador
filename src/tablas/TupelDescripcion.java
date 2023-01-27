@@ -12,7 +12,7 @@ public class TupelDescripcion extends IdDescripcion{
     private final int variableNumber;
     private final TypeEnum type;
     private final boolean isVar;
-    private int size; //al ser diferentes tipos como se haria
+    private int size;
     private boolean init;
     
     public TupelDescripcion(int variableNumber, TypeEnum type, boolean isVar, boolean init) {

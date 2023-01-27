@@ -39,7 +39,10 @@ public class TablaSimbolos {
     }
 
     public IdDescripcion consultaId(String id) {
-        return td.get(id).getDescripcion();
+        if(td.existe(id)){
+            return td.get(id).getDescripcion();
+        }
+        return null;
     }
 
     public void entrarBloque() {
@@ -121,7 +124,7 @@ public class TablaSimbolos {
     }
 
     public IdDescripcion consultarCampo(String idTupel, String idCampo) {
-        if (td.existe(idTupel)) {
+        if (!td.existe(idTupel)) {
             throw new UnsupportedOperationException("No existe la tupla con este nombre: " + idTupel);
         }
         IdDescripcion d = td.get(idTupel).getDescripcion();
@@ -184,6 +187,18 @@ public class TablaSimbolos {
         }
         return td.get(id).getFirst();
     }
+    
+    public int firstCampo(String id) {
+        if (!td.existe(id)) {
+            throw new UnsupportedOperationException("No existe la tupla con este nombre: " + id);
+        }
+        IdDescripcion dtupla = td.get(id).getDescripcion();
+        if (dtupla.getTipoDescripcion() != IdDescripcion.TipoDescripcion.dtupel) {
+            throw new UnsupportedOperationException("No es una tupla");
+        }
+        return td.get(id).getFirst();
+    }
+
 
     public ArrayList<ArgDescripcion> consultarParams(String id) {
         ArrayList<ArgDescripcion> res = new ArrayList<>();
@@ -200,6 +215,21 @@ public class TablaSimbolos {
         return res;
     }
 
+    public ArrayList<CampoDescripcion> consultarCampos(String id) {
+        ArrayList<CampoDescripcion> res = new ArrayList<>();
+        int actual = firstCampo(id);
+        if (actual == -1) {
+            return null;
+        }
+        while (!last(actual)) {
+            actual = next(actual);
+            res.add((CampoDescripcion) consultarTe(actual));
+        }
+        //ponemos el último campo
+        res.add((CampoDescripcion) consultarTe(actual));
+        return res;
+    }
+    
     public int next(int idx) { //puede servir tanto para indices,campos,parametros
         if (te.get(idx).getNext() == -1) {
             throw new UnsupportedOperationException("El indice/campo/parametro actual es el último");
