@@ -11,7 +11,7 @@ import types.TypeEnum;
  * @author tomeu
  */
 public class Desplazamiento {
-    int desp;
+    int desp; // número de la variable que estarà en la tabla de simbolos que guarda el desplazamiento
     String id;
     public TypeEnum type;
     
