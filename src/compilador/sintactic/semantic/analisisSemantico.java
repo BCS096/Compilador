@@ -5,12 +5,12 @@
  */
 package compilador.sintactic.semantic;
 
+import compilador.ensamblado.AssemblyGenerator;
 import compilador.main.MVP;
 import compilador.sintactic.Parser;
 import compilador.sintactic.ParserSym;
 import compilador.sintactic.nodes.*;
 import compilador.sintactic.semantic.Operator3Address.CastType;
-
 import java.util.ArrayList;
 import tablas.*;
 import tablas.IdDescripcion.TipoDescripcion;
@@ -112,6 +112,8 @@ public class analisisSemantico {
         gc.getInstruccions().forEach(ins -> {
             mvp.semanticCode(new StringBuilder(ins.toString() + '\n'));
         });
+        AssemblyGenerator ensamblado = new AssemblyGenerator(mvp.getActualFile(), tv, tp, gc.getInstruccions());
+        ensamblado.mainMake();
     }
 
     public void handleDeclList(DeclListNode declList) {

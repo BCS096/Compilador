@@ -36,6 +36,7 @@ public class MVP extends javax.swing.JFrame {
     JScrollPane[] semScrollPanesC;
     JScrollPane[] semScrollPanesE;
     String carpeta = null;
+    private String currentFile;
     private boolean semantic = false;
     private boolean sintactic = false;
 
@@ -297,6 +298,7 @@ public class MVP extends javax.swing.JFrame {
     }
 
     public void addLexic(String fileName) {
+        currentFile = fileName;
         ++currentLexicTextIdx;
         this.lexicText = new StringBuilder("");
         lexicPanes[currentLexicTextIdx] = new JTextArea("Lexic here...");
@@ -399,5 +401,9 @@ public class MVP extends javax.swing.JFrame {
     
     public void sintactic(boolean sintactic){
         this.sintactic = sintactic;
+    }
+    
+    public String getActualFile(){
+        return this.currentFile;
     }
 }
