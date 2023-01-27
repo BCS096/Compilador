@@ -7,7 +7,7 @@ public class ArrayDescripcion extends IdDescripcion {
     private final int variableNumber;
     private final TypeEnum type;
     private final boolean isVar;
-    private int size;
+    private int size; // numero de la variable que está en la tabla de variables que contiene el total de ocupacion de bytes de la array
     private boolean init;
     
     public ArrayDescripcion(int variableNumber, TypeEnum type, boolean isVar, boolean init) {

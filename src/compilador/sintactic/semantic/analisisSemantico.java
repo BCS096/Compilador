@@ -278,36 +278,44 @@ public class analisisSemantico {
 
         if (initialized) {
             //Caso de que ya esté inicializado (tiene su declaración y eso significa que si)
-            handleInitArray(declArray.getArrayDecl().getInitArrayNode());
+            handleArrayDecl(declArray.getArrayDecl(), tipo, id);
         }
     }
 
-    public void handleDimArray(DimArrayNode dimArray) {
-        //TODO: Poner []? en gc me refiero, por discutir
-        if (dimArray.getNextDim() != null && !dimArray.getNextDim().isEmpty()) {
-            handleDimArray(dimArray.getNextDim());
-        }
-
+    public void handleDimArray(DimArrayNode dimArray, String id) {
         if (dimArray.getDim() != null) {
             handleExpresion(dimArray.getDim());
+            if (dimArray.getDim().getType() != TypeEnum.INT) {
+                IndexDescripcion idxd = new IndexDescripcion(dimArray.getDim().getReference());
+                ts.ponerIndice(id, idxd);
+                if (dimArray.getNextDim() != null && !dimArray.getNextDim().isEmpty()) {
+                    handleDimArray(dimArray.getNextDim(), id);
+                }
+            }else{
+                parser.report_error("El tipo de la expresión que representa la dimensión no es un entero", dimArray.getDim());
+            }
+
         } else {
             parser.report_error("No valid dimension found!", dimArray);
         }
     }
 
-    public void handleInitArray(InitArrayNode initArray) {
+    public void handleInitArray(InitArrayNode initArray, TypeEnum type, String id) {
         //Comprobación de tipo ya no es posible, no está en la producción. Pasarla como parámetro de alguna manera?????
-
-        if (initArray.getDimArray() != null) {
-            handleDimArray(initArray.getDimArray());
+        if (type != initArray.getTypeId().getType()) {
+            parser.report_error("No coincide el tipo en la istancia de la array", initArray.getTypeId());
         } else {
-            parser.report_error("No se ha encontrado la dimensión del array!", initArray);
+            if (initArray.getDimArray() != null) {
+                handleDimArray(initArray.getDimArray(), id);
+            } else {
+                parser.report_error("No se ha encontrado la dimensión del array!", initArray);
+            }
         }
     }
 
-    public void handleArrayDecl(InitArrayNode initArray) {
-        if (!initArray.isEmpty()) {
-            handleInitArray(initArray);
+    public void handleArrayDecl(ArrayDeclNode node, TypeEnum type, String id) {
+        if (node.getInitArrayNode() != null) {
+            handleInitArray(node.getInitArrayNode(), type, id);
         }
     }
 
@@ -526,6 +534,10 @@ public class analisisSemantico {
         return -1;
     }
 
+    public int handleGestArray(GestArrayNode arrayNode, String idArray, Desplazamiento res){
+        
+    }
+    
     public int handleGestTupel(GestTupelNode node, String idTupla, Desplazamiento res) {
         IdDescripcion dcampo = ts.consultarCampo(idTupla, node.getIdentifier().getIdentifierLiteral());
         if (dcampo == null) {
