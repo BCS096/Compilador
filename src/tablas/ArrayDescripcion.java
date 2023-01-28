@@ -6,15 +6,13 @@ public class ArrayDescripcion extends IdDescripcion {
     
     private final int variableNumber;
     private final TypeEnum type;
-    private final boolean isVar;
     private int size; // numero de la variable que está en la tabla de variables que contiene el total de ocupacion de bytes de la array
     private boolean init;
     
-    public ArrayDescripcion(int variableNumber, TypeEnum type, boolean isVar, boolean init) {
+    public ArrayDescripcion(int variableNumber, TypeEnum type, boolean init) {
         super(TipoDescripcion.darray);
         this.variableNumber = variableNumber;
         this.type = type;
-        this.isVar = isVar;
         this.size = -1;
         this.init = init;
     }
@@ -27,10 +25,6 @@ public class ArrayDescripcion extends IdDescripcion {
         return type;
     }
     
-    public boolean isVar() {
-        return isVar;
-    }
-
     public int getSize() {
         return size;
     }
@@ -53,6 +47,6 @@ public class ArrayDescripcion extends IdDescripcion {
 
     @Override
     public String toString() {
-        return "ArrayDescription{" + "variableNumber=" + variableNumber + ", type=" + type + ", isVar=" + isVar + ", size=" + size + '}';
+        return "ArrayDescription{" + "variableNumber=" + variableNumber + ", type=" + type + ", size=" + size + '}';
     }
 }
