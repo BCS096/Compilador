@@ -31,6 +31,7 @@ public class analisisSemantico {
     private final TablaVariables tv;
     private final TablaProcedimientos tp;
     private final CodeGeneration3Address gc;
+    private static String tempId = null;
 
     public analisisSemantico(ProgramNode program, Parser parser) {
         this.programNode = program;
@@ -648,6 +649,7 @@ public class analisisSemantico {
             boolean isIdx = handleGestorIdx(simpleValue.getGestor(), des);
             //TO DO : aqui asignar el tipo a simpleValue
             simpleValue.setType(des.type);
+            tempId = des.id;
             int nv = idFromDesc(ts.consultaId(des.id));
             int var = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
             if (isIdx) {
@@ -1194,25 +1196,81 @@ public class analisisSemantico {
                         break;
                     case darray:
                         if (isIdx) {
-                            if(desp.type != assigNode.getExpression().getType()){
+                            if (desp.type != assigNode.getExpression().getType()) {
                                 parser.report_error("El tipo de la indexación no coincide con el de la expresión", assigNode);
-                            }else{
-                                 gc.generate(InstructionType.ASSINDEX, new Operator3Address(assigNode.getExpression().getReference()), new Operator3Address(desp.desp, CastType.INT), new Operator3Address(idFromDesc(d)));
+                            } else {
+                                gc.generate(InstructionType.ASSINDEX, new Operator3Address(assigNode.getExpression().getReference()), new Operator3Address(desp.desp, CastType.INT), new Operator3Address(idFromDesc(d)));
                             }
-                        }else{
+                        } else {
                             //copiar cada posicion que tiene la array a asignar a cada pos del array de id
+                            if (assigNode.getExpression().getType() == TypeEnum.ARRAY) {
+                                boolean iguales = true;
+                                //Id id
+                                ArrayList<IndexDescripcion> idDesc = ts.consultarIndices(id);
+                                //Id Expresion
+                                ArrayList<IndexDescripcion> expDesc = ts.consultarIndices(tempId);
+                                if (idDesc.size() == expDesc.size()) {
+                                    for (int i = 0; i < idDesc.size(); i++) {
+                                        if (idDesc.get(i).getDim() != expDesc.get(i).getDim()) {
+                                            iguales = false;
+                                            break;
+                                        }
+                                    }
+                                    if (iguales) {
+                                        if (assigNode.getExpression().getType() == typeFromId(ts.consultaId(id))) {
+                                            //COPIAR DE UNO A OTRO
+                                            for (int i = 0; i < idDesc.size(); i++) {
+                                                //La vd que no sé si está bien lo estoy haciendo mientras hablo con mis padres y a punto de coméh
+                                                //Pongo esto temporalmente TODO:Modificar
+                                                IdDescripcion temp = expDesc.get(i);
+                                                ts.poner(id, temp);
+                                            }
+                                        } else {
+                                            parser.report_error("Los tipos del Identificador y la Expresión no coinciden", assigNode);
+                                        }
+                                    } else {
+                                        parser.report_error("Los tamaños no coinciden, revisa la asignación de la array", assigNode);
+                                    }
+                                } else {
+                                    parser.report_error("Los tamaños no coinciden, revisa la asignación de la array", assigNode);
+                                }
+                            } else {
+                                parser.report_error("No es una array válida", assigNode);
+                            }
                         }
                         break;
                     case dtupel:
                         if (isIdx) {
-                            if(desp.type != assigNode.getExpression().getType()){
+                            if (desp.type != assigNode.getExpression().getType()) {
                                 parser.report_error("El tipo de la indexación no coincide con el de la expresión", assigNode);
-                            }else{
-                                 gc.generate(InstructionType.ASSINDEX, new Operator3Address(assigNode.getExpression().getReference()), new Operator3Address(desp.desp, CastType.INT), new Operator3Address(idFromDesc(d)));
+                            } else {
+                                gc.generate(InstructionType.ASSINDEX, new Operator3Address(assigNode.getExpression().getReference()), new Operator3Address(desp.desp, CastType.INT), new Operator3Address(idFromDesc(d)));
                             }
-                        }else{
+                        } else {
                             //copiar cada campo que tiene la tupla a asignar a cada campo del la tupla de id
-                            //
+                            if (assigNode.getExpression().getType() == TypeEnum.TUPEL) {
+                                //Id id
+                                ArrayList<CampoDescripcion> idDesc = ts.consultarCampos(id);
+                                //Id Expresion
+                                ArrayList<CampoDescripcion> expDesc = ts.consultarCampos(tempId);
+                                if (idDesc.size() == expDesc.size()) {
+                                    for (int i = 0; i < idDesc.size(); i++) {
+                                        if (idDesc.get(i).getType() == expDesc.get(i).getType()) {
+                                            //No estoy seguro, pongo esto temporalmente TODO:Modificar
+                                            IdDescripcion temp = expDesc.get(i);
+                                            ts.poner(id, temp);
+                                        } else {
+                                            parser.report_error("El tipo del campo no coincide con el del dato", assigNode);
+                                            break;
+                                        }
+                                    }
+
+                                } else {
+                                    parser.report_error("Los tamaños no coinciden, revisa la asignación de la tupla", assigNode);
+                                }
+                            } else {
+                                parser.report_error("No es una tupla válida", assigNode);
+                            }
                         }
                         break;
                     default:
