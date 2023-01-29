@@ -254,15 +254,26 @@ public class analisisSemantico {
         ArrayDescripcion arr;
         switch (modifier) {
             case dvar:
-                int nVar = gc.newVar(Variable.TipoVariable.VARIABLE, tipo, true, false);
-
-                arr = new ArrayDescripcion(nVar, tipo, initialized);
-                try {
-                    ts.poner(id, arr);
-                } catch (IllegalArgumentException e) {
-                    parser.report_error("Variable " + id + " ya está definida", declArray);
+                if (tipo == TypeEnum.ARRAY || tipo == TypeEnum.TUPEL) {
+                    switch (tipo) {
+                        case ARRAY:
+                            parser.syntax_error(new java_cup.runtime.Symbol(25));
+                            break;
+                        case TUPEL:
+                            parser.syntax_error(new java_cup.runtime.Symbol(26));
+                            break;
+                    }
+                } else {
+                    int nVar = gc.newVar(Variable.TipoVariable.VARIABLE, tipo, true, false);
+                    arr = new ArrayDescripcion(nVar, tipo, initialized);
+                    try {
+                        ts.poner(id, arr);
+                    } catch (IllegalArgumentException e) {
+                        parser.report_error("Variable " + id + " ya está definida", declArray);
+                        tv.decrement();
+                    }
+                    break;
                 }
-                break;
             case dconst:
                 parser.syntax_error(new java_cup.runtime.Symbol(39));
             default:
@@ -470,6 +481,8 @@ public class analisisSemantico {
                     return ((ArrayDescripcion) desc).getType();
                 case dtupel:
                     return ((TupelDescripcion) desc).getType();
+                case dstring:
+                    return TypeEnum.STRING;
                 default:
                     return null;
             }
@@ -489,6 +502,8 @@ public class analisisSemantico {
                     return ((ArrayDescripcion) desc).getVariableNumber();
                 case dtupel:
                     return ((TupelDescripcion) desc).getVariableNumber();
+                case dstring:
+                    return ((StringDescripcion) desc).getVariableNumber();
                 default:
                     return -1;
             }
@@ -504,7 +519,8 @@ public class analisisSemantico {
             if (desc == null) {
                 parser.report_error("No existe el identificador", gestIdx.getId());
             } else {
-                if (desc.getTipoDescripcion() == TipoDescripcion.dvar || desc.getTipoDescripcion() == TipoDescripcion.dconst) {
+                if (desc.getTipoDescripcion() == TipoDescripcion.dvar || desc.getTipoDescripcion() == TipoDescripcion.dconst
+                        || desc.getTipoDescripcion() == TipoDescripcion.dstring) {
                     if (gestIdx.getGest() != null) {
                         parser.report_error("Se ha intentado indexar una variable que no es un array o una tupla", gestIdx);
                     } else {
@@ -524,6 +540,9 @@ public class analisisSemantico {
                     } else {
                         type = typeFromId(desc);
                     }
+                } else {
+                    parser.report_error("El identificador no tiene un tipo válido", gestIdx);
+                    return isIdx;
                 }
                 int nv = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
                 gc.generate(InstructionType.CLONE, new Operator3Address(desp, CastType.INT), null, new Operator3Address(nv));
@@ -532,7 +551,7 @@ public class analisisSemantico {
                 res.type = type;
             }
         } else {
-            parser.report_error("No se ha puesto un identificador", gestIdx.getId());
+            parser.report_error("No se ha puesto un identificador", gestIdx);
         }
         return isIdx;
     }
@@ -541,17 +560,25 @@ public class analisisSemantico {
     public int handleGestor(GestorNode node, String id, Desplazamiento res) {
         if (node.getGestArray() != null) {
             ArrayDescripcion a = (ArrayDescripcion) ts.consultaId(id);
-            if (!a.isInit()) {
-                parser.report_error("Array no inicializada", node);
+            if (a == null) {
+                parser.report_error("No existe dicho id", node);
             } else {
-                return handleGestArray(node.getGestArray(), id, res);
+                if (!a.isInit()) {
+                    parser.report_error("Array no inicializada", node);
+                } else {
+                    return handleGestArray(node.getGestArray(), id, res);
+                }
             }
         } else if (node.getGestTupel() != null) {
             TupelDescripcion a = (TupelDescripcion) ts.consultaId(id);
-            if (!a.isInit()) {
-                parser.report_error("Tupla no inicializada", node);
+            if (a == null) {
+                parser.report_error("No existe dicho id", node);
             } else {
-                return handleGestTupel(node.getGestTupel(), id, res);
+                if (!a.isInit()) {
+                    parser.report_error("Tupla no inicializada", node);
+                } else {
+                    return handleGestTupel(node.getGestTupel(), id, res);
+                }
             }
         }
         return -1;
@@ -560,15 +587,26 @@ public class analisisSemantico {
     public int handleGestArray(GestArrayNode arrayNode, String idArray, Desplazamiento res) {
         if (arrayNode.getExp() != null) {
             handleExpresion(arrayNode.getExp());
-            if (arrayNode.getGestArray() != null) {
-                int var = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
-                gc.generate(InstructionType.CLONE, new Operator3Address(arrayNode.getExp().getReference()), null, new Operator3Address(var));
-                return handleGestArrayRecur(arrayNode.getGestArray().getGestArray(), idArray, res, var, 1);
+            if (arrayNode.getExp().getType() != TypeEnum.INT) {
+                parser.report_error("El valor de la dimensión no es de tipo entero", arrayNode.getExp());
+                return -1;
             } else {
-                int var = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
-                int nbytes = ((ArrayDescripcion) ts.consultaId(idArray)).getType().getBytes();
-                gc.generate(InstructionType.MUL, new Operator3Address(arrayNode.getExp().getReference()), new Operator3Address(nbytes, CastType.INT), new Operator3Address(var));
-                return var;
+                if (arrayNode.getGestArray() != null) {
+                    int var = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
+                    gc.generate(InstructionType.CLONE, new Operator3Address(arrayNode.getExp().getReference()), null, new Operator3Address(var));
+                    return handleGestArrayRecur(arrayNode.getGestArray().getGestArray(), idArray, res, var, 1);
+                } else {
+                    int var = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
+                    ArrayDescripcion darray = (ArrayDescripcion) ts.consultaId(idArray);
+                    if (darray == null) {
+                        parser.report_error("No existe dicho id", arrayNode);
+                        return -1;
+                    } else {
+                        int nbytes = darray.getType().getBytes();
+                        gc.generate(InstructionType.MUL, new Operator3Address(arrayNode.getExp().getReference()), new Operator3Address(nbytes, CastType.INT), new Operator3Address(var));
+                        return var;
+                    }
+                }
             }
         } else {
             parser.report_error("No se ha encontrado ninguna expresion para el array", arrayNode);
@@ -580,18 +618,29 @@ public class analisisSemantico {
     public int handleGestArrayRecur(GestArrayNode arrayNode, String idArray, Desplazamiento res, int ref, int posArray) {
         if (arrayNode.getExp() != null) {
             handleExpresion(arrayNode.getExp());
-            if (arrayNode.getGestArray() != null) {
-                int var = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
-                ArrayList<IndexDescripcion> indices = ts.consultarIndices(idArray);
-                gc.generate(InstructionType.MUL, new Operator3Address(ref), new Operator3Address(indices.get(posArray).getDim()), new Operator3Address(var));
-                int var1 = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
-                gc.generate(InstructionType.ADD, new Operator3Address(var), new Operator3Address(arrayNode.getExp().getReference()), new Operator3Address(var1));
-                return handleGestArrayRecur(arrayNode.getGestArray(), idArray, res, var1, posArray + 1);
+            if (arrayNode.getExp().getType() != TypeEnum.INT) {
+                parser.report_error("El valor de la dimensión no es de tipo entero", arrayNode.getExp());
+                return -1;
             } else {
-                int var = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
-                int nbytes = ((ArrayDescripcion) ts.consultaId(idArray)).getType().getBytes();
-                gc.generate(InstructionType.MUL, new Operator3Address(ref), new Operator3Address(nbytes, CastType.INT), new Operator3Address(var));
-                return var;
+                if (arrayNode.getGestArray() != null) {
+                    int var = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
+                    ArrayList<IndexDescripcion> indices = ts.consultarIndices(idArray);
+                    gc.generate(InstructionType.MUL, new Operator3Address(ref), new Operator3Address(indices.get(posArray).getDim()), new Operator3Address(var));
+                    int var1 = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
+                    gc.generate(InstructionType.ADD, new Operator3Address(var), new Operator3Address(arrayNode.getExp().getReference()), new Operator3Address(var1));
+                    return handleGestArrayRecur(arrayNode.getGestArray(), idArray, res, var1, posArray + 1);
+                } else {
+                    int var = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
+                    ArrayDescripcion darray = (ArrayDescripcion) ts.consultaId(idArray);
+                    if (darray == null) {
+                        parser.report_error("No existe dicho id", arrayNode);
+                        return -1;
+                    } else {
+                        int nbytes = darray.getType().getBytes();
+                        gc.generate(InstructionType.MUL, new Operator3Address(ref), new Operator3Address(nbytes, CastType.INT), new Operator3Address(var));
+                        return var;
+                    }
+                }
             }
         } else {
             parser.report_error("No se ha encontrado ninguna expresión para el array", arrayNode);
@@ -641,17 +690,12 @@ public class analisisSemantico {
 
     public void handleSimpleValue(SimpleValueNode simpleValue) {
         if (simpleValue.getGestor() != null) {
-            //Caso que el tipo es de un id
-            //COTI : ESTO AHORA LO PASARÀ EL GESTIDX
-            //simpleValue.setType(typeFromId(ts.consultaId(simpleValue.getGestor().getId().getIdentifierLiteral())));
-            //TO DO : CAMBIAR 
             Desplazamiento des = new Desplazamiento();
             boolean isIdx = handleGestorIdx(simpleValue.getGestor(), des);
-            //TO DO : aqui asignar el tipo a simpleValue
             simpleValue.setType(des.type);
             tempId = des.id;
             int nv = idFromDesc(ts.consultaId(des.id));
-            int var = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
+            int var = gc.newVar(Variable.TipoVariable.VARIABLE, des.type, false, false);
             if (isIdx) {
                 gc.generate(InstructionType.INDVALUE, new Operator3Address(nv), new Operator3Address(des.desp, CastType.INT), new Operator3Address(var));
             } else {
@@ -669,10 +713,11 @@ public class analisisSemantico {
                 //le pasamos la referencia a simpleValue para que la use en futuro handler
                 simpleValue.setReference(var);
             } else {
-                parser.report_error("No se ha encontrado un valor adecuado, " + simpleValue.getType().getTypeString() + " encontrado y se esperaba " + TypeEnum.INT.getTypeString(), this);
+                parser.report_error("No se ha encontrado un valor adecuado, " + simpleValue.getType().getTypeString() + " encontrado y se esperaba " + TypeEnum.INT.getTypeString(), simpleValue);
             }
         } else if (simpleValue.getInstExp() != null) {
             handleInstExp(simpleValue.getInstExp());
+            simpleValue.setType(simpleValue.getInstExp().getType());
             if (simpleValue.getType() != null && simpleValue.getType() == TypeEnum.VOID) {
                 parser.report_error("Method does not return anything", simpleValue.getInstExp());
             } else if (simpleValue.getType() == TypeEnum.NULL) {
@@ -682,8 +727,8 @@ public class analisisSemantico {
             }
             simpleValue.setType(simpleValue.getInstExp().getType());
         } else if (simpleValue.getLiteral() != null) {
-            //TODO: revisar si va benne
-            handleLiteral(simpleValue.getLiteral().getLiteral(), simpleValue.getLiteral().getType());
+            simpleValue.setReference(handleLiteral(simpleValue.getLiteral().getLiteral(), simpleValue.getLiteral().getType()));
+            simpleValue.setType(simpleValue.getLiteral().getType());
         } else {
             parser.report_error("No suitable development found!", simpleValue);
         }
@@ -696,7 +741,12 @@ public class analisisSemantico {
             if (declTupel.getId() != null) {
                 int nVar = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.TUPEL, false, true);
                 boolean init = declTupel.getTupeldecl() != null;
-                ts.poner(declTupel.getId().getIdentifierLiteral(), new TupelDescripcion(nVar, TypeEnum.TUPEL, init));
+                try {
+                    ts.poner(declTupel.getId().getIdentifierLiteral(), new TupelDescripcion(nVar, TypeEnum.TUPEL, init));
+                } catch (IllegalArgumentException e) {
+                    parser.report_error("Ya existe un identificador con este nombre", declTupel.getId());
+                    tv.decrement();
+                }
                 if (declTupel.getParams() != null && !declTupel.getParams().isEmpty() && declTupel.getTupeldecl() != null) {
                     //gestion de los campos
                     ActualParamListNode aux = declTupel.getParams().getActualParamList();
@@ -708,7 +758,11 @@ public class analisisSemantico {
                             ts.ponerCampo(declTupel.getId().getIdentifierLiteral(), aux.getParam().getId().getIdentifierLiteral(), dcampo);
                             aux = aux.getActualParamList();
                         } else if (aux.getParam().getSpecialParam() != null) {
-                            parser.report_error("No se admite un array o una tupla como campo de una tupla", aux.getParam());
+                            if (aux.getParam().getSpecialParam().getTypeId().getType() == TypeEnum.ARRAY) {
+                                parser.syntax_error(new java_cup.runtime.Symbol(25));
+                            } else {//tupel case
+                                parser.syntax_error(new java_cup.runtime.Symbol(26));
+                            }
                         } else {
                             parser.report_error("No se ha indicado el tipo del campo", aux.getParam());
                         }
@@ -745,34 +799,38 @@ public class analisisSemantico {
             } else {
                 int desp = 0;
                 IdDescripcion aux = ts.consultaId(id);
-                if (aux.getTipoDescripcion() == TipoDescripcion.dtupel) {
-                    TupelDescripcion td = (TupelDescripcion) aux;
-                    for (int i = 0; i < params.size(); i++) {
-                        if (params.get(i).getType() != paramsIn.get(i).getType()) {
-                            parser.report_error("No coinciden los tipos del valor pasado con el tipo del campo", initTupel.getParams());
-                        } else {
-                            //calcular desplazamientos
-                            // id[desp] = expressionNode.getReference
-                            gc.generate(InstructionType.ASSINDEX, new Operator3Address(paramsIn.get(i).getReference()), new Operator3Address(desp, CastType.INT), new Operator3Address(td.getVariableNumber()));
-                            switch (params.get(i).getType()) {
-                                case INT:
-                                    desp += TypeEnum.INT.getBytes();
-                                    break;
-                                case CHAR:
-                                    desp += TypeEnum.CHAR.getBytes();
-                                    break;
-                                case BOOL:
-                                    desp += TypeEnum.BOOL.getBytes();
-                                    break;
-                                case STRING:
-                                    desp += TypeEnum.STRING.getBytes();
-                                    break;
+                if (aux == null) {
+                    parser.report_error("No existe dicho id", initTupel);
+                } else {
+                    if (aux.getTipoDescripcion() == TipoDescripcion.dtupel) {
+                        TupelDescripcion td = (TupelDescripcion) aux;
+                        for (int i = 0; i < params.size(); i++) {
+                            if (params.get(i).getType() != paramsIn.get(i).getType()) {
+                                parser.report_error("No coinciden los tipos del valor pasado con el tipo del campo", initTupel.getParams());
+                            } else {
+                                //calcular desplazamientos
+                                // id[desp] = expressionNode.getReference
+                                gc.generate(InstructionType.ASSINDEX, new Operator3Address(paramsIn.get(i).getReference()), new Operator3Address(desp, CastType.INT), new Operator3Address(td.getVariableNumber()));
+                                switch (params.get(i).getType()) {
+                                    case INT:
+                                        desp += TypeEnum.INT.getBytes();
+                                        break;
+                                    case CHAR:
+                                        desp += TypeEnum.CHAR.getBytes();
+                                        break;
+                                    case BOOL:
+                                        desp += TypeEnum.BOOL.getBytes();
+                                        break;
+                                    case STRING:
+                                        desp += TypeEnum.STRING.getBytes();
+                                        break;
+                                }
                             }
                         }
+                        td.setSize(desp);
+                    } else {
+                        parser.report_error("No es una tupla", initTupel);
                     }
-                    td.setSize(desp);
-                } else {
-                    parser.report_error("No es una tupla", initTupel);
                 }
             }
         } else {
@@ -907,7 +965,7 @@ public class analisisSemantico {
             ts.poner(id, dvar);
         } catch (IllegalArgumentException e) {
             parser.report_error("Variable " + id + " ya está definida", node);
-            tp.decrement();
+            tv.decrement();
         }
     }
 
@@ -981,26 +1039,27 @@ public class analisisSemantico {
                 if (node.getForInst() != null) {
                     String id = node.getForInst().getIdentifier().getIdentifierLiteral();
                     IdDescripcion d = ts.consultaId(id);
-
-                    if (node.getForInst().getExpression() == null) {
-                        handleSpecialOp(node.getForInst().getSpecialOp(), node.getForInst().getIdentifier());
-                    } else { // ID = EXP
-                        handleExpresion(node.getExpression());
-                        IdDescripcion idd = ts.consultaId(node.getForInst().getIdentifier().getIdentifierLiteral());
-                        VarDescripcion dvar = null;
-                        if (d.getTipoDescripcion() == IdDescripcion.TipoDescripcion.dvar) {
-                            dvar = (VarDescripcion) idd;
-                        } else {
-                            parser.report_error("El identificador no es una variable", id);
-                        }
-                        if (dvar != null) {
-                            if (node.getForInst().getExpression().getType() != dvar.getType()) {
-                                parser.report_error("Se intenta hacer una asignación con diferentes tsb", id);
+                    if (d == null) {
+                        parser.report_error("No existe dicho id", node.getForInst().getIdentifier());
+                    } else {
+                        if (node.getForInst().getExpression() == null) {
+                            handleSpecialOp(node.getForInst().getSpecialOp(), node.getForInst().getIdentifier());
+                        } else { // ID = EXP
+                            handleExpresion(node.getExpression());
+                            IdDescripcion idd = ts.consultaId(node.getForInst().getIdentifier().getIdentifierLiteral());
+                            if (d.getTipoDescripcion() == IdDescripcion.TipoDescripcion.dconst) {
+                                parser.report_error("El identificador no es una variable", node.getForInst().getIdentifier());
+                            } else {
+                                if (idd != null) {
+                                    if (node.getForInst().getExpression().getType() != typeFromId(idd)) {
+                                        parser.report_error("Se intenta hacer una asignación con diferentes tsb", node.getForInst().getIdentifier());
+                                    }
+                                    gc.generate(InstructionType.CLONE, new Operator3Address(node.getExpression().getReference()), null, new Operator3Address(idFromDesc(idd)));
+                                }
                             }
-                            gc.generate(InstructionType.CLONE, new Operator3Address(node.getExpression().getReference()), null, new Operator3Address(dvar.getVariableNumber()));
                         }
-
                     }
+
                 }
                 gc.generate(InstructionType.GOTO, null, null, new Operator3Address(againFor));
                 gc.generate(InstructionType.SKIP, null, null, new Operator3Address(finalFor));
@@ -1031,23 +1090,27 @@ public class analisisSemantico {
 
     public void handleSpecialOp(SpecialOpNode node, IdentifierNode id) {
         IdDescripcion d = ts.consultaId(id.getIdentifierLiteral());
-        if (d.getTipoDescripcion() == TipoDescripcion.dvar) {
-            VarDescripcion dvar = (VarDescripcion) d;
-            if (dvar.getType() == TypeEnum.INT) {
-                int result = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
-                if (node.getType() == SpecialOpType.INCREMENT) {
-                    gc.generate(InstructionType.ADD, new Operator3Address(dvar.getVariableNumber()), new Operator3Address(1, CastType.INT), new Operator3Address(result));
-                } else {
-                    //decrement
-                    gc.generate(InstructionType.SUB, new Operator3Address(dvar.getVariableNumber()), new Operator3Address(1, CastType.INT), new Operator3Address(result));
-                }
-                gc.generate(InstructionType.CLONE, new Operator3Address(dvar.getVariableNumber()), null, new Operator3Address(result));
-                node.setReference(result);
-            } else {
-                parser.report_error("La variable a incrementar/decrementar no es de tipo entero", id);
-            }
+        if (d == null) {
+            parser.report_error("No existe dicho id", node);
         } else {
-            parser.report_error("El identificador no es una variable", id);
+            if (d.getTipoDescripcion() == TipoDescripcion.dvar) {
+                VarDescripcion dvar = (VarDescripcion) d;
+                if (dvar.getType() == TypeEnum.INT) {
+                    int result = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
+                    if (node.getType() == SpecialOpType.INCREMENT) {
+                        gc.generate(InstructionType.ADD, new Operator3Address(dvar.getVariableNumber()), new Operator3Address(1, CastType.INT), new Operator3Address(result));
+                    } else {
+                        //decrement
+                        gc.generate(InstructionType.SUB, new Operator3Address(dvar.getVariableNumber()), new Operator3Address(1, CastType.INT), new Operator3Address(result));
+                    }
+                    gc.generate(InstructionType.CLONE, new Operator3Address(dvar.getVariableNumber()), null, new Operator3Address(result));
+                    node.setReference(result);
+                } else {
+                    parser.report_error("La variable a incrementar/decrementar no es de tipo entero", id);
+                }
+            } else {
+                parser.report_error("El identificador no es una variable", id);
+            }
         }
     }
 
@@ -1128,40 +1191,44 @@ public class analisisSemantico {
     public TypeEnum handleMethodCall(MethodCallNode node) {
         TypeEnum resType = TypeEnum.NULL;
         IdDescripcion d = ts.consultaId(node.getIdentifier().getIdentifierLiteral());
-        if (d.getTipoDescripcion() == TipoDescripcion.dproc || d.getTipoDescripcion() == TipoDescripcion.dfunc) {
-            ArrayList<ArgDescripcion> param = ts.consultarParams(node.getIdentifier().getIdentifierLiteral());
-            if (node.getParamIn() != null && !(node.getParamIn().isEmpty())) {
-                ArrayList<ExpressionNode> paramIn = new ArrayList<>();
-                handleParamIn(node.getParamIn(), paramIn);
-                if (param == null || param.size() != paramIn.size()) {
-                    parser.report_error("No se han escrito el número de parámetros correspondientes", node.getParamIn());
-                } else {
-                    for (int i = 0; i < param.size(); i++) {
-                        if (param.get(i).getType() != paramIn.get(i).getType()) {
-                            parser.report_error("Uno de los parámetros introducido no tiene el tipo correspondiente", node.getParamIn());
+        if (d == null) {
+            parser.report_error("El identificador no está definido", node.getIdentifier());
+        } else {
+            if (d.getTipoDescripcion() == TipoDescripcion.dproc || d.getTipoDescripcion() == TipoDescripcion.dfunc) {
+                ArrayList<ArgDescripcion> param = ts.consultarParams(node.getIdentifier().getIdentifierLiteral());
+                if (node.getParamIn() != null && !(node.getParamIn().isEmpty())) {
+                    ArrayList<ExpressionNode> paramIn = new ArrayList<>();
+                    handleParamIn(node.getParamIn(), paramIn);
+                    if (param == null || param.size() != paramIn.size()) {
+                        parser.report_error("No se han escrito el número de parámetros correspondientes o el procedimiento no necesita parámetros", node.getParamIn());
+                    } else {
+                        for (int i = 0; i < param.size(); i++) {
+                            if (param.get(i).getType() != paramIn.get(i).getType()) {
+                                parser.report_error("Uno de los parámetros introducido no tiene el tipo correspondiente", node.getParamIn());
+                            }
+                            gc.generate(InstructionType.SIMPLEPARAM, null, null, new Operator3Address(paramIn.get(i).getReference()));
                         }
-                        gc.generate(InstructionType.SIMPLEPARAM, null, null, new Operator3Address(paramIn.get(i).getReference()));
+                    }
+                } else {
+                    //la llamada no tiene parámetros
+                    if (param != null) {
+                        parser.report_error("La llamada requiere de parámetros", node.getParamIn());
                     }
                 }
-            } else {
-                //la llamada no tiene parámetros
-                if (param != null) {
-                    parser.report_error("La llamada requiere de parámetros", node.getParamIn());
+                int res = -1;
+                if (d.getTipoDescripcion() == TipoDescripcion.dfunc) {
+                    FuncDescripcion dfunc = (FuncDescripcion) d;
+                    res = gc.newVar(Variable.TipoVariable.VARIABLE, dfunc.getType(), false, false);
+                    gc.generate(InstructionType.CALL, new Operator3Address(node.getIdentifier().getIdentifierLiteral()), null, new Operator3Address(res));
+                    resType = dfunc.getType();
+                } else {
+                    gc.generate(InstructionType.CALL, new Operator3Address(node.getIdentifier().getIdentifierLiteral()), null, null);
+                    resType = TypeEnum.VOID;
                 }
-            }
-            int res = -1;
-            if (d.getTipoDescripcion() == TipoDescripcion.dfunc) {
-                FuncDescripcion dfunc = (FuncDescripcion) d;
-                res = gc.newVar(Variable.TipoVariable.VARIABLE, dfunc.getType(), false, false);
-                gc.generate(InstructionType.CALL, new Operator3Address(node.getIdentifier().getIdentifierLiteral()), null, new Operator3Address(res));
-                resType = dfunc.getType();
+                node.setReference(res);
             } else {
-                gc.generate(InstructionType.CALL, new Operator3Address(node.getIdentifier().getIdentifierLiteral()), null, null);
-                resType = TypeEnum.VOID;
+                parser.report_error("Este identificador no corresponde a ningún subprograma", node.getIdentifier());
             }
-            node.setReference(res);
-        } else {
-            parser.report_error("Este identificador no corresponde a ningún subprograma", node.getIdentifier());
         }
         return resType;
     }
@@ -1174,46 +1241,56 @@ public class analisisSemantico {
         }
     }
 
-    //TODO:
     public void handleAssig(AssigNode assigNode) {
         Desplazamiento desp = new Desplazamiento();
         if (assigNode.getGestIdx() != null) {
             boolean isIdx = handleGestorIdx(assigNode.getGestIdx(), desp);
-            IdDescripcion d = ts.consultaId(assigNode.getGestIdx().getId().getIdentifierLiteral());
-            if (assigNode.getExpression() != null) {
-                handleExpresion(assigNode.getExpression());
-                String id = assigNode.getGestIdx().getId().getIdentifierLiteral();
-                switch (d.getTipoDescripcion()) {
-                    case dvar:
-                        if (desp.type != assigNode.getExpression().getType()) {
-                            parser.report_error("El tipo del id no coincide con el de la expresión", assigNode);
-                        } else {
-                            gc.generate(InstructionType.CLONE, new Operator3Address(assigNode.getExpression().getReference()), null, new Operator3Address(idFromDesc(d)));
-                        }
-                        break;
-                    case dconst:
-                        parser.report_error("No se puede hacer una asignación a una variable constante", assigNode);
-                        break;
-                    case darray:
-                        if (isIdx) {
+            IdDescripcion d = ts.consultaId(desp.id);
+            if (d == null) {
+                parser.report_error("No existe dicho id", assigNode.getGestIdx().getId());
+            } else {
+                if (assigNode.getExpression() != null) {
+                    handleExpresion(assigNode.getExpression());
+                    String id = desp.id;
+                    switch (d.getTipoDescripcion()) {
+                        case dvar:
                             if (desp.type != assigNode.getExpression().getType()) {
-                                parser.report_error("El tipo de la indexación no coincide con el de la expresión", assigNode);
+                                parser.report_error("El tipo del id no coincide con el de la expresión", assigNode);
                             } else {
-                                gc.generate(InstructionType.ASSINDEX, new Operator3Address(assigNode.getExpression().getReference()), new Operator3Address(desp.desp, CastType.INT), new Operator3Address(idFromDesc(d)));
+                                gc.generate(InstructionType.CLONE, new Operator3Address(assigNode.getExpression().getReference()), null, new Operator3Address(idFromDesc(d)));
                             }
-                        } else {
-                            //copiar cada posicion que tiene la array a asignar a cada pos del array de id
-                            if (assigNode.getExpression().getType() == TypeEnum.ARRAY) {
-                                boolean iguales = true;
-                                //Id id
-                                ArrayList<IndexDescripcion> idDesc = ts.consultarIndices(id);
-                                //Id Expresion
-                                ArrayList<IndexDescripcion> expDesc = ts.consultarIndices(tempId);
-                                if (idDesc.size() == expDesc.size()) {
-                                    for (int i = 0; i < idDesc.size(); i++) {
-                                        if (idDesc.get(i).getDim() != expDesc.get(i).getDim()) {
-                                            iguales = false;
-                                            break;
+                            break;
+                        case dconst:
+                            ConstDescripcion dconst = (ConstDescripcion) d;
+                            if (dconst.isInit()) {
+                                parser.report_error("No se puede hacer una asignación a una variable constante", assigNode);
+                            } else {
+                                dconst.setInit(true);
+                                gc.generate(InstructionType.CLONE, new Operator3Address(assigNode.getExpression().getReference()), null, new Operator3Address(dconst.getVariableNumber()));
+                            }
+
+                            break;
+                        case darray:
+                            if (isIdx) {
+                                if (desp.type != assigNode.getExpression().getType()) {
+                                    parser.report_error("El tipo de la indexación no coincide con el de la expresión", assigNode);
+                                } else {
+                                    gc.generate(InstructionType.ASSINDEX, new Operator3Address(assigNode.getExpression().getReference()), new Operator3Address(desp.desp, CastType.INT), new Operator3Address(idFromDesc(d)));
+                                }
+                            } else {
+                                //copiar cada posicion que tiene la array a asignar a cada pos del array de id
+                                if (assigNode.getExpression().getType() == TypeEnum.ARRAY) {
+                                    boolean iguales = true;
+                                    //Id id
+                                    ArrayList<IndexDescripcion> idDesc = ts.consultarIndices(id);
+                                    //Id Expresion
+                                    ArrayList<IndexDescripcion> expDesc = ts.consultarIndices(tempId);
+                                    if (idDesc.size() == expDesc.size()) {
+                                        for (int i = 0; i < idDesc.size(); i++) {
+                                            if (idDesc.get(i).getDim() != expDesc.get(i).getDim()) {
+                                                iguales = false;
+                                                break;
+                                            }
                                         }
                                     }
                                     if (iguales) {
@@ -1227,86 +1304,86 @@ public class analisisSemantico {
                                                     var1 = b[var0]
                                                     var2 = desp -->a
                                                     a[var2] = var1
-                                                */
+                                                 */
                                                 int despB = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
                                                 gc.generate(InstructionType.CLONE, new Operator3Address(desp.desp + (i * nbytes)), null, new Operator3Address(despB));
                                                 int var1 = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
-                                                gc.generate(InstructionType.INDVALUE, new Operator3Address(tempId), new Operator3Address(despB),new Operator3Address(var1));
+                                                gc.generate(InstructionType.INDVALUE, new Operator3Address(tempId), new Operator3Address(despB), new Operator3Address(var1));
                                                 int despA = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
                                                 gc.generate(InstructionType.CLONE, new Operator3Address(desp.desp + (i * nbytes)), null, new Operator3Address(despA));
                                                 int var2 = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
-                                                gc.generate(InstructionType.ASSINDEX, new Operator3Address(id), new Operator3Address(despA),new Operator3Address(var2));
+                                                gc.generate(InstructionType.ASSINDEX, new Operator3Address(id), new Operator3Address(despA), new Operator3Address(var2));
                                                 //Copiar de uno a otro
                                                 gc.generate(InstructionType.CLONE, new Operator3Address(var1), null, new Operator3Address(var2));
+
                                             }
                                         } else {
-                                            parser.report_error("Los tipos del Identificador y la Expresión no coinciden", assigNode);
+                                            parser.report_error("Los tamaños no coinciden, revisa la asignación de la array", assigNode);
                                         }
                                     } else {
                                         parser.report_error("Los tamaños no coinciden, revisa la asignación de la array", assigNode);
                                     }
                                 } else {
-                                    parser.report_error("Los tamaños no coinciden, revisa la asignación de la array", assigNode);
+                                    parser.report_error("No es una array válida", assigNode);
                                 }
-                            } else {
-                                parser.report_error("No es una array válida", assigNode);
                             }
-                        }
-                        break;
-                    case dtupel:
-                        if (isIdx) {
-                            if (desp.type != assigNode.getExpression().getType()) {
-                                parser.report_error("El tipo de la indexación no coincide con el de la expresión", assigNode);
-                            } else {
-                                gc.generate(InstructionType.ASSINDEX, new Operator3Address(assigNode.getExpression().getReference()), new Operator3Address(desp.desp, CastType.INT), new Operator3Address(idFromDesc(d)));
-                            }
-                        } else {
-                            //copiar cada campo que tiene la tupla a asignar a cada campo del la tupla de id
-                            if (assigNode.getExpression().getType() == TypeEnum.TUPEL) {
-                                //Id id
-                                ArrayList<CampoDescripcion> idDesc = ts.consultarCampos(id);
-                                //Id Expresion
-                                ArrayList<CampoDescripcion> expDesc = ts.consultarCampos(tempId);
-                                if (idDesc.size() == expDesc.size()) {
-                                    for (int i = 0; i < idDesc.size(); i++) {
-                                        if (idDesc.get(i).getType() == expDesc.get(i).getType()) {
-                                            //No estoy seguro, pongo esto temporalmente TODO:Modificar
-                                            IdDescripcion expTemp = expDesc.get(i);
-                                            CampoDescripcion expCampo = (CampoDescripcion) expTemp;
-                                            //Esta vez el de la id
-                                            IdDescripcion idTemp = idDesc.get(i);
-                                            CampoDescripcion idCampo = (CampoDescripcion) idTemp;
-                                            //No está bien creo, el campo deberia tener un nombre bien pero el comment me daba a entender algo mal
-                                            int campoExp = idFromDesc(ts.consultarCampo(tempId, expCampo.getName()));
-                                            int var = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
-                                            //En var tenemos la referencia indexada
-                                            gc.generate(InstructionType.INDVALUE, new Operator3Address(campoExp), null, new Operator3Address(var));
-                                            int var1 = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
-                                            int campoId = idFromDesc(ts.consultarCampo(tempId, idCampo.getName()));
-                                            //La asignación de donde hay que meter el campo
-                                            gc.generate(InstructionType.ASSINDEX, new Operator3Address(campoId), null, new Operator3Address(var1));
-                                            //Metemos el campo de la exp en la id 
-                                            gc.generate(InstructionType.CLONE, new Operator3Address(var), null, new Operator3Address(var1));
-                                        } else {
-                                            parser.report_error("El tipo del campo no coincide con el del dato", assigNode);
-                                            break;
-                                        }
-                                    }
-
+                            break;
+                        case dtupel:
+                            if (isIdx) {
+                                if (desp.type != assigNode.getExpression().getType()) {
+                                    parser.report_error("El tipo de la indexación no coincide con el de la expresión", assigNode);
                                 } else {
-                                    parser.report_error("Los tamaños no coinciden, revisa la asignación de la tupla", assigNode);
+                                    gc.generate(InstructionType.ASSINDEX, new Operator3Address(assigNode.getExpression().getReference()), new Operator3Address(desp.desp, CastType.INT), new Operator3Address(idFromDesc(d)));
                                 }
                             } else {
-                                parser.report_error("No es una tupla válida", assigNode);
+                                //copiar cada campo que tiene la tupla a asignar a cada campo del la tupla de id
+                                if (assigNode.getExpression().getType() == TypeEnum.TUPEL) {
+                                    //Id id
+                                    ArrayList<CampoDescripcion> idDesc = ts.consultarCampos(id);
+                                    //Id Expresion
+                                    ArrayList<CampoDescripcion> expDesc = ts.consultarCampos(tempId);
+                                    if (idDesc.size() == expDesc.size()) {
+                                        for (int i = 0; i < idDesc.size(); i++) {
+                                            if (idDesc.get(i).getType() == expDesc.get(i).getType()) {
+                                                //No estoy seguro, pongo esto temporalmente TODO:Modificar
+                                                IdDescripcion expTemp = expDesc.get(i);
+                                                CampoDescripcion expCampo = (CampoDescripcion) expTemp;
+                                                //Esta vez el de la id
+                                                IdDescripcion idTemp = idDesc.get(i);
+                                                CampoDescripcion idCampo = (CampoDescripcion) idTemp;
+                                                //No está bien creo, el campo deberia tener un nombre bien pero el comment me daba a entender algo mal
+                                                int campoExp = idFromDesc(ts.consultarCampo(tempId, expCampo.getName()));
+                                                int var = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
+                                                //En var tenemos la referencia indexada
+                                                gc.generate(InstructionType.INDVALUE, new Operator3Address(campoExp), null, new Operator3Address(var));
+                                                int var1 = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
+                                                int campoId = idFromDesc(ts.consultarCampo(tempId, idCampo.getName()));
+                                                //La asignación de donde hay que meter el campo
+                                                gc.generate(InstructionType.ASSINDEX, new Operator3Address(campoId), null, new Operator3Address(var1));
+                                                //Metemos el campo de la exp en la id 
+                                                gc.generate(InstructionType.CLONE, new Operator3Address(var), null, new Operator3Address(var1));
+                                            } else {
+                                                parser.report_error("El tipo del campo no coincide con el del dato", assigNode);
+                                                break;
+                                            }
+                                        }
+                                    } else {
+                                        parser.report_error("Los tamaños no coinciden, revisa la asignación de la tupla", assigNode);
+                                    }
+                                } else {
+                                    parser.report_error("No es una tupla válida", assigNode);
+                                }
                             }
-                        }
-                        break;
-                    default:
-                        parser.report_error("No se ha encontrado una descripción adecuada", d);
-                        break;
+                            break;
+                        case dstring:
+                            break;
+                        default:
+                            parser.report_error("No se ha encontrado una descripción adecuada", assigNode);
+                            break;
+                    }
+                } else {
+                    parser.report_error("No hay expresión a asignar", assigNode);
                 }
-            } else {
-                parser.report_error("No hay expresión a asignar", assigNode);
             }
 
         } else {
@@ -1360,14 +1437,4 @@ public class analisisSemantico {
         ts.salirBloque();
     }
 
-    /**
-     * @Manu PROGRAM; DECL_LIST; DECL; ACTUAL_DECL; DECL_ELEM; DECL_ARRAY;
-     * DIM_ARRAY; ARRAY_DECL; INIT_ARRAY; DECL_TUPEL; TUPEL_DECL; INIT_TUPEL;
-     * EXP; SIMPLE_VALUE; GEST_IDX; GESTOR; COTI : handleExpresion debe poner el
-     * resultado como referencia en el nodo porfa jej , màs que nada todo nodo y
-     * derivados que se usa en assig deberá hacerse esto
-     *
-     * @Constantino BINARY_OP; REL_OP; LOGIC_OP; ARIT_OP; NEG_OP; MODIFIER; ID;
-     */
-    //DEADLINE: 14-01-2023 -> Tenerlos hechos (no hace falta que bien), quedar y arreglarlos (si hace falta).
 }
