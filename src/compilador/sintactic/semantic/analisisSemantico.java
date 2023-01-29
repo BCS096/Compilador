@@ -1219,11 +1219,25 @@ public class analisisSemantico {
                                     if (iguales) {
                                         if (assigNode.getExpression().getType() == typeFromId(ts.consultaId(id))) {
                                             //COPIAR DE UNO A OTRO
+                                            int nbytes = desp.type.getBytes();
                                             for (int i = 0; i < idDesc.size(); i++) {
-                                                //La vd que no sé si está bien lo estoy haciendo mientras hablo con mis padres y a punto de coméh
-                                                //Pongo esto temporalmente TODO:Modificar
-                                                IdDescripcion temp = expDesc.get(i);
-                                                ts.poner(id, temp);
+                                                //a[desp] = b[desp]
+                                                /*
+                                                    var0 = desp1 -->b
+                                                    var1 = b[var0]
+                                                    var2 = desp -->a
+                                                    a[var2] = var1
+                                                */
+                                                int despB = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
+                                                gc.generate(InstructionType.CLONE, new Operator3Address(desp.desp + (i * nbytes)), null, new Operator3Address(despB));
+                                                int var1 = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
+                                                gc.generate(InstructionType.INDVALUE, new Operator3Address(tempId), new Operator3Address(despB),new Operator3Address(var1));
+                                                int despA = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
+                                                gc.generate(InstructionType.CLONE, new Operator3Address(desp.desp + (i * nbytes)), null, new Operator3Address(despA));
+                                                int var2 = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
+                                                gc.generate(InstructionType.ASSINDEX, new Operator3Address(id), new Operator3Address(despA),new Operator3Address(var2));
+                                                //Copiar de uno a otro
+                                                gc.generate(InstructionType.CLONE, new Operator3Address(var1), null, new Operator3Address(var2));
                                             }
                                         } else {
                                             parser.report_error("Los tipos del Identificador y la Expresión no coinciden", assigNode);
@@ -1257,8 +1271,22 @@ public class analisisSemantico {
                                     for (int i = 0; i < idDesc.size(); i++) {
                                         if (idDesc.get(i).getType() == expDesc.get(i).getType()) {
                                             //No estoy seguro, pongo esto temporalmente TODO:Modificar
-                                            IdDescripcion temp = expDesc.get(i);
-                                            ts.poner(id, temp);
+                                            IdDescripcion expTemp = expDesc.get(i);
+                                            CampoDescripcion expCampo = (CampoDescripcion) expTemp;
+                                            //Esta vez el de la id
+                                            IdDescripcion idTemp = idDesc.get(i);
+                                            CampoDescripcion idCampo = (CampoDescripcion) idTemp;
+                                            //No está bien creo, el campo deberia tener un nombre bien pero el comment me daba a entender algo mal
+                                            int campoExp = idFromDesc(ts.consultarCampo(tempId, expCampo.getName()));
+                                            int var = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
+                                            //En var tenemos la referencia indexada
+                                            gc.generate(InstructionType.INDVALUE, new Operator3Address(campoExp), null, new Operator3Address(var));
+                                            int var1 = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
+                                            int campoId = idFromDesc(ts.consultarCampo(tempId, idCampo.getName()));
+                                            //La asignación de donde hay que meter el campo
+                                            gc.generate(InstructionType.ASSINDEX, new Operator3Address(campoId), null, new Operator3Address(var1));
+                                            //Metemos el campo de la exp en la id 
+                                            gc.generate(InstructionType.CLONE, new Operator3Address(var), null, new Operator3Address(var1));
                                         } else {
                                             parser.report_error("El tipo del campo no coincide con el del dato", assigNode);
                                             break;

@@ -15,9 +15,10 @@ Variable4        DS.L 1
 Variable5        DS.L 1
 Variable6        DS.L 1
 Variable7        DS.L 1
-Variable8        DC.B 'El numero era menor que 5',0
-Variable9        DC.B 'El numero era mayor o igual a 5',0
-Variable10        DC.B 'Linea de final',0
+Variable8        DS.L 1
+Variable9        DC.B 'El numero era menor que 5',0
+Variable10        DC.B 'El numero era mayor o igual a 5',0
+Variable11        DC.B 'Linea de final',0
 ;-----------------------------------------------------------
         DS.W 0
 ;-----------------------------------------------------------
@@ -71,10 +72,24 @@ Variable0        DC.B 'Introduce un numero entre 0 y 9: ', 0 ; Inmediate string
         MOVE.L 12(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: CLONE
-;Operator 1 -> 0, Store in -> 6
+;Operator 1 -> 0, Store in -> 5
+
+        MOVE.L #0, D0 ; Load variable
+        MOVE.L 16(A6), A0 ; A0 contains parameter @
+        MOVE.L D0, (A0) ; Store local parameter
+; Instruction of type: CLONE
+;Operator 1 -> 4, Store in -> 6
+
+        MOVE.L 12(A6), A0 ; A0 contains store address
+        MOVE.L D0, A0
+        MOVE.L (A0), D0 ; Get parameter
+        MOVE.L 20(A6), A0 ; A0 contains parameter @
+        MOVE.L D0, (A0) ; Store local parameter
+; Instruction of type: CLONE
+;Operator 1 -> 0, Store in -> 7
 
         MOVE.L #5, D0 ; Load variable
-        MOVE.L 20(A6), A0 ; A0 contains parameter @
+        MOVE.L 24(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: IFLT
 ;Operator 1 -> 0, Operator 2 -> ReferenceOp(ref: 0), Store in -> 0
@@ -84,10 +99,10 @@ Variable0        DC.B 'Introduce un numero entre 0 y 9: ', 0 ; Inmediate string
         CMP.L D1, D0
         BLT Label0
 ; Instruction of type: CLONE
-;Operator 1 -> 0, Store in -> 7
+;Operator 1 -> 0, Store in -> 8
 
         MOVE.L #0, D0 ; Load variable
-        MOVE.L 6(A6), A0 ; A0 contains parameter @
+        MOVE.L 7(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: GOTO
 ;, Store in -> 0
@@ -98,31 +113,31 @@ Variable0        DC.B 'Introduce un numero entre 0 y 9: ', 0 ; Inmediate string
 
 Label0:
 ; Instruction of type: CLONE
-;Operator 1 -> 0, Store in -> 7
+;Operator 1 -> 0, Store in -> 8
 
         MOVE.L #1, D0 ; Load variable
-        MOVE.L 6(A6), A0 ; A0 contains parameter @
+        MOVE.L 7(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: SKIP
 ;, Store in -> 0
 
 Label1:
 ; Instruction of type: IFEQ
-;Operator 1 -> 7, Operator 2 -> LiteralOp(value: 0), Store in -> 0
+;Operator 1 -> 8, Operator 2 -> LiteralOp(value: 0), Store in -> 0
 
-        MOVE.L 6(A6), A0 ; A0 contains store address
+        MOVE.L 7(A6), A0 ; A0 contains store address
         MOVE.L D0, A0
         MOVE.L (A0), D0 ; Get parameter
         MOVE.L #0, D1 ; Load variable
         CMP.L D1, D0
         BEQ Label2
 ; Instruction of type: CLONE
-;Operator 1 -> 0, Store in -> 8
+;Operator 1 -> 0, Store in -> 9
 
 Variable0        DC.B 'El numero era menor que 5', 0 ; Inmediate string
         LEA Variable0, A0
         MOVE.L A0, D0 ; Load variable
-        MOVE.L 896(A6), A0 ; A0 contains parameter @
+        MOVE.L 1024(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: PRINTLN
 ;Operator 1 -> 0
@@ -147,12 +162,12 @@ Variable0        DC.B 'El numero era menor que 5', 0 ; Inmediate string
 
 Label2:
 ; Instruction of type: CLONE
-;Operator 1 -> 0, Store in -> 9
+;Operator 1 -> 0, Store in -> 10
 
 Variable0        DC.B 'El numero era mayor o igual a 5', 0 ; Inmediate string
         LEA Variable0, A0
         MOVE.L A0, D0 ; Load variable
-        MOVE.L 1024(A6), A0 ; A0 contains parameter @
+        MOVE.L 1152(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: PRINTLN
 ;Operator 1 -> 0
@@ -169,12 +184,12 @@ Variable0        DC.B 'El numero era mayor o igual a 5', 0 ; Inmediate string
         ADDQ.B #1, D1 ; We increment the current row by 1
         TRAP #15 ; Set new coordinates (next line ready)
 ; Instruction of type: CLONE
-;Operator 1 -> 0, Store in -> 10
+;Operator 1 -> 0, Store in -> 11
 
 Variable0        DC.B 'Linea de final', 0 ; Inmediate string
         LEA Variable0, A0
         MOVE.L A0, D0 ; Load variable
-        MOVE.L 1152(A6), A0 ; A0 contains parameter @
+        MOVE.L 1280(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: PRINT
 ;Operator 1 -> 0

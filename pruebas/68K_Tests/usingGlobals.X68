@@ -18,9 +18,12 @@ Variable7        DS.L 1
 Variable8        DS.L 1
 Variable9        DS.L 1
 Variable10        DS.L 1
-Variable11        DC.B 'Result is: ',0
-Variable12        DS.L 1
+Variable11        DS.L 1
+Variable12        DC.B 'Result is: ',0
 Variable13        DS.L 1
+Variable14        DS.L 1
+Variable15        DS.L 1
+Variable16        DS.L 1
 ;-----------------------------------------------------------
         DS.W 0
 ;-----------------------------------------------------------
@@ -49,67 +52,78 @@ Label0:
         MOVE.L A6, 8(A7) ; DISP(prof) = BP
         SUB.L #VARSIZE, A7 ; SP changed to assign Variable Space
 ; Instruction of type: CLONE
-;Operator 1 -> 0, Store in -> 4
+;Operator 1 -> 0, Store in -> 3
 
-        MOVE.L #4, D0 ; Load variable
+        MOVE.L #0, D0 ; Load variable
+        MOVE.L 8(A6), A0 ; A0 contains parameter @
+        MOVE.L D0, (A0) ; Store local parameter
+; Instruction of type: CLONE
+;Operator 1 -> 2, Store in -> 4
+
         MOVE.L 12(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: CLONE
 ;Operator 1 -> 0, Store in -> 5
 
-        MOVE.L #2, D0 ; Load variable
+        MOVE.L #4, D0 ; Load variable
         MOVE.L 16(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
+; Instruction of type: CLONE
+;Operator 1 -> 0, Store in -> 6
+
+        MOVE.L #2, D0 ; Load variable
+        MOVE.L 20(A6), A0 ; A0 contains parameter @
+        MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: DIV
-;Operator 1 -> 0, Operator 2 -> ReferenceOp(ref: 0), Store in -> 6
+;Operator 1 -> 0, Operator 2 -> ReferenceOp(ref: 0), Store in -> 7
 
         MOVE.L -4(A6), D0 ; Load local variable
         MOVE.L -4(A6), D1 ; Load local variable
         DIVM D1, D0
         AND.L #$0000FFFF, D1
-        MOVE.L 20(A6), A0 ; A0 contains parameter @
+        MOVE.L 24(A6), A0 ; A0 contains parameter @
         MOVE.L D1, (A0) ; Store local parameter
 ; Instruction of type: CLONE
-;Operator 1 -> 0, Store in -> 7
+;Operator 1 -> 0, Store in -> 8
 
         MOVE.L #3, D0 ; Load variable
-        MOVE.L 24(A6), A0 ; A0 contains parameter @
+        MOVE.L 28(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: MUL
-;Operator 1 -> 6, Operator 2 -> ReferenceOp(ref: 0), Store in -> 8
+;Operator 1 -> 7, Operator 2 -> ReferenceOp(ref: 0), Store in -> 9
 
-        MOVE.L 20(A6), A0 ; A0 contains store address
+        MOVE.L 24(A6), A0 ; A0 contains store address
         MOVE.L D0, A0
         MOVE.L (A0), D0 ; Get parameter
         MOVE.L -4(A6), D1 ; Load local variable
         MULTM D0, D1
-        MOVE.L 28(A6), A0 ; A0 contains parameter @
+        MOVE.L 32(A6), A0 ; A0 contains parameter @
         MOVE.L D1, (A0) ; Store local parameter
 ; Instruction of type: ADD
-;Operator 1 -> 0, Operator 2 -> ReferenceOp(ref: 8), Store in -> 9
+;Operator 1 -> 0, Operator 2 -> ReferenceOp(ref: 9), Store in -> 10
 
         MOVE.L -4(A6), D0 ; Load local variable
-        MOVE.L 28(A6), A0 ; A0 contains store address
+        MOVE.L 32(A6), A0 ; A0 contains store address
         MOVE.L D1, A0
         MOVE.L (A0), D1 ; Get parameter
         ADDM D0, D1
-        MOVE.L 32(A6), A0 ; A0 contains parameter @
+        MOVE.L 36(A6), A0 ; A0 contains parameter @
         MOVE.L D1, (A0) ; Store local parameter
 ; Instruction of type: CLONE
-;Operator 1 -> 9, Store in -> 10
+;Operator 1 -> 10, Store in -> 11
 
-        MOVE.L 32(A6), A0 ; A0 contains store address
+        MOVE.L 36(A6), A0 ; A0 contains store address
         MOVE.L D0, A0
         MOVE.L (A0), D0 ; Get parameter
-        MOVE.L 36(A6), A0 ; A0 contains parameter @
+        MOVE.L 40(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: CLONE
-;Operator 1 -> 0, Store in -> 11
+;Operator 1 -> 0, Store in -> 12
 
 Variable0        DC.B 'Result is: ', 0 ; Inmediate string
         LEA Variable0, A0
         MOVE.L A0, D0 ; Load variable
-        MOVE.L 1280(A6), A0 ; A0 contains parameter @
+        MOVE.L 1408(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: PRINT
 ;Operator 1 -> 0
@@ -118,6 +132,20 @@ Variable0        DC.B 'Result is: ', 0 ; Inmediate string
         MOVE.L #3, D0 ; Prepare display
         TRAP #15
  ; Expect screen visualization
+; Instruction of type: CLONE
+;Operator 1 -> 0, Store in -> 13
+
+        MOVE.L #0, D0 ; Load variable
+        MOVE.L 48(A6), A0 ; A0 contains parameter @
+        MOVE.L D0, (A0) ; Store local parameter
+; Instruction of type: CLONE
+;Operator 1 -> 11, Store in -> 14
+
+        MOVE.L 40(A6), A0 ; A0 contains store address
+        MOVE.L D0, A0
+        MOVE.L (A0), D0 ; Get parameter
+        MOVE.L 52(A6), A0 ; A0 contains parameter @
+        MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: PRINTLN
 ;Operator 1 -> 0
 
@@ -144,6 +172,17 @@ Variable0        DC.B 'Result is: ', 0 ; Inmediate string
 
 main:                                                       
         MOVE.L A7, A6
+; Instruction of type: CLONE
+;Operator 1 -> 0, Store in -> 15
+
+        MOVE.L #0, D0 ; Load variable
+        MOVE.L 56(A6), A0 ; A0 contains parameter @
+        MOVE.L D0, (A0) ; Store local parameter
+; Instruction of type: CLONE
+;Operator 1 -> 1, Store in -> 16
+
+        MOVE.L 60(A6), A0 ; A0 contains parameter @
+        MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: SIMPLEPARAM
 ;, Store in -> 0
 
