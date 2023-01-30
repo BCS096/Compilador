@@ -50,22 +50,6 @@ public class TablaSimbolos {
         this.ta.set(n, this.ta.get(n - 1));
     }
 
-    public void ponerM(String id, IdDescripcion d) {
-        //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        int np = td.get(id).getNp();
-        if (td.existe(id)) {
-
-            if (np == n) {
-                throw new UnsupportedOperationException("Símbolo ya declarado en el ámbito actual");
-            } else if (n > np) {
-                ta.nuevaEntrada(n);
-                te.put(ta.get(n), td.get(id));
-            }
-        } else {
-            Data data = new Data(id, d, n, -1, -1);
-            td.put(id, data);
-        }
-    }
 
     //nunca habrá que controloar n< o n> ya que hacemos bien los entrar, salir bloque :)
     public void poner(String id, IdDescripcion d) {
@@ -74,9 +58,8 @@ public class TablaSimbolos {
                 throw new UnsupportedOperationException("Símbolo ya declarado en el ámbito actual");
             }
             ta.nuevaEntrada(n);
-            te.put(n, td.get(id));
+            te.put(ta.get(n), td.get(id));
         }
-
         td.put(id, new Data(id, d, n, -1, -1));
     }
 
@@ -140,8 +123,7 @@ public class TablaSimbolos {
         }
         return null;
     }
-    //COTIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
-    //if (td.existe(id)) { := neuronasManu--
+
     public void ponerIndice(String id, IdDescripcion d) {
         if (!td.existe(id)) {
             throw new UnsupportedOperationException("No existe el array con este nombre: " + id);
@@ -266,7 +248,6 @@ public class TablaSimbolos {
 //    }
 
     public void ponerParam(String idProc, String idParam, IdDescripcion d) {
-        //si existe, no existe GUAT
         if (!td.existe(idProc)) {
             throw new UnsupportedOperationException("No existe el procedimiento/función con este nombre: " + idProc);
         }
