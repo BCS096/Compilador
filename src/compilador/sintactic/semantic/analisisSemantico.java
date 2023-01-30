@@ -174,7 +174,7 @@ public class analisisSemantico {
     }
 
     public void handleElemIdAssig(ElemIdAssigNode elemIdAssig, TypeEnum type, IdDescripcion.TipoDescripcion modifier) {
-        String id = (String) elemIdAssig.getIdentifier().getIdentifierLiteral();
+        String id = elemIdAssig.getIdentifier().getIdentifierLiteral();
         ExpressionNode expression = elemIdAssig.getExp();
         //IdDescripcion.TipoDescripcion modifier = ts.consultaId(elemIdAssig.getIdentifier().getIdentifierLiteral()).getTipoDescripcion();
         //check si tiene valor literal (será constante), si no es dvar.
@@ -192,6 +192,7 @@ public class analisisSemantico {
             case dvar:
                 if (type != TypeEnum.STRING) {
                     nVar = gc.newVar(Variable.TipoVariable.VARIABLE, type, false, false);
+                    mvp.semanticCode(new StringBuilder(nVar + " = " + id + '\n'));
                     VarDescripcion var = new VarDescripcion(nVar, type);
                     try {
                         ts.poner(id, var);
@@ -202,6 +203,7 @@ public class analisisSemantico {
                 } else {
                     nVar = gc.newVar(Variable.TipoVariable.VARIABLE, type, false, false);
                     StringDescripcion var = new StringDescripcion(nVar, true, expression != null);
+                    mvp.semanticCode(new StringBuilder(nVar + " = " + id + '\n'));
                     try {
                         ts.poner(id, var);
                     } catch (IllegalArgumentException e) {
@@ -248,7 +250,7 @@ public class analisisSemantico {
 
     public void handleDeclArray(DeclArrayNode declArray, IdDescripcion.TipoDescripcion modifier) {
         TypeEnum tipo = declArray.getTypeId().getType();
-        String id = (String) declArray.getIdentifier().getIdentifierLiteral();
+        String id = declArray.getIdentifier().getIdentifierLiteral();
         ArrayDeclNode init = declArray.getArrayDecl();
         Boolean initialized = (init != null && !init.isEmpty());
         ArrayDescripcion arr;
@@ -265,6 +267,7 @@ public class analisisSemantico {
                     }
                 } else {
                     int nVar = gc.newVar(Variable.TipoVariable.VARIABLE, tipo, true, false);
+                    mvp.semanticCode(new StringBuilder(nVar + " = " + id + '\n'));
                     arr = new ArrayDescripcion(nVar, tipo, initialized);
                     try {
                         ts.poner(id, arr);
@@ -286,7 +289,7 @@ public class analisisSemantico {
         }
     }
 
-    public void handleDimArray(DimArrayNode dimArray, String id) {
+    public int handleDimArray(DimArrayNode dimArray, String id) {
         if (dimArray.getDim() != null) {
             handleExpresion(dimArray.getDim());
             //Lo dejo tal cual para que el que lo haya hecho le de vergüenza xd
@@ -295,14 +298,21 @@ public class analisisSemantico {
                 IndexDescripcion idxd = new IndexDescripcion(dimArray.getDim().getReference());
                 ts.ponerIndice(id, idxd);
                 if (dimArray.getNextDim() != null && !dimArray.getNextDim().isEmpty()) {
-                    handleDimArray(dimArray.getNextDim(), id);
+                    int nv = handleDimArray(dimArray.getNextDim(), id);
+                    int res = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
+                    gc.generate(InstructionType.ADD, new Operator3Address(nv), new Operator3Address(dimArray.getDim().getReference()), new Operator3Address(res));
+                    return res;
+                }else{
+                    return dimArray.getDim().getReference();
                 }
             } else {
                 parser.report_error("El tipo de la expresión que representa la dimensión no es un entero", dimArray.getDim());
+                return -1;
             }
 
         } else {
             parser.report_error("No valid dimension found!", dimArray);
+            return -1;
         }
     }
 
@@ -312,7 +322,8 @@ public class analisisSemantico {
             parser.report_error("No coincide el tipo en la istancia de la array", initArray.getTypeId());
         } else {
             if (initArray.getDimArray() != null) {
-                handleDimArray(initArray.getDimArray(), id);
+                ArrayDescripcion arr = (ArrayDescripcion) ts.consultaId(id); 
+                arr.setSize(handleDimArray(initArray.getDimArray(), id));
             } else {
                 parser.report_error("No se ha encontrado la dimensión del array!", initArray);
             }
@@ -546,9 +557,11 @@ public class analisisSemantico {
                     parser.report_error("El identificador no tiene un tipo válido", gestIdx);
                     return isIdx;
                 }
-                int nv = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
-                gc.generate(InstructionType.CLONE, new Operator3Address(desp, CastType.INT), null, new Operator3Address(nv));
-                res.desp = nv;
+                if (isIdx) {
+                    int nv = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
+                    gc.generate(InstructionType.CLONE, new Operator3Address(desp), null, new Operator3Address(nv));
+                    res.desp = nv;
+                }              
                 res.id = gestIdx.getId().getIdentifierLiteral();
                 res.type = type;
             }
@@ -699,10 +712,11 @@ public class analisisSemantico {
             int nv = idFromDesc(ts.consultaId(des.id));
             int var = gc.newVar(Variable.TipoVariable.VARIABLE, des.type, false, false);
             if (isIdx) {
-                gc.generate(InstructionType.INDVALUE, new Operator3Address(nv), new Operator3Address(des.desp, CastType.INT), new Operator3Address(var));
+                gc.generate(InstructionType.INDVALUE, new Operator3Address(nv), new Operator3Address(des.desp), new Operator3Address(var));
             } else {
                 gc.generate(InstructionType.CLONE, new Operator3Address(idFromDesc(ts.consultaId(des.id))), null, new Operator3Address(var));
             }
+            simpleValue.setReference(var);
         } else if (simpleValue.getSimpl() != null) {
             //?
             //Si no es INT no se puede negar
@@ -742,6 +756,7 @@ public class analisisSemantico {
         } else {
             if (declTupel.getId() != null) {
                 int nVar = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.TUPEL, false, true);
+                mvp.semanticCode(new StringBuilder(nVar + " = " + declTupel.getId().getIdentifierLiteral() + '\n'));
                 boolean init = declTupel.getTupeldecl() != null;
                 try {
                     ts.poner(declTupel.getId().getIdentifierLiteral(), new TupelDescripcion(nVar, TypeEnum.TUPEL, init));
@@ -1277,7 +1292,7 @@ public class analisisSemantico {
                                 if (desp.type != assigNode.getExpression().getType()) {
                                     parser.report_error("El tipo de la indexación no coincide con el de la expresión", assigNode);
                                 } else {
-                                    gc.generate(InstructionType.ASSINDEX, new Operator3Address(assigNode.getExpression().getReference()), new Operator3Address(desp.desp, CastType.INT), new Operator3Address(idFromDesc(d)));
+                                    gc.generate(InstructionType.ASSINDEX, new Operator3Address(assigNode.getExpression().getReference()), new Operator3Address(desp.desp), new Operator3Address(idFromDesc(d)));
                                 }
                             } else {
                                 //copiar cada posicion que tiene la array a asignar a cada pos del array de id
@@ -1287,13 +1302,14 @@ public class analisisSemantico {
                                     ArrayList<IndexDescripcion> idDesc = ts.consultarIndices(id);
                                     //Id Expresion
                                     ArrayList<IndexDescripcion> expDesc = ts.consultarIndices(tempId);
-                                    if (idDesc.size() == expDesc.size()) {
-                                        for (int i = 0; i < idDesc.size(); i++) {
-                                            if (idDesc.get(i).getDim() != expDesc.get(i).getDim()) {
-                                                iguales = false;
-                                                break;
-                                            }
-                                        }
+                                    if (idDesc.size() != expDesc.size()) {
+                                        //TO DO : PREGUNTA
+//                                        for (int i = 0; i < idDesc.size(); i++) {
+//                                            if (idDesc.get(i).getDim() != expDesc.get(i).getDim()) {
+//                                                iguales = false;
+//                                                break;
+//                                            }
+//                                        }
                                     }
                                     if (iguales) {
                                         if (assigNode.getExpression().getType() == typeFromId(ts.consultaId(id))) {
@@ -1320,7 +1336,7 @@ public class analisisSemantico {
 
                                             }
                                         } else {
-                                            parser.report_error("Los tamaños no coinciden, revisa la asignación de la array", assigNode);
+                                            parser.report_error("Los tipos no coinciden, revisa la asignación de la array", assigNode);
                                         }
                                     } else {
                                         parser.report_error("Los tamaños no coinciden, revisa la asignación de la array", assigNode);

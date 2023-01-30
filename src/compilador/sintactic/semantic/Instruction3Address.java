@@ -24,8 +24,8 @@ public class Instruction3Address {
     @Override
     public String toString() {
         return instructionType.getInstructionCode() + " | "
-                + ((operators[0] != null) ? operators[0].toString() : "") + " | "
-                + ((operators[1] != null) ? operators[1].toString() : "") + " | "
-                + ((operators[2] != null) ? operators[2].toString() : "");
+                + ((operators[0] != null) ? operators[0].toString() : "null") + " | "
+                + ((operators[1] != null) ? operators[1].toString() : "null") + " | "
+                + ((operators[2] != null) ? operators[2].toString() : "null");
     }
 }
