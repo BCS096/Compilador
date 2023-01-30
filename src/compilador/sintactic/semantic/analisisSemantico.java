@@ -302,7 +302,7 @@ public class analisisSemantico {
                     int res = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
                     gc.generate(InstructionType.ADD, new Operator3Address(nv), new Operator3Address(dimArray.getDim().getReference()), new Operator3Address(res));
                     return res;
-                }else{
+                } else {
                     return dimArray.getDim().getReference();
                 }
             } else {
@@ -322,7 +322,7 @@ public class analisisSemantico {
             parser.report_error("No coincide el tipo en la istancia de la array", initArray.getTypeId());
         } else {
             if (initArray.getDimArray() != null) {
-                ArrayDescripcion arr = (ArrayDescripcion) ts.consultaId(id); 
+                ArrayDescripcion arr = (ArrayDescripcion) ts.consultaId(id);
                 arr.setSize(handleDimArray(initArray.getDimArray(), id));
             } else {
                 parser.report_error("No se ha encontrado la dimensión del array!", initArray);
@@ -561,7 +561,7 @@ public class analisisSemantico {
                     int nv = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
                     gc.generate(InstructionType.CLONE, new Operator3Address(desp), null, new Operator3Address(nv));
                     res.desp = nv;
-                }              
+                }
                 res.id = gestIdx.getId().getIdentifierLiteral();
                 res.type = type;
             }
@@ -1282,8 +1282,12 @@ public class analisisSemantico {
                             if (dconst.isInit()) {
                                 parser.report_error("No se puede hacer una asignación a una variable constante", assigNode);
                             } else {
-                                dconst.setInit(true);
-                                gc.generate(InstructionType.CLONE, new Operator3Address(assigNode.getExpression().getReference()), null, new Operator3Address(dconst.getVariableNumber()));
+                                if (desp.type != assigNode.getExpression().getType()) {
+                                    parser.report_error("El tipo del id no coincide con el de la expresión", assigNode);
+                                } else {
+                                    dconst.setInit(true);
+                                    gc.generate(InstructionType.CLONE, new Operator3Address(assigNode.getExpression().getReference()), null, new Operator3Address(dconst.getVariableNumber()));
+                                }
                             }
 
                             break;
@@ -1362,28 +1366,32 @@ public class analisisSemantico {
                                     ArrayList<CampoDescripcion> expDesc = ts.consultarCampos(tempId);
                                     if (idDesc.size() == expDesc.size()) {
                                         int desplazamiento = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
-                                        gc.generate(InstructionType.CLONE, new Operator3Address(0,CastType.INT), null, new Operator3Address(desplazamiento));
+                                        gc.generate(InstructionType.CLONE, new Operator3Address(0, CastType.INT), null, new Operator3Address(desplazamiento));
                                         for (int i = 0; i < idDesc.size(); i++) {
-                                            if (idDesc.get(i).getType() == expDesc.get(i).getType()) {       
+                                            if (idDesc.get(i).getType() == expDesc.get(i).getType()) {
                                                 int newVar = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
                                                 //newVar = exp[desplazamiento]
                                                 gc.generate(InstructionType.INDVALUE, new Operator3Address(idFromDesc(ts.consultaId(tempId))), new Operator3Address(desplazamiento), new Operator3Address(newVar));
                                                 // id[desplazamiento] = newVar
                                                 gc.generate(InstructionType.ASSINDEX, new Operator3Address(newVar), new Operator3Address(desplazamiento), new Operator3Address(idFromDesc(d)));
                                                 //actualizamos el desplazamiento
-                                                if(i + 1 == idDesc.size()){
+                                                if (i + 1 == idDesc.size()) {
                                                     //para que para la ultima operacin no calcule otra vez el desplazamiento que no se usará para nada :)
                                                     break;
                                                 }
-                                                switch(idDesc.get(i).getType()){
-                                                    case INT: gc.generate(InstructionType.ADD, new Operator3Address(desplazamiento), new Operator3Address(TypeEnum.INT.getBytes(),CastType.INT), new Operator3Address(desplazamiento));
-                                                    break;
-                                                    case CHAR: gc.generate(InstructionType.ADD, new Operator3Address(desplazamiento), new Operator3Address(TypeEnum.CHAR.getBytes(),CastType.INT), new Operator3Address(desplazamiento));
-                                                    break;
-                                                    case BOOL: gc.generate(InstructionType.ADD, new Operator3Address(desplazamiento), new Operator3Address(TypeEnum.BOOL.getBytes(),CastType.INT), new Operator3Address(desplazamiento));
-                                                    break;
-                                                    case STRING: gc.generate(InstructionType.ADD, new Operator3Address(desplazamiento), new Operator3Address(TypeEnum.STRING.getBytes(),CastType.INT), new Operator3Address(desplazamiento));
-                                                    break;
+                                                switch (idDesc.get(i).getType()) {
+                                                    case INT:
+                                                        gc.generate(InstructionType.ADD, new Operator3Address(desplazamiento), new Operator3Address(TypeEnum.INT.getBytes(), CastType.INT), new Operator3Address(desplazamiento));
+                                                        break;
+                                                    case CHAR:
+                                                        gc.generate(InstructionType.ADD, new Operator3Address(desplazamiento), new Operator3Address(TypeEnum.CHAR.getBytes(), CastType.INT), new Operator3Address(desplazamiento));
+                                                        break;
+                                                    case BOOL:
+                                                        gc.generate(InstructionType.ADD, new Operator3Address(desplazamiento), new Operator3Address(TypeEnum.BOOL.getBytes(), CastType.INT), new Operator3Address(desplazamiento));
+                                                        break;
+                                                    case STRING:
+                                                        gc.generate(InstructionType.ADD, new Operator3Address(desplazamiento), new Operator3Address(TypeEnum.STRING.getBytes(), CastType.INT), new Operator3Address(desplazamiento));
+                                                        break;
                                                 }
                                             } else {
                                                 parser.report_error("El tipo del campo no coincide con el del dato", assigNode);
@@ -1399,6 +1407,25 @@ public class analisisSemantico {
                             }
                             break;
                         case dstring:
+                            StringDescripcion stD = (StringDescripcion) d;
+                            if (stD.isVar()) {
+                                if (assigNode.getExpression().getType() != TypeEnum.STRING) {
+                                    parser.report_error("El tipo del identificador no coincide con el de la expresión", assigNode);
+                                } else {
+                                    gc.generate(InstructionType.CLONE, new Operator3Address(assigNode.getExpression().getReference()), null, new Operator3Address(stD.getVariableNumber()));
+                                }
+                            } else { //la string es contante
+                                if (stD.isInit()) {
+                                    parser.report_error("El identificador al que se quiere asignar una expresión es una constante inicializada", assigNode);
+                                } else {
+                                    if (assigNode.getExpression().getType() != TypeEnum.STRING) {
+                                        parser.report_error("El tipo del identificador no coincide con el de la expresión", assigNode);
+                                    } else {
+                                        stD.setInit(true);
+                                        gc.generate(InstructionType.CLONE, new Operator3Address(assigNode.getExpression().getReference()), null, new Operator3Address(stD.getVariableNumber()));
+                                    }
+                                }
+                            }
                             break;
                         default:
                             parser.report_error("No se ha encontrado una descripción adecuada", assigNode);
