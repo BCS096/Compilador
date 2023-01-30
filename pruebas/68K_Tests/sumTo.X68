@@ -58,7 +58,7 @@ Label0:
 
         MOVE.L #0, D0 ; Load variable
 ; Instruction of type: CLONE
-;Operator 1 -> 0, Store in -> 2
+;Operator 1 -> 1, Store in -> 2
 
         MOVE.L 4(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
@@ -69,8 +69,11 @@ Label0:
         MOVE.L 8(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: CLONE
-;Operator 1 -> 0, Store in -> 4
+;Operator 1 -> 3, Store in -> 4
 
+        MOVE.L 8(A6), A0 ; A0 contains store address
+        MOVE.L D0, A0
+        MOVE.L (A0), D0 ; Get parameter
         MOVE.L 12(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: SKIP
@@ -250,9 +253,12 @@ Variable0        DC.B 'Introduce un numero entre 0 y 9: ', 0 ; Inmediate string
         MOVE.L 2304(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: PRINT
-;Operator 1 -> 0
+;Operator 1 -> 19
 
-        MOVE.L #3, D0 ; Prepare display
+        MOVE.L 2304(A6), A0 ; A0 contains store address
+        MOVE.L (A0), A0 ; Get parameter
+        MOVE.L A0, A1 ; Ready text
+        MOVE.L #14, D0 ; Prepare display
         TRAP #15
  ; Expect screen visualization
 ; Instruction of type: READ
@@ -270,11 +276,14 @@ Variable0        DC.B 'Introduce un numero entre 0 y 9: ', 0 ; Inmediate string
         MOVE.L 80(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: SUB
-;Operator 1 -> 20, Operator 2 -> ReferenceOp(ref: 0), Store in -> 22
+;Operator 1 -> 20, Operator 2 -> ReferenceOp(ref: 21), Store in -> 22
 
         MOVE.L 38(A6), A0 ; A0 contains store address
         MOVE.L D0, A0
         MOVE.L (A0), D0 ; Get parameter
+        MOVE.L 80(A6), A0 ; A0 contains store address
+        MOVE.L D1, A0
+        MOVE.L (A0), D1 ; Get parameter
         SUBM D0, D1
         MOVE.L 84(A6), A0 ; A0 contains parameter @
         MOVE.L D1, (A0) ; Store local parameter
@@ -295,9 +304,12 @@ Variable0        DC.B 'La suma de 1 hasta tu numero es: ', 0 ; Inmediate string
         MOVE.L 2944(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: PRINT
-;Operator 1 -> 0
+;Operator 1 -> 24
 
-        MOVE.L #3, D0 ; Prepare display
+        MOVE.L 2944(A6), A0 ; A0 contains store address
+        MOVE.L (A0), A0 ; Get parameter
+        MOVE.L A0, A1 ; Ready text
+        MOVE.L #14, D0 ; Prepare display
         TRAP #15
  ; Expect screen visualization
 ; Instruction of type: CLONE

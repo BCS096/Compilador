@@ -289,7 +289,9 @@ public class analisisSemantico {
     public void handleDimArray(DimArrayNode dimArray, String id) {
         if (dimArray.getDim() != null) {
             handleExpresion(dimArray.getDim());
-            if (dimArray.getDim().getType() != TypeEnum.INT) {
+            //Lo dejo tal cual para que el que lo haya hecho le de vergüenza xd
+            //if (dimArray.getDim().getType() != TypeEnum.INT) {
+            if (dimArray.getDim().getType() == TypeEnum.INT) {
                 IndexDescripcion idxd = new IndexDescripcion(dimArray.getDim().getReference());
                 ts.ponerIndice(id, idxd);
                 if (dimArray.getNextDim() != null && !dimArray.getNextDim().isEmpty()) {

@@ -57,9 +57,11 @@ Variable0        DC.B 'Introduce un numero entre 0 y 9: ', 0 ; Inmediate string
         MOVE.L 4(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: SUB
-;Operator 1 -> 1, Operator 2 -> ReferenceOp(ref: 0), Store in -> 3
+;Operator 1 -> 1, Operator 2 -> ReferenceOp(ref: 2), Store in -> 3
 
-        MOVE.L -128(A6), D1 ; Load local variable
+        MOVE.L 4(A6), A0 ; A0 contains store address
+        MOVE.L D1, A0
+        MOVE.L (A0), D1 ; Get parameter
         SUBM D0, D1
         MOVE.L 8(A6), A0 ; A0 contains parameter @
         MOVE.L D1, (A0) ; Store local parameter
@@ -92,10 +94,12 @@ Variable0        DC.B 'Introduce un numero entre 0 y 9: ', 0 ; Inmediate string
         MOVE.L 24(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: IFLT
-;Operator 1 -> 0, Operator 2 -> ReferenceOp(ref: 0), Store in -> 0
+;Operator 1 -> 0, Operator 2 -> ReferenceOp(ref: 7), Store in -> 0
 
         MOVE.L -128(A6), D0 ; Load local variable
-        MOVE.L -128(A6), D1 ; Load local variable
+        MOVE.L 24(A6), A0 ; A0 contains store address
+        MOVE.L D1, A0
+        MOVE.L (A0), D1 ; Get parameter
         CMP.L D1, D0
         BLT Label0
 ; Instruction of type: CLONE
@@ -140,9 +144,10 @@ Variable0        DC.B 'El numero era menor que 5', 0 ; Inmediate string
         MOVE.L 1024(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: PRINTLN
-;Operator 1 -> 0
+;Operator 1 -> 9
 
-        MOVE.L -128(A6), A0 ; Load local variable
+        MOVE.L 1024(A6), A0 ; A0 contains store address
+        MOVE.L (A0), A0 ; Get parameter
         MOVE.L A0, A1 ; Ready text
         MOVE.L #14, D0 ; Prepare display
         TRAP #15
@@ -170,9 +175,10 @@ Variable0        DC.B 'El numero era mayor o igual a 5', 0 ; Inmediate string
         MOVE.L 1152(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: PRINTLN
-;Operator 1 -> 0
+;Operator 1 -> 10
 
-        MOVE.L -128(A6), A0 ; Load local variable
+        MOVE.L 1152(A6), A0 ; A0 contains store address
+        MOVE.L (A0), A0 ; Get parameter
         MOVE.L A0, A1 ; Ready text
         MOVE.L #14, D0 ; Prepare display
         TRAP #15
@@ -192,9 +198,10 @@ Variable0        DC.B 'Linea de final', 0 ; Inmediate string
         MOVE.L 1280(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: PRINT
-;Operator 1 -> 0
+;Operator 1 -> 11
 
-        MOVE.L -128(A6), A0 ; Load local variable
+        MOVE.L 1280(A6), A0 ; A0 contains store address
+        MOVE.L (A0), A0 ; Get parameter
         MOVE.L A0, A1 ; Ready text
         MOVE.L #14, D0 ; Prepare display
         TRAP #15

@@ -124,9 +124,11 @@ main:
         MOVE.L 4(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: CLONE
-;Operator 1 -> 0, Store in -> 3
+;Operator 1 -> 2, Store in -> 3
 
-        MOVE.L -4(A6), D0 ; Load local variable
+        MOVE.L 4(A6), A0 ; A0 contains store address
+        MOVE.L D0, A0
+        MOVE.L (A0), D0 ; Get parameter
         MOVE.L 8(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: CLONE
@@ -142,9 +144,11 @@ main:
         MOVE.L 7(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: CLONE
-;Operator 1 -> 0, Store in -> 6
+;Operator 1 -> 8, Store in -> 6
 
-        MOVE.L -4(A6), D0 ; Load local variable
+        MOVE.L 7(A6), A0 ; A0 contains store address
+        MOVE.L D0, A0
+        MOVE.L (A0), D0 ; Get parameter
         MOVE.L 5(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: SKIP
@@ -163,7 +167,7 @@ Label0:
         MOVE.L 5(A6), A0 ; A0 contains store address
         MOVE.L D0, A0
         MOVE.L (A0), D0 ; Get parameter
-        MOVE.L 36(A6), A0 ; A0 contains parameter @
+        MOVE.L 9(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: IFEQ
 ;Operator 1 -> 0, Operator 2 -> LiteralOp(value: 0), Store in -> 0
@@ -185,9 +189,11 @@ Label0:
         MOVE.L 11(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: CLONE
-;Operator 1 -> 0, Store in -> 6
+;Operator 1 -> 12, Store in -> 6
 
-        MOVE.L -4(A6), D0 ; Load local variable
+        MOVE.L 11(A6), A0 ; A0 contains store address
+        MOVE.L D0, A0
+        MOVE.L (A0), D0 ; Get parameter
         MOVE.L 5(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: CLONE
@@ -203,9 +209,11 @@ Label0:
         MOVE.L 52(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: CLONE
-;Operator 1 -> 0, Store in -> 4
+;Operator 1 -> 14, Store in -> 4
 
-        MOVE.L -4(A6), D0 ; Load local variable
+        MOVE.L 52(A6), A0 ; A0 contains store address
+        MOVE.L D0, A0
+        MOVE.L (A0), D0 ; Get parameter
         MOVE.L 12(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: SKIP
@@ -338,10 +346,12 @@ Label4:
         MOVE.L 104(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: SUB
-;Operator 1 -> 0, Operator 2 -> ReferenceOp(ref: 0), Store in -> 28
+;Operator 1 -> 0, Operator 2 -> ReferenceOp(ref: 27), Store in -> 28
 
         MOVE.L -4(A6), D0 ; Load local variable
-        MOVE.L -4(A6), D1 ; Load local variable
+        MOVE.L 104(A6), A0 ; A0 contains store address
+        MOVE.L D1, A0
+        MOVE.L (A0), D1 ; Get parameter
         SUBM D0, D1
         MOVE.L 108(A6), A0 ; A0 contains parameter @
         MOVE.L D1, (A0) ; Store local parameter
@@ -419,10 +429,12 @@ Variable0        DC.B ' ', 0 ; Inmediate string
         MOVE.L 4096(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: PRINTLN
-;Operator 1 -> 0
+;Operator 1 -> 33
 
-        MOVE.L -4(A6), D1 ; Load local variable
-        MOVE.L #3, D0 ; Prepare display
+        MOVE.L 4096(A6), A0 ; A0 contains store address
+        MOVE.L (A0), A0 ; Get parameter
+        MOVE.L A0, A1 ; Ready text
+        MOVE.L #14, D0 ; Prepare display
         TRAP #15
  ; Expect screen visualization
         MOVE.B #11, D0 ; Next line prepare
@@ -440,10 +452,12 @@ Variable0        DC.B 'Swapping ', 0 ; Inmediate string
         MOVE.L 4224(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: PRINT
-;Operator 1 -> 0
+;Operator 1 -> 34
 
-        MOVE.L -4(A6), D1 ; Load local variable
-        MOVE.L #3, D0 ; Prepare display
+        MOVE.L 4224(A6), A0 ; A0 contains store address
+        MOVE.L (A0), A0 ; Get parameter
+        MOVE.L A0, A1 ; Ready text
+        MOVE.L #14, D0 ; Prepare display
         TRAP #15
  ; Expect screen visualization
 ; Instruction of type: CLONE
@@ -499,10 +513,12 @@ Variable0        DC.B ' with ', 0 ; Inmediate string
         MOVE.L 4992(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: PRINT
-;Operator 1 -> 0
+;Operator 1 -> 40
 
-        MOVE.L -4(A6), D1 ; Load local variable
-        MOVE.L #3, D0 ; Prepare display
+        MOVE.L 4992(A6), A0 ; A0 contains store address
+        MOVE.L (A0), A0 ; Get parameter
+        MOVE.L A0, A1 ; Ready text
+        MOVE.L #14, D0 ; Prepare display
         TRAP #15
  ; Expect screen visualization
 ; Instruction of type: CLONE
@@ -526,10 +542,12 @@ Variable0        DC.B ' with ', 0 ; Inmediate string
         MOVE.L 168(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: SUB
-;Operator 1 -> 0, Operator 2 -> ReferenceOp(ref: 0), Store in -> 44
+;Operator 1 -> 0, Operator 2 -> ReferenceOp(ref: 43), Store in -> 44
 
         MOVE.L -4(A6), D0 ; Load local variable
-        MOVE.L -4(A6), D1 ; Load local variable
+        MOVE.L 168(A6), A0 ; A0 contains store address
+        MOVE.L D1, A0
+        MOVE.L (A0), D1 ; Get parameter
         SUBM D0, D1
         MOVE.L 172(A6), A0 ; A0 contains parameter @
         MOVE.L D1, (A0) ; Store local parameter
@@ -598,10 +616,12 @@ Variable0        DC.B ' with ', 0 ; Inmediate string
         MOVE.L 200(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: SUB
-;Operator 1 -> 0, Operator 2 -> ReferenceOp(ref: 0), Store in -> 52
+;Operator 1 -> 0, Operator 2 -> ReferenceOp(ref: 51), Store in -> 52
 
         MOVE.L -4(A6), D0 ; Load local variable
-        MOVE.L -4(A6), D1 ; Load local variable
+        MOVE.L 200(A6), A0 ; A0 contains store address
+        MOVE.L D1, A0
+        MOVE.L (A0), D1 ; Get parameter
         SUBM D0, D1
         MOVE.L 204(A6), A0 ; A0 contains parameter @
         MOVE.L D1, (A0) ; Store local parameter
@@ -657,10 +677,12 @@ Variable0        DC.B ' with ', 0 ; Inmediate string
         MOVE.L 228(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: SUB
-;Operator 1 -> 0, Operator 2 -> ReferenceOp(ref: 0), Store in -> 59
+;Operator 1 -> 0, Operator 2 -> ReferenceOp(ref: 58), Store in -> 59
 
         MOVE.L -4(A6), D0 ; Load local variable
-        MOVE.L -4(A6), D1 ; Load local variable
+        MOVE.L 228(A6), A0 ; A0 contains store address
+        MOVE.L D1, A0
+        MOVE.L (A0), D1 ; Get parameter
         SUBM D0, D1
         MOVE.L 232(A6), A0 ; A0 contains parameter @
         MOVE.L D1, (A0) ; Store local parameter
@@ -788,9 +810,11 @@ Variable0        DC.B ' with ', 0 ; Inmediate string
         MOVE.L 73(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: CLONE
-;Operator 1 -> 0, Store in -> 6
+;Operator 1 -> 74, Store in -> 6
 
-        MOVE.L -4(A6), D0 ; Load local variable
+        MOVE.L 73(A6), A0 ; A0 contains store address
+        MOVE.L D0, A0
+        MOVE.L (A0), D0 ; Get parameter
         MOVE.L 5(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: GOTO
@@ -832,10 +856,12 @@ Label9:
         MOVE.L 308(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: ADD
-;Operator 1 -> 0, Operator 2 -> ReferenceOp(ref: 0), Store in -> 79
+;Operator 1 -> 0, Operator 2 -> ReferenceOp(ref: 78), Store in -> 79
 
         MOVE.L -4(A6), D0 ; Load local variable
-        MOVE.L -4(A6), D1 ; Load local variable
+        MOVE.L 308(A6), A0 ; A0 contains store address
+        MOVE.L D1, A0
+        MOVE.L (A0), D1 ; Get parameter
         ADDM D0, D1
         MOVE.L 312(A6), A0 ; A0 contains parameter @
         MOVE.L D1, (A0) ; Store local parameter
@@ -872,10 +898,12 @@ Variable0        DC.B 'El array iniciado era: {4,5,3,1,9}', 0 ; Inmediate string
         MOVE.L 10112(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: PRINT
-;Operator 1 -> 0
+;Operator 1 -> 80
 
-        MOVE.L -4(A6), D1 ; Load local variable
-        MOVE.L #3, D0 ; Prepare display
+        MOVE.L 10112(A6), A0 ; A0 contains store address
+        MOVE.L (A0), A0 ; Get parameter
+        MOVE.L A0, A1 ; Ready text
+        MOVE.L #14, D0 ; Prepare display
         TRAP #15
  ; Expect screen visualization
 ; Instruction of type: CLONE
@@ -887,10 +915,12 @@ Variable0        DC.B 'El array resultante es: ', 0 ; Inmediate string
         MOVE.L 10240(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: PRINT
-;Operator 1 -> 0
+;Operator 1 -> 81
 
-        MOVE.L -4(A6), D1 ; Load local variable
-        MOVE.L #3, D0 ; Prepare display
+        MOVE.L 10240(A6), A0 ; A0 contains store address
+        MOVE.L (A0), A0 ; Get parameter
+        MOVE.L A0, A1 ; Ready text
+        MOVE.L #14, D0 ; Prepare display
         TRAP #15
  ; Expect screen visualization
 ; Instruction of type: CLONE
@@ -900,9 +930,11 @@ Variable0        DC.B 'El array resultante es: ', 0 ; Inmediate string
         MOVE.L 324(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: CLONE
-;Operator 1 -> 0, Store in -> 83
+;Operator 1 -> 82, Store in -> 83
 
-        MOVE.L -4(A6), D0 ; Load local variable
+        MOVE.L 324(A6), A0 ; A0 contains store address
+        MOVE.L D0, A0
+        MOVE.L (A0), D0 ; Get parameter
         MOVE.L 328(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: SKIP
@@ -1030,10 +1062,12 @@ Variable0        DC.B ',', 0 ; Inmediate string
         MOVE.L 11904(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: PRINT
-;Operator 1 -> 0
+;Operator 1 -> 94
 
-        MOVE.L -4(A6), D1 ; Load local variable
-        MOVE.L #3, D0 ; Prepare display
+        MOVE.L 11904(A6), A0 ; A0 contains store address
+        MOVE.L (A0), A0 ; Get parameter
+        MOVE.L A0, A1 ; Ready text
+        MOVE.L #14, D0 ; Prepare display
         TRAP #15
  ; Expect screen visualization
 ; Instruction of type: ADD

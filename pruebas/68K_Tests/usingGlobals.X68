@@ -75,10 +75,14 @@ Label0:
         MOVE.L 20(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: DIV
-;Operator 1 -> 0, Operator 2 -> ReferenceOp(ref: 0), Store in -> 7
+;Operator 1 -> 5, Operator 2 -> ReferenceOp(ref: 6), Store in -> 7
 
-        MOVE.L -4(A6), D0 ; Load local variable
-        MOVE.L -4(A6), D1 ; Load local variable
+        MOVE.L 16(A6), A0 ; A0 contains store address
+        MOVE.L D0, A0
+        MOVE.L (A0), D0 ; Get parameter
+        MOVE.L 20(A6), A0 ; A0 contains store address
+        MOVE.L D1, A0
+        MOVE.L (A0), D1 ; Get parameter
         DIVM D1, D0
         AND.L #$0000FFFF, D1
         MOVE.L 24(A6), A0 ; A0 contains parameter @
@@ -90,12 +94,14 @@ Label0:
         MOVE.L 28(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: MUL
-;Operator 1 -> 7, Operator 2 -> ReferenceOp(ref: 0), Store in -> 9
+;Operator 1 -> 7, Operator 2 -> ReferenceOp(ref: 8), Store in -> 9
 
         MOVE.L 24(A6), A0 ; A0 contains store address
         MOVE.L D0, A0
         MOVE.L (A0), D0 ; Get parameter
-        MOVE.L -4(A6), D1 ; Load local variable
+        MOVE.L 28(A6), A0 ; A0 contains store address
+        MOVE.L D1, A0
+        MOVE.L (A0), D1 ; Get parameter
         MULTM D0, D1
         MOVE.L 32(A6), A0 ; A0 contains parameter @
         MOVE.L D1, (A0) ; Store local parameter
@@ -126,10 +132,12 @@ Variable0        DC.B 'Result is: ', 0 ; Inmediate string
         MOVE.L 1408(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
 ; Instruction of type: PRINT
-;Operator 1 -> 0
+;Operator 1 -> 12
 
-        MOVE.L -4(A6), D1 ; Load local variable
-        MOVE.L #3, D0 ; Prepare display
+        MOVE.L 1408(A6), A0 ; A0 contains store address
+        MOVE.L (A0), A0 ; Get parameter
+        MOVE.L A0, A1 ; Ready text
+        MOVE.L #14, D0 ; Prepare display
         TRAP #15
  ; Expect screen visualization
 ; Instruction of type: CLONE

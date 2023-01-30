@@ -140,9 +140,10 @@ public class TablaSimbolos {
         }
         return null;
     }
-
+    //COTIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+    //if (td.existe(id)) { := neuronasManu--
     public void ponerIndice(String id, IdDescripcion d) {
-        if (td.existe(id)) {
+        if (!td.existe(id)) {
             throw new UnsupportedOperationException("No existe el array con este nombre: " + id);
         }
         IdDescripcion darray = td.get(id).getDescripcion();
