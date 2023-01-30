@@ -1217,11 +1217,11 @@ public class analisisSemantico {
                     ArrayList<ExpressionNode> paramIn = new ArrayList<>();
                     handleParamIn(node.getParamIn(), paramIn);
                     if (param == null || param.size() != paramIn.size()) {
-                        parser.report_error("No se han escrito el número de parámetros correspondientes o el procedimiento no necesita parámetros", node.getParamIn());
+                        parser.report_error("No se han escrito el número de parámetros correspondientes o el procedimiento no necesita parámetros", node);
                     } else {
                         for (int i = 0; i < param.size(); i++) {
                             if (param.get(i).getType() != paramIn.get(i).getType()) {
-                                parser.report_error("Uno de los parámetros introducido no tiene el tipo correspondiente", node.getParamIn());
+                                parser.report_error("Uno de los parámetros introducido no tiene el tipo correspondiente", node);
                             }
                             gc.generate(InstructionType.SIMPLEPARAM, null, null, new Operator3Address(paramIn.get(i).getReference()));
                         }
@@ -1361,25 +1361,30 @@ public class analisisSemantico {
                                     //Id Expresion
                                     ArrayList<CampoDescripcion> expDesc = ts.consultarCampos(tempId);
                                     if (idDesc.size() == expDesc.size()) {
+                                        int desplazamiento = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
+                                        gc.generate(InstructionType.CLONE, new Operator3Address(0,CastType.INT), null, new Operator3Address(desplazamiento));
                                         for (int i = 0; i < idDesc.size(); i++) {
-                                            if (idDesc.get(i).getType() == expDesc.get(i).getType()) {
-                                                //No estoy seguro, pongo esto temporalmente TODO:Modificar
-                                                IdDescripcion expTemp = expDesc.get(i);
-                                                CampoDescripcion expCampo = (CampoDescripcion) expTemp;
-                                                //Esta vez el de la id
-                                                IdDescripcion idTemp = idDesc.get(i);
-                                                CampoDescripcion idCampo = (CampoDescripcion) idTemp;
-                                                //No está bien creo, el campo deberia tener un nombre bien pero el comment me daba a entender algo mal
-                                                int campoExp = idFromDesc(ts.consultarCampo(tempId, expCampo.getName()));
-                                                int var = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
-                                                //En var tenemos la referencia indexada
-                                                gc.generate(InstructionType.INDVALUE, new Operator3Address(campoExp), null, new Operator3Address(var));
-                                                int var1 = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
-                                                int campoId = idFromDesc(ts.consultarCampo(tempId, idCampo.getName()));
-                                                //La asignación de donde hay que meter el campo
-                                                gc.generate(InstructionType.ASSINDEX, new Operator3Address(campoId), null, new Operator3Address(var1));
-                                                //Metemos el campo de la exp en la id 
-                                                gc.generate(InstructionType.CLONE, new Operator3Address(var), null, new Operator3Address(var1));
+                                            if (idDesc.get(i).getType() == expDesc.get(i).getType()) {       
+                                                int newVar = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
+                                                //newVar = exp[desplazamiento]
+                                                gc.generate(InstructionType.INDVALUE, new Operator3Address(idFromDesc(ts.consultaId(tempId))), new Operator3Address(desplazamiento), new Operator3Address(newVar));
+                                                // id[desplazamiento] = newVar
+                                                gc.generate(InstructionType.ASSINDEX, new Operator3Address(newVar), new Operator3Address(desplazamiento), new Operator3Address(idFromDesc(d)));
+                                                //actualizamos el desplazamiento
+                                                if(i + 1 == idDesc.size()){
+                                                    //para que para la ultima operacin no calcule otra vez el desplazamiento que no se usará para nada :)
+                                                    break;
+                                                }
+                                                switch(idDesc.get(i).getType()){
+                                                    case INT: gc.generate(InstructionType.ADD, new Operator3Address(desplazamiento), new Operator3Address(TypeEnum.INT.getBytes(),CastType.INT), new Operator3Address(desplazamiento));
+                                                    break;
+                                                    case CHAR: gc.generate(InstructionType.ADD, new Operator3Address(desplazamiento), new Operator3Address(TypeEnum.CHAR.getBytes(),CastType.INT), new Operator3Address(desplazamiento));
+                                                    break;
+                                                    case BOOL: gc.generate(InstructionType.ADD, new Operator3Address(desplazamiento), new Operator3Address(TypeEnum.BOOL.getBytes(),CastType.INT), new Operator3Address(desplazamiento));
+                                                    break;
+                                                    case STRING: gc.generate(InstructionType.ADD, new Operator3Address(desplazamiento), new Operator3Address(TypeEnum.STRING.getBytes(),CastType.INT), new Operator3Address(desplazamiento));
+                                                    break;
+                                                }
                                             } else {
                                                 parser.report_error("El tipo del campo no coincide con el del dato", assigNode);
                                                 break;
