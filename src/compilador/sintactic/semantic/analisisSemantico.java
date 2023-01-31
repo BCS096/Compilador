@@ -284,14 +284,14 @@ public class analisisSemantico {
         if (initialized) {
             //Caso de que ya esté inicializado (tiene su declaración y eso significa que si)
             handleArrayDecl(declArray.getArrayDecl(), tipo, id);
+        }else{
+            parser.syntax_error(new java_cup.runtime.Symbol(1));
         }
     }
 
     public int handleDimArray(DimArrayNode dimArray, String id) {
         if (dimArray.getDim() != null) {
             handleExpresion(dimArray.getDim());
-            //Lo dejo tal cual para que el que lo haya hecho le de vergüenza xd
-            //if (dimArray.getDim().getType() != TypeEnum.INT) {
             if (dimArray.getDim().getType() == TypeEnum.INT) {
                 IndexDescripcion idxd = new IndexDescripcion(dimArray.getDim().getReference());
                 ts.ponerIndice(id, idxd, dimArray);
@@ -321,7 +321,9 @@ public class analisisSemantico {
         } else {
             if (initArray.getDimArray() != null) {
                 ArrayDescripcion arr = (ArrayDescripcion) ts.consultaId(id);
-                arr.setSize(handleDimArray(initArray.getDimArray(), id));
+                int size = handleDimArray(initArray.getDimArray(), id);
+                gc.generate(InstructionType.MUL, new Operator3Address(type.getBytes(),CastType.INT), new Operator3Address(size), new Operator3Address(size));
+                arr.setSize(size);
             } else {
                 parser.report_error("No se ha encontrado la dimensión del array!", initArray);
             }
@@ -549,7 +551,12 @@ public class analisisSemantico {
                             type = d.getType();
                         }
                     } else {
-                        type = typeFromId(desc);
+                        switch(desc.getTipoDescripcion()){
+                            case darray: type = TypeEnum.ARRAY;
+                            break;
+                            case dtupel: type = TypeEnum.TUPEL;
+                            break;
+                        }
                     }
                 } else {
                     parser.report_error("El identificador no tiene un tipo válido", gestIdx);

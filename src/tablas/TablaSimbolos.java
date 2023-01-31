@@ -145,7 +145,7 @@ public class TablaSimbolos {
             parser.report_error("No es un array", node);
         }
         int idxe = td.get(id).getFirst();
-        int idxep = 0;
+        int idxep = -1;
         while (idxe != -1) {
             idxep = idxe;
             idxe = te.get(idxe).getNext();
@@ -154,16 +154,16 @@ public class TablaSimbolos {
         Data data = new Data("", d, -1, -1, -1);
         te.put(idxe + 1, data);
         if (idxep == -1) {
-            td.get(id).setFirst(idxe + 1);
+            td.get(id).setFirst(ta.get(n));
         } else {
-            te.get(idxep).setNext(idxe + 1);
+            te.get(idxep).setNext(ta.get(n));
         }
     }
 
     public int firstIndice(String id, BaseNode node) {
-        if (td.existe(id)) {
+        if (!td.existe(id)) {
             //throw new UnsupportedOperationException("No existe el array con este nombre: " + id);
-            parser.report_error("No existe el array con este nombre: ", node);
+            parser.report_error("No existe el array con este nombre ", node);
         }
         IdDescripcion darray = td.get(id).getDescripcion();
         if (darray.getTipoDescripcion() != IdDescripcion.TipoDescripcion.darray) {
