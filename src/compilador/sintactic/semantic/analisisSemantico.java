@@ -154,7 +154,7 @@ public class analisisSemantico {
         handleElemIdAssig(elemList.getElemIdAssig(), type, modifier);
     }
 
-    
+    //checked
     public void handleElemIdAssig(ElemIdAssigNode elemIdAssig, TypeEnum type, IdDescripcion.TipoDescripcion modifier) {
         String id = elemIdAssig.getIdentifier().getIdentifierLiteral();
         ExpressionNode expression = elemIdAssig.getExp();
@@ -249,7 +249,7 @@ public class analisisSemantico {
                             break;
                     }
                 } else {
-                    int nVar = gc.newVar(Variable.TipoVariable.VARIABLE, tipo, true, false);
+                    int nVar = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.ARRAY, true, false);
                     mvp.semanticCode(new StringBuilder(nVar + " = " + id + '\n'));
                     arr = new ArrayDescripcion(nVar, tipo, initialized);
                     try {
@@ -514,6 +514,7 @@ public class analisisSemantico {
         }
     }
 
+    //checked
     public boolean handleGestorIdx(GestIdxNode gestIdx, Desplazamiento res) {
         int desp = 0;
         boolean isIdx = false;
@@ -567,6 +568,7 @@ public class analisisSemantico {
         return isIdx;
     }
 
+    //checked
     public int handleGestor(GestorNode node, String id, Desplazamiento res) {
         if (node.getGestArray() != null) {
             ArrayDescripcion a = (ArrayDescripcion) ts.consultaId(id);
@@ -1254,6 +1256,7 @@ public class analisisSemantico {
         return resType;
     }
 
+    //checked
     public void handleParamIn(ParamInNode node, ArrayList<ExpressionNode> res) {
         handleExpresion(node.getExpression());
         res.add(node.getExpression());
