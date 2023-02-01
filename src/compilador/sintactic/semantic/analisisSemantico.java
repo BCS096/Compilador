@@ -1406,7 +1406,7 @@ public class analisisSemantico {
                 break;
             case CHAR:
                 //Code generation for char literal
-                opValue = new Operator3Address(value.charAt(0), CastType.CHAR);
+                opValue = new Operator3Address(value.charAt(1), CastType.CHAR);
                 break;
             case BOOL:
                 //Code generation for bool literal

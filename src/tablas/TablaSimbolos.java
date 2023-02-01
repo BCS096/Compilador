@@ -42,6 +42,7 @@ public class TablaSimbolos {
         ta.set(n, -1);
     }
 
+    //checked
     public IdDescripcion consultaId(String id) {
         if(td.existe(id)){
             return td.get(id).getDescripcion();
@@ -49,13 +50,13 @@ public class TablaSimbolos {
         return null;
     }
 
+    //checked
     public void entrarBloque() {
         this.n++;
         this.ta.set(n, this.ta.get(n - 1));
     }
 
-
-    //nunca habrá que controloar n< o n> ya que hacemos bien los entrar, salir bloque :)
+    //checked
     public void poner(String id, IdDescripcion d, BaseNode node) {
         if (td.existe(id)) {
             if (td.get(id).getNp() == n) {
@@ -90,6 +91,7 @@ public class TablaSimbolos {
         }
     }
 
+    //checked
     public void ponerCampo(String idTupel, String idCampo, IdDescripcion dCampo, BaseNode node) {
         if (!td.existe(idTupel)) {
             parser.report_error("No existe la tupla con este nombre: " + idTupel, node);
@@ -100,20 +102,29 @@ public class TablaSimbolos {
             parser.report_error("Se intenta poner un campo en una variable que no corresponde a una tupla", node);
             //throw new UnsupportedOperationException("Se intenta poner un campo en una variable que no corresponde a una tupla");
         }
-        int i = td.get(idTupel).getFirst();
-        while (i != -1 && !(te.get(i).getId().equals(idCampo))) {
-            i = te.get(i).getNext();
+        int idxe = td.get(idTupel).getFirst();
+        int idxep = -1;
+        while (idxe != -1 && !(te.get(idxe).getId().equals(idCampo))) {
+            idxep = idxe;
+            idxe = te.get(idxe).getNext();
         }
-        if (i != -1) {
+        if (idxe != -1) {
             parser.report_error("Ya existe un campo con este nombre: " + idCampo, node);
             //throw new UnsupportedOperationException("Ya existe un campo con este nombre: " + idCampo);
         }
         ta.nuevaEntrada(n);
-        Data data = new Data(idCampo, dCampo, -1, td.get(idTupel).getFirst(), -1);
-        te.put(ta.get(n), data);
-        td.get(idTupel).setFirst(ta.get(n));
+        idxe = ta.get(n);
+        Data data = new Data(idCampo, dCampo, -1, -1, -1);
+        te.put(idxe, data);
+        if(idxep == -1){
+            td.get(idTupel).setFirst(idxe);
+        }else{
+            te.get(idxep).setNext(idxe);
+        }
+        
     }
 
+    //checked
     public IdDescripcion consultarCampo(String idTupel, String idCampo, BaseNode node) {
         if (!td.existe(idTupel)) {
             //throw new UnsupportedOperationException("No existe la tupla con este nombre: " + idTupel);
@@ -134,6 +145,8 @@ public class TablaSimbolos {
         return null;
     }
 
+    
+    //checked
     public void ponerIndice(String id, IdDescripcion d, BaseNode node) {
         if (!td.existe(id)) {
             parser.report_error("No existe el array con este nombre: " + id, node);
@@ -159,7 +172,8 @@ public class TablaSimbolos {
             te.get(idxep).setNext(ta.get(n));
         }
     }
-
+    
+    //checked
     public int firstIndice(String id, BaseNode node) {
         if (!td.existe(id)) {
             //throw new UnsupportedOperationException("No existe el array con este nombre: " + id);
@@ -173,6 +187,7 @@ public class TablaSimbolos {
         return td.get(id).getFirst();
     }
 
+    //checked
     public int firstParam(String id, BaseNode node) {
         if (!td.existe(id)) {
             //throw new UnsupportedOperationException("No existe el procedimiento/función con este nombre: " + id);
@@ -187,6 +202,7 @@ public class TablaSimbolos {
         return td.get(id).getFirst();
     }
     
+    //checked
     public int firstCampo(String id, BaseNode node) {
         if (!td.existe(id)) {
             //throw new UnsupportedOperationException("No existe la tupla con este nombre: " + id);
@@ -200,37 +216,47 @@ public class TablaSimbolos {
         return td.get(id).getFirst();
     }
 
-
+    //checked
     public ArrayList<ArgDescripcion> consultarParams(String id, BaseNode node) {
         ArrayList<ArgDescripcion> res = new ArrayList<>();
         int actual = firstParam(id, node);
         if (actual == -1) {
             return null;
         }
+        //meto el primero
+        res.add((ArgDescripcion) consultarTe(actual));
+        if(last(actual)){
+            //solo hay un elemento
+            return res;
+        }
         while (!last(actual)) {
             actual = next(actual, node);
             res.add((ArgDescripcion) consultarTe(actual));
         }
-        //ponemos el último param
-        res.add((ArgDescripcion) consultarTe(actual));
         return res;
     }
 
+    //checked
     public ArrayList<CampoDescripcion> consultarCampos(String id, BaseNode node) {
         ArrayList<CampoDescripcion> res = new ArrayList<>();
         int actual = firstCampo(id, node);
         if (actual == -1) {
             return null;
         }
+        //meto el primero
+        res.add((CampoDescripcion) consultarTe(actual));
+        if(last(actual)){
+            //solo hay un elemento
+            return res;
+        }
         while (!last(actual)) {
             actual = next(actual, node);
             res.add((CampoDescripcion) consultarTe(actual));
         }
-        //ponemos el último campo
-        res.add((CampoDescripcion) consultarTe(actual));
         return res;
     }
     
+    //checked
     public int next(int idx, BaseNode node) { //puede servir tanto para indices,campos,parametros
         if (te.get(idx).getNext() == -1) {
             parser.report_error("El indice/campo/parametro actual es el último", node);
@@ -239,16 +265,19 @@ public class TablaSimbolos {
         return te.get(idx).getNext();
     }
 
+    //checked
     public boolean last(int idx) { //puede servir tanto para indices,campos,parametros
         return te.get(idx).getNext() == -1;
     }
 
+    //checked
     //para consultar en la tabla de expansion los campos,indices y parametros que no se copian en la tabla de descripciones
     public IdDescripcion consultarTe(int idx) {
         return te.get(idx).getDescripcion();
     }
 
 
+    //checked
     public void ponerParam(String idProc, String idParam, IdDescripcion d, BaseNode node) {
         if (!td.existe(idProc)) {
             //throw new UnsupportedOperationException("No existe el procedimiento/función con este nombre: " + idProc);
@@ -281,22 +310,28 @@ public class TablaSimbolos {
         }
     }
 
+    //checked
     public int getActual() {
         return this.n;
     }
 
+    //checked
     public ArrayList<IndexDescripcion> consultarIndices(String idArray, BaseNode node) {
         ArrayList<IndexDescripcion> res = new ArrayList<>();
         int actual = firstIndice(idArray, node);
         if (actual == -1) {
             return null;
         }
+        //meto el primero
+        res.add((IndexDescripcion) consultarTe(actual));
+        if(last(actual)){
+            //solo hay un elemento
+            return res;
+        }
         while (!last(actual)) {
             actual = next(actual, node);
             res.add((IndexDescripcion) consultarTe(actual));
         }
-        //ponemos el último campo
-        res.add((IndexDescripcion) consultarTe(actual));
         return res;
     }
 
