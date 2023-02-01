@@ -45,28 +45,6 @@ public class analisisSemantico {
     }
 
     private void initTablaSimbolos() {
-        /*
-        IdDescripcion nulo = new IdDescripcion(IdDescripcion.TipoDescripcion.dnula);
-        ts.poner("if", nulo);
-        ts.poner("elif", nulo);
-        ts.poner("else", nulo);
-        ts.poner("while", nulo);
-        ts.poner("repeat", nulo);
-        ts.poner("until", nulo);
-        ts.poner("for", nulo);
-        ts.poner("print", nulo);
-        ts.poner("println", nulo);
-        ts.poner("read", nulo);
-        ts.poner("procedure", nulo);
-        ts.poner("return", nulo);
-        ts.poner("function", nulo);
-        ts.poner("new", nulo);
-        ts.poner("const", nulo);
-        ts.poner("array", nulo);
-        ts.poner("tupel", nulo);
-         */
-        //TypeDescripcion no sirve para nada porque ya tenemos TypeEnum, pero diria que lo suyo y lo màs adecuado es usar TypeDescripcion
-        //y borrar typeEnum
         TypeDescripcion tipo = new TypeDescripcion(TypeDescripcion.TSB.tsb_int, Integer.MIN_VALUE, Integer.MAX_VALUE);
         ts.poner("int", tipo, null);
         tipo = new TypeDescripcion(TypeDescripcion.TSB.tsb_char, Character.MIN_VALUE, Character.MAX_VALUE);
@@ -87,6 +65,7 @@ public class analisisSemantico {
         ts.poner("main", mainDescription, null);
     }
 
+    //checked
     public void handleProgram() {
         //Switch al output de semantico
         mvp.semantic(true);
@@ -115,6 +94,7 @@ public class analisisSemantico {
         ensamblado.mainMake();
     }
 
+    //checked
     public void handleDeclList(DeclListNode declList) {
         DeclListNode listaDecls = declList.getDeclList();
         //Lista con declaraciones?
@@ -125,6 +105,7 @@ public class analisisSemantico {
         handleDecl(declList.getDecl());
     }
 
+    //checked
     public void handleDecl(DeclNode decl) {
         ModifierNode mod = decl.getModifier();
         if (mod == null) {
@@ -136,6 +117,7 @@ public class analisisSemantico {
         handleActualDecl(decl.getActualDecl(), mod.getDescriptionType());
     }
 
+    //checked
     public void handleActualDecl(ActualDeclNode actualDecl, IdDescripcion.TipoDescripcion modifier) {
         DeclElemNode declElem = actualDecl.getDeclElem();
         DeclArrayNode declArray = actualDecl.getDeclArray();
@@ -154,14 +136,15 @@ public class analisisSemantico {
             parser.report_error("Actual decl no contiene elementos, arrays o tuplas!", actualDecl);
         }
     }
-//Sin pasar type desde aquí no se puede saber luego
 
+    //checked
     public void handleDeclElem(DeclElemNode declElem, IdDescripcion.TipoDescripcion modifier) {
         TypeEnum type = declElem.getTypeId().getType();
         //Una lista de elementos
         handleElemList(declElem.getElemList(), type, modifier);
     }
 
+    //checked
     public void handleElemList(ElemListNode elemList, TypeEnum type, IdDescripcion.TipoDescripcion modifier) {
         ElemListNode listaElementos = elemList.getElemList();
         if (listaElementos != null) {
@@ -171,6 +154,7 @@ public class analisisSemantico {
         handleElemIdAssig(elemList.getElemIdAssig(), type, modifier);
     }
 
+    
     public void handleElemIdAssig(ElemIdAssigNode elemIdAssig, TypeEnum type, IdDescripcion.TipoDescripcion modifier) {
         String id = elemIdAssig.getIdentifier().getIdentifierLiteral();
         ExpressionNode expression = elemIdAssig.getExp();
@@ -246,6 +230,7 @@ public class analisisSemantico {
         }
     }
 
+    //checked
     public void handleDeclArray(DeclArrayNode declArray, IdDescripcion.TipoDescripcion modifier) {
         TypeEnum tipo = declArray.getTypeId().getType();
         String id = declArray.getIdentifier().getIdentifierLiteral();
@@ -289,6 +274,7 @@ public class analisisSemantico {
         }
     }
 
+    //checked
     public int handleDimArray(DimArrayNode dimArray, String id) {
         if (dimArray.getDim() != null) {
             handleExpresion(dimArray.getDim());
@@ -314,6 +300,7 @@ public class analisisSemantico {
         }
     }
 
+    //checked
     public void handleInitArray(InitArrayNode initArray, TypeEnum type, String id) {
         //Comprobación de tipo ya no es posible, no está en la producción. Pasarla como parámetro de alguna manera?????
         if (type != initArray.getTypeId().getType()) {
@@ -330,12 +317,14 @@ public class analisisSemantico {
         }
     }
 
+    //checked
     public void handleArrayDecl(ArrayDeclNode node, TypeEnum type, String id) {
         if (node.getInitArrayNode() != null) {
             handleInitArray(node.getInitArrayNode(), type, id);
         }
     }
 
+    //checked
     public void handleExpresion(ExpressionNode expressionNode) {
         if (expressionNode != null) {
             //Si tenemos alguna expresion en el lado izquierdo, pero no en el derecho
@@ -481,6 +470,7 @@ public class analisisSemantico {
         }
     }
 
+    //checked
     public TypeEnum typeFromId(IdDescripcion desc) {
         if (null == desc.getTipoDescripcion()) {
             return null;
@@ -502,6 +492,7 @@ public class analisisSemantico {
         }
     }
 
+    //checked
     public int idFromDesc(IdDescripcion desc) {
         if (null == desc.getTipoDescripcion()) {
             return -1;
@@ -576,7 +567,6 @@ public class analisisSemantico {
         return isIdx;
     }
 
-    //va a devolver el desplazamiento relativo para llegar a x dimension o campo
     public int handleGestor(GestorNode node, String id, Desplazamiento res) {
         if (node.getGestArray() != null) {
             ArrayDescripcion a = (ArrayDescripcion) ts.consultaId(id);
@@ -707,6 +697,7 @@ public class analisisSemantico {
         }
     }
 
+    //checked
     public void handleSimpleValue(SimpleValueNode simpleValue) {
         if (simpleValue.getGestor() != null) {
             Desplazamiento des = new Desplazamiento();
@@ -859,6 +850,7 @@ public class analisisSemantico {
         }
     }
 
+    //checked
     public void handleMethodList(MethodListNode node) {
         if (node.getMethod() != null) {
             handleMethod(node.getMethod());
@@ -868,6 +860,7 @@ public class analisisSemantico {
         }
     }
 
+    //checked
     public void handleMethod(MethodNode node) {
         if (node.getProc() != null) {
             handleProc(node.getProc());
@@ -877,6 +870,7 @@ public class analisisSemantico {
         }
     }
 
+    //checked
     public void handleProc(ProcNode node) {
         String idProc = node.getIdentifier().getIdentifierLiteral();
         gc.addFunctionId(idProc); //ponemos el procedimiento en la cima de la pila de procedimientos activos
@@ -910,6 +904,7 @@ public class analisisSemantico {
         ts.salirBloque();
     }
 
+    //checked
     public void handleFunc(FuncNode node) {
         TypeEnum tipo = node.getTypeId().getType();
         String idFunc = node.getId().getIdentifierLiteral();
@@ -949,6 +944,7 @@ public class analisisSemantico {
         ts.salirBloque();
     }
 
+    //checked
     public void handleParamList(ActualParamListNode node) {
         if (node.getParam() != null) {
             handleParam(node.getParam());
@@ -958,6 +954,7 @@ public class analisisSemantico {
         }
     }
 
+    //checked
     public void handleParam(ParamNode node) {
         String actualProc = gc.getCurrentFunction();
         String id = node.getId().getIdentifierLiteral();
@@ -990,6 +987,7 @@ public class analisisSemantico {
         }
     }
 
+    //checked
     public void handleSentenceList(SentenceListNode node) {
         if (node.getSentence() != null) {
             handleSentence(node.getSentence());
@@ -1160,6 +1158,7 @@ public class analisisSemantico {
         }
     }
 
+    //checked
     public void handleInst(InstNode node) {
         switch (node.getInstType()) {
             case EXP:
@@ -1189,6 +1188,7 @@ public class analisisSemantico {
         }
     }
 
+    //checked
     private void handleInstExp(InstExpNode node) {
         if (node.getSpecialOp() != null) {
             handleSpecialOp(node.getSpecialOp(), node.getIdentifier());
@@ -1395,6 +1395,7 @@ public class analisisSemantico {
 
     }
 
+    //checked
     private int handleLiteral(String value, TypeEnum tipo) {
         //temporalPointer for latter assignment of reference if needed
         int varRef = gc.newVar(Variable.TipoVariable.VARIABLE, tipo, false, false);
@@ -1427,6 +1428,7 @@ public class analisisSemantico {
         return varRef;
     }
 
+    //checked
     private void handleMain(MainNode mainNode) {
         // TODO: A better solution would be to attach each variable in descriptionTable
         // to a procedure, so we can have the same var, in the same scope, for different procedures
