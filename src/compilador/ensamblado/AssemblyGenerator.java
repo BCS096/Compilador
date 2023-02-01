@@ -21,6 +21,7 @@ import compilador.sintactic.semantic.Operator3Address.CastType;
 import compilador.sintactic.semantic.Operator3Address.Type;
 import compilador.sintactic.semantic.VariableNumberTypePair;
 import tablas.*;
+import tablas.Variable.TipoVariable;
 
 /**
  *
@@ -29,8 +30,9 @@ import tablas.*;
 public class AssemblyGenerator {
 
     StringBuilder assemblyCode = new StringBuilder();
-    TablaVariables variableTable;
-    TablaProcedimientos procedureTable;
+    TablaVariables tv;
+    TablaProcedimientos tp;
+    TablaSimbolos ts;
     ArrayList<Instruction3Address> instructions;
     private final String labelSpace = "        ";
     private final String instSpace = " ";
@@ -59,19 +61,21 @@ public class AssemblyGenerator {
     private int HN = 1000; //Heap number
     private String HP = "$" + HN;
     private boolean choice = false;
+    private ArrayList<String> stringsDone = new ArrayList<>();
 
     /**
      *
-     * @param variableTable
-     * @param procedureTable
+     * @param tv
+     * @param tp
      * @param expansionTable
      * @param symbolTable We need all the tables for the code generation process
      * @param instructions
      */
-    public AssemblyGenerator(String filename, TablaVariables variableTable, TablaProcedimientos procedureTable, ArrayList<Instruction3Address> instructions) {
+    public AssemblyGenerator(String filename, TablaSimbolos symbolTable, TablaVariables tv, TablaProcedimientos tp, ArrayList<Instruction3Address> instructions) {
         this.filename = filename;
-        this.variableTable = variableTable;
-        this.procedureTable = procedureTable;
+        this.ts = symbolTable;
+        this.tv = tv;
+        this.tp = tp;
         this.instructions = instructions;
 
     }
@@ -91,14 +95,14 @@ public class AssemblyGenerator {
         assemblyCode.append(";-----------------------------------------------------------\n");
         //Initiate all variables in memory
 
-        for (int i = 0; i < variableTable.getContador(); i++) {
-            if (variableTable.get(i).getTipo() == TypeEnum.STRING) {
-                assemblyCode.append(variableTable.get(i).getId() + labelSpace + "DC.B" + instSpace + getStringValue(i) + ",0\n");
+        for (int i = 0; i < tv.getContador(); i++) {
+            if (tv.get(i).getTipo() == TypeEnum.STRING) {
+                assemblyCode.append(tv.get(i).getId() + labelSpace + "DC.B" + instSpace + getStringValue(i) + ",0\n");
             } else {
-                if (variableTable.get(i).isArray()) {
-                    assemblyCode.append(variableTable.get(i).getId() + labelSpace + "DS.L" + instSpace + "15\n");
+                if (tv.get(i).isArray()) {
+                    assemblyCode.append(tv.get(i).getId() + labelSpace + "DS.L" + instSpace + "15\n");
                 } else {
-                    assemblyCode.append(variableTable.get(i).getId() + labelSpace + "DS.L" + instSpace + "1\n");
+                    assemblyCode.append(tv.get(i).getId() + labelSpace + "DS.L" + instSpace + "1\n");
                 }
             }
         }
@@ -109,11 +113,11 @@ public class AssemblyGenerator {
         choice = true;//Scanner scan = new Scanner(System.in);
         //choice = scan.nextBoolean();
         if (choice) {
-            for (int i = 0; i < variableTable.getContador(); i++) {
+            for (int i = 0; i < tv.getContador(); i++) {
                 System.out.println("-------------------------------------------------------------------------------------------------------------------------");
-                System.out.println("El identificador: " + variableTable.get(i).getId() + ", el nombre: " + variableTable.get(i).getIdProcedimiento());
-                if (procedureTable.get(variableTable.get(i).getIdProcedimiento()) != null) {
-                    System.out.println("La profundidad de la variable es: " + procedureTable.get(variableTable.get(i).getIdProcedimiento()).getAmbito());
+                System.out.println("El identificador: " + tv.get(i).getId() + ", el nombre: " + tv.get(i).getIdProcedimiento());
+                if (tp.get(tv.get(i).getIdProcedimiento()) != null) {
+                    System.out.println("La profundidad de la variable es: " + tp.get(tv.get(i).getIdProcedimiento()).getAmbito());
                 } else {
                     System.out.println("No hay profundidad de procedure, o sea que profundidad: 0");
                 }
@@ -153,7 +157,7 @@ public class AssemblyGenerator {
         assemblyCode.append(labelSpace
                 + "END" + instSpace + "globals");
 
-        try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(new File(folder + filename.substring(0, filename.length()-4) + extension)))) {
+        try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(new File(folder + filename.substring(0, filename.length() - 4) + extension)))) {
             bufferedWriter.write(assemblyCode.toString());
             //For overwritting avoidance
             Thread.sleep(2000);
@@ -172,140 +176,140 @@ public class AssemblyGenerator {
         switch (instruction.getInstructionType()) {
             case CLONE:
                 //Case A=B, Valor in A, store in C ta mal
-                LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), variableTable.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D0");
-                STORE("D0", variableTable.get(instruction.getOperators()[2].getReference()).getIdProcedimiento(), instruction.getOperators()[2].getReference());
+                LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), tv.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D0");
+                STORE("D0", tv.get(instruction.getOperators()[2].getReference()).getIdProcedimiento(), instruction.getOperators()[2].getReference());
                 break;
             case ADD:
 
                 //Assuming A+B, store in C
-                LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), variableTable.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D0");
-                LOAD(instruction.getOperators()[1], instruction.getOperators()[1].getReference(), variableTable.get(instruction.getOperators()[1].getReference()).getIdProcedimiento(), "D1");
+                LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), tv.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D0");
+                LOAD(instruction.getOperators()[1], instruction.getOperators()[1].getReference(), tv.get(instruction.getOperators()[1].getReference()).getIdProcedimiento(), "D1");
                 assemblyCode.append(labelSpace + "ADDM" + instSpace + "D0, D1\n");
-                STORE("D1", variableTable.get(instruction.getOperators()[2].getReference()).getIdProcedimiento(),
+                STORE("D1", tv.get(instruction.getOperators()[2].getReference()).getIdProcedimiento(),
                         instruction.getOperators()[2].getReference());
                 break;
             case SUB:
                 //Assuming A-B, store in C
-                LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), variableTable.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D0");
-                LOAD(instruction.getOperators()[1], instruction.getOperators()[1].getReference(), variableTable.get(instruction.getOperators()[1].getReference()).getIdProcedimiento(), "D1");
+                LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), tv.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D0");
+                LOAD(instruction.getOperators()[1], instruction.getOperators()[1].getReference(), tv.get(instruction.getOperators()[1].getReference()).getIdProcedimiento(), "D1");
                 assemblyCode.append(labelSpace + "SUBM" + instSpace + "D0, D1\n");
-                STORE("D1", variableTable.get(instruction.getOperators()[2].getReference()).getIdProcedimiento(),
+                STORE("D1", tv.get(instruction.getOperators()[2].getReference()).getIdProcedimiento(),
                         instruction.getOperators()[2].getReference());
                 break;
             case MUL:
                 //Assuming A*B, store in C
-                LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), variableTable.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D0");
-                LOAD(instruction.getOperators()[1], instruction.getOperators()[1].getReference(), variableTable.get(instruction.getOperators()[1].getReference()).getIdProcedimiento(), "D1");
+                LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), tv.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D0");
+                LOAD(instruction.getOperators()[1], instruction.getOperators()[1].getReference(), tv.get(instruction.getOperators()[1].getReference()).getIdProcedimiento(), "D1");
                 assemblyCode.append(labelSpace + "MULTM" + instSpace + "D0, D1\n");
-                STORE("D1", variableTable.get(instruction.getOperators()[2].getReference()).getIdProcedimiento(),
+                STORE("D1", tv.get(instruction.getOperators()[2].getReference()).getIdProcedimiento(),
                         instruction.getOperators()[2].getReference());
                 break;
             case DIV:
                 //Assuming A/B, store in C
-                LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), variableTable.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D0");
-                LOAD(instruction.getOperators()[1], instruction.getOperators()[1].getReference(), variableTable.get(instruction.getOperators()[1].getReference()).getIdProcedimiento(), "D1");
+                LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), tv.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D0");
+                LOAD(instruction.getOperators()[1], instruction.getOperators()[1].getReference(), tv.get(instruction.getOperators()[1].getReference()).getIdProcedimiento(), "D1");
                 assemblyCode.append(labelSpace + "DIVM" + instSpace + "D1, D0\n");
                 assemblyCode.append(labelSpace + "AND.L" + instSpace + clearHighRegister + ", D1\n"); //Remove remainder
-                STORE("D1", variableTable.get(instruction.getOperators()[2].getReference()).getIdProcedimiento(),
+                STORE("D1", tv.get(instruction.getOperators()[2].getReference()).getIdProcedimiento(),
                         instruction.getOperators()[2].getReference());
                 break;
             case MOD:
                 //Assuming A/B, store in C
-                LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), variableTable.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D0");
-                LOAD(instruction.getOperators()[1], instruction.getOperators()[1].getReference(), variableTable.get(instruction.getOperators()[1].getReference()).getIdProcedimiento(), "D1");
+                LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), tv.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D0");
+                LOAD(instruction.getOperators()[1], instruction.getOperators()[1].getReference(), tv.get(instruction.getOperators()[1].getReference()).getIdProcedimiento(), "D1");
                 assemblyCode.append(labelSpace + "MODM" + instSpace + "D1, D0\n"); //In this macro we clear division result and swap inside it
-                STORE("D1", variableTable.get(instruction.getOperators()[2].getReference()).getIdProcedimiento(),
+                STORE("D1", tv.get(instruction.getOperators()[2].getReference()).getIdProcedimiento(),
                         instruction.getOperators()[2].getReference());
                 break;
             case NEG:
                 //A = -b
-                LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), variableTable.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D1");
+                LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), tv.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D1");
                 assemblyCode.append(labelSpace + "NEGM" + instSpace + "D1"); //If we already use D1 for result, optimal to get the value inside it
-                STORE("D1", variableTable.get(instruction.getOperators()[2].getReference()).getIdProcedimiento(), instruction.getOperators()[2].getReference());
+                STORE("D1", tv.get(instruction.getOperators()[2].getReference()).getIdProcedimiento(), instruction.getOperators()[2].getReference());
                 break;
             case AND:
                 //Assuming A & B, store in C
-                LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), variableTable.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D0");
-                LOAD(instruction.getOperators()[1], instruction.getOperators()[1].getReference(), variableTable.get(instruction.getOperators()[1].getReference()).getIdProcedimiento(), "D1");
+                LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), tv.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D0");
+                LOAD(instruction.getOperators()[1], instruction.getOperators()[1].getReference(), tv.get(instruction.getOperators()[1].getReference()).getIdProcedimiento(), "D1");
                 assemblyCode.append(labelSpace + "ANDM" + instSpace + "D0, D1\n");
-                STORE("D1", variableTable.get(instruction.getOperators()[2].getReference()).getIdProcedimiento(),
+                STORE("D1", tv.get(instruction.getOperators()[2].getReference()).getIdProcedimiento(),
                         instruction.getOperators()[2].getReference());
                 break;
             case OR:
                 //Assuming A | B, store in C
-                LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), variableTable.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D0");
-                LOAD(instruction.getOperators()[1], instruction.getOperators()[1].getReference(), variableTable.get(instruction.getOperators()[1].getReference()).getIdProcedimiento(), "D1");
+                LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), tv.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D0");
+                LOAD(instruction.getOperators()[1], instruction.getOperators()[1].getReference(), tv.get(instruction.getOperators()[1].getReference()).getIdProcedimiento(), "D1");
                 assemblyCode.append(labelSpace + "ORM" + instSpace + "D0, D1\n");
-                STORE("D1", variableTable.get(instruction.getOperators()[2].getReference()).getIdProcedimiento(),
+                STORE("D1", tv.get(instruction.getOperators()[2].getReference()).getIdProcedimiento(),
                         instruction.getOperators()[2].getReference());
                 break;
             case NOT:
                 //a = NOT b
-                LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), variableTable.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D1");
+                LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), tv.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D1");
                 assemblyCode.append(labelSpace + "NOTM" + instSpace + "D1"); //If we already use D1 for result, optimal to get the value inside it
-                STORE("D1", variableTable.get(instruction.getOperators()[2].getReference()).getIdProcedimiento(), instruction.getOperators()[2].getReference());
+                STORE("D1", tv.get(instruction.getOperators()[2].getReference()).getIdProcedimiento(), instruction.getOperators()[2].getReference());
                 break;
             case INDVALUE:
                 //C = A[B]
                 //B might be inmediate (assuming decimal value)
                 //Array always stored before, if we acces indexed value
-//                LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), variableTable.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D0");
-                assemblyCode.append(labelSpace + "LEA" + instSpace + '(' + variableTable.get(instruction.getOperators()[0].getReference()).getId() + "), A0\n");
-                LOAD(instruction.getOperators()[1], instruction.getOperators()[1].getReference(), variableTable.get(instruction.getOperators()[1].getReference()).getIdProcedimiento(), "D0");
+//                LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), tv.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D0");
+                assemblyCode.append(labelSpace + "LEA" + instSpace + '(' + tv.get(instruction.getOperators()[0].getReference()).getId() + "), A0\n");
+                LOAD(instruction.getOperators()[1], instruction.getOperators()[1].getReference(), tv.get(instruction.getOperators()[1].getReference()).getIdProcedimiento(), "D0");
                 assemblyCode.append(labelSpace + "ADD.L" + instSpace + "D0, A0 ; D0 = @B[C]\n");
                 assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "(A0), D0 ; D0 = B[C]\n");
-                STORE("D0", variableTable.get(instruction.getOperators()[2].getReference()).getIdProcedimiento(), instruction.getOperators()[2].getReference());
+                STORE("D0", tv.get(instruction.getOperators()[2].getReference()).getIdProcedimiento(), instruction.getOperators()[2].getReference());
                 break;
             case ASSINDEX:
 
                 //C[B] = A, if C,B,A = OP1,OP2,OP3
-//                LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), variableTable.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D0");
-                assemblyCode.append(labelSpace + "LEA" + instSpace + '(' + variableTable.get(instruction.getOperators()[2].getReference()).getId() + "), A0\n");
-                LOAD(instruction.getOperators()[1], instruction.getOperators()[1].getReference(), variableTable.get(instruction.getOperators()[1].getReference()).getIdProcedimiento(), "D0");
+//                LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), tv.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D0");
+                assemblyCode.append(labelSpace + "LEA" + instSpace + '(' + tv.get(instruction.getOperators()[2].getReference()).getId() + "), A0\n");
+                LOAD(instruction.getOperators()[1], instruction.getOperators()[1].getReference(), tv.get(instruction.getOperators()[1].getReference()).getIdProcedimiento(), "D0");
                 assemblyCode.append(labelSpace + "ADD.L" + instSpace + "D0, A0 ; D0 = @B[C]\n");
-                LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), variableTable.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D2");
+                LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), tv.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D2");
                 assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "D2, (A0) ; Store C IN A[B]\n");
                 break;
             case SKIP:
-                //assemblyCode.append(procedureTable.get(instruction.getOperators()[2].getLabel()).getStartLabel() + ":\n");
+                //assemblyCode.append(tp.get(instruction.getOperators()[2].getLabel()).getStartLabel() + ":\n");
                 assemblyCode.append(instruction.getOperators()[2].getLabel() + ":\n");
                 break;
             case GOTO:
                 assemblyCode.append(labelSpace + "JMP" + instSpace + instruction.getOperators()[2].getLabel() + '\n');
                 break;
             case IFLT:
-                LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), variableTable.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D0");
-                LOAD(instruction.getOperators()[1], instruction.getOperators()[1].getReference(), variableTable.get(instruction.getOperators()[1].getReference()).getIdProcedimiento(), "D1");
+                LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), tv.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D0");
+                LOAD(instruction.getOperators()[1], instruction.getOperators()[1].getReference(), tv.get(instruction.getOperators()[1].getReference()).getIdProcedimiento(), "D1");
                 assemblyCode.append(labelSpace + "CMP.L" + instSpace + "D1, D0\n");
                 assemblyCode.append(labelSpace + "BLT" + instSpace + instruction.getOperators()[2].getLabel() + '\n');
                 break;
             case IFLE:
-                LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), variableTable.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D0");
-                LOAD(instruction.getOperators()[1], instruction.getOperators()[1].getReference(), variableTable.get(instruction.getOperators()[1].getReference()).getIdProcedimiento(), "D1");
+                LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), tv.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D0");
+                LOAD(instruction.getOperators()[1], instruction.getOperators()[1].getReference(), tv.get(instruction.getOperators()[1].getReference()).getIdProcedimiento(), "D1");
                 assemblyCode.append(labelSpace + "CMP.L" + instSpace + "D1, D0\n");
                 assemblyCode.append(labelSpace + "BLE" + instSpace + instruction.getOperators()[2].getLabel() + '\n');
                 break;
             case IFGT:
-                LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), variableTable.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D0");
-                LOAD(instruction.getOperators()[1], instruction.getOperators()[1].getReference(), variableTable.get(instruction.getOperators()[1].getReference()).getIdProcedimiento(), "D1");
+                LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), tv.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D0");
+                LOAD(instruction.getOperators()[1], instruction.getOperators()[1].getReference(), tv.get(instruction.getOperators()[1].getReference()).getIdProcedimiento(), "D1");
                 assemblyCode.append(labelSpace + "CMP.L" + instSpace + "D1, D0\n");
                 assemblyCode.append(labelSpace + "BGT" + instSpace + instruction.getOperators()[2].getLabel() + '\n');
                 break;
             case IFGE:
-                LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), variableTable.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D0");
-                LOAD(instruction.getOperators()[1], instruction.getOperators()[1].getReference(), variableTable.get(instruction.getOperators()[1].getReference()).getIdProcedimiento(), "D1");
+                LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), tv.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D0");
+                LOAD(instruction.getOperators()[1], instruction.getOperators()[1].getReference(), tv.get(instruction.getOperators()[1].getReference()).getIdProcedimiento(), "D1");
                 assemblyCode.append(labelSpace + "CMP.L" + instSpace + "D1, D0\n");
                 assemblyCode.append(labelSpace + "BGE" + instSpace + instruction.getOperators()[2].getLabel() + '\n');
                 break;
             case IFEQ:
-                LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), variableTable.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D0");
-                LOAD(instruction.getOperators()[1], instruction.getOperators()[1].getReference(), variableTable.get(instruction.getOperators()[1].getReference()).getIdProcedimiento(), "D1");
+                LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), tv.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D0");
+                LOAD(instruction.getOperators()[1], instruction.getOperators()[1].getReference(), tv.get(instruction.getOperators()[1].getReference()).getIdProcedimiento(), "D1");
                 assemblyCode.append(labelSpace + "CMP.L" + instSpace + "D1, D0\n");
                 assemblyCode.append(labelSpace + "BEQ" + instSpace + instruction.getOperators()[2].getLabel() + '\n');
                 break;
             case IFNE:
-                LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), variableTable.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D0");
-                LOAD(instruction.getOperators()[1], instruction.getOperators()[1].getReference(), variableTable.get(instruction.getOperators()[1].getReference()).getIdProcedimiento(), "D1");
+                LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), tv.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D0");
+                LOAD(instruction.getOperators()[1], instruction.getOperators()[1].getReference(), tv.get(instruction.getOperators()[1].getReference()).getIdProcedimiento(), "D1");
                 assemblyCode.append(labelSpace + "CMP.L" + instSpace + "D1, D0\n");
                 assemblyCode.append(labelSpace + "BNE" + instSpace + instruction.getOperators()[2].getLabel() + '\n');
                 break;
@@ -316,7 +320,7 @@ public class AssemblyGenerator {
                     break;
                 } else {
                     //We already have the parameters and return address. We just put in the DISP and BP
-                    int prof4x = procedureTable.get(instruction.getOperators()[2].getLabel()).getAmbito() * 4;
+                    int prof4x = tp.get(instruction.getOperators()[2].getLabel()).getAmbito() * 4;
                     assemblyCode.append(labelSpace + "LEA" + instSpace + "DISP, A0\n");
                     //Antic DISP(prof)
                     assemblyCode.append(labelSpace + "MOVE.L" + instSpace + prof4x + "(A0), -(A7)\n");
@@ -333,13 +337,13 @@ public class AssemblyGenerator {
                     assemblyCode.append(labelSpace + "SIMHALT\n");
                     break;
                 }
-                int prof4x = procedureTable.get(instruction.getOperators()[0].getLabel()).getAmbito() * 4;
+                int prof4x = tp.get(instruction.getOperators()[0].getLabel()).getAmbito() * 4;
                 assemblyCode.append(labelSpace + "MOVE.L" + instSpace + EBP + ", A7 ; SP = BP, return to state before PMB\n");
                 assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "(A7)+, " + EBP + " ; BP = old BP\n");
                 assemblyCode.append(labelSpace + "LEA" + instSpace + "DISP, A0 ; A0 = @DISP\n");
                 assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "(A7)+, " + prof4x + "(A0) ; DISP[prof] = old value\n");
                 if (instruction.getOperators()[2] != null) {
-                    LOAD(instruction.getOperators()[2], instruction.getOperators()[2].getReference(), variableTable.get(instruction.getOperators()[2].getReference()).getIdProcedimiento(), "D5");
+                    LOAD(instruction.getOperators()[2], instruction.getOperators()[2].getReference(), tv.get(instruction.getOperators()[2].getReference()).getIdProcedimiento(), "D5");
                 }
                 assemblyCode.append(labelSpace + "RTS ; Return\n");
                 break;
@@ -351,14 +355,14 @@ public class AssemblyGenerator {
                     actualOffset = parameterNumber * wordSize + 12 + wordSize; //10*4 right now, 12 are the 3 vars (DISP, RET, BP), and we do --, so first is wrong (wordSize corrects it)
                     break;
                 }
-                Procedimiento procedure = procedureTable.get(instruction.getOperators()[0].getLabel());
+                Procedimiento procedure = tp.get(instruction.getOperators()[0].getLabel());
                 String label = procedure.getEtiquetaInicial();
 
                 int numberParameters = procedure.getNumberParameters(); //How many parameters (max ->parameterNumber)
                 assemblyCode.append(labelSpace + "JSR" + instSpace + label + " ; GOTO " + label + "\n"); //Make the jump, we have parameters in stack (From SIMPLEPARAM)
                 if (instruction.getOperators()[2] != null) {
                     //D5 used for returning values
-                    STORE("D5", variableTable.get(instruction.getOperators()[2].getReference()).getIdProcedimiento(), instruction.getOperators()[2].getReference());
+                    STORE("D5", tv.get(instruction.getOperators()[2].getReference()).getIdProcedimiento(), instruction.getOperators()[2].getReference());
                 }
 
                 assemblyCode.append(labelSpace + "MOVE.L" + instSpace + EBP + ", A7\n");
@@ -366,20 +370,20 @@ public class AssemblyGenerator {
                 break;
             case SIMPLEPARAM:
                 int variableId = instruction.getOperators()[2].getReference();
-                variableTable.get(variableId).setOffset((actualOffset -= wordSize));
-                String procedureId = variableTable.get(variableId).getIdProcedimiento();
+                tv.get(variableId).setOffset((actualOffset -= wordSize));
+                String procedureId = tv.get(variableId).getIdProcedimiento();
                 LOAD(instruction.getOperators()[2], variableId, procedureId, "D0");
                 assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "D0, -(A7)\n");
                 if (choice) {
                     System.out.println("-------------------------------------------------------------------------------------------------------------------------");
-                    System.out.println("El identificador: " + variableTable.get(variableId).getId() + ", el nombre: " + variableTable.get(variableId).getIdProcedimiento());
-                    if (procedureTable.get(variableTable.get(variableId).getIdProcedimiento()) != null) {
-                        System.out.println("La profundidad de la variable es: " + procedureTable.get(variableTable.get(variableId).getIdProcedimiento()).getAmbito());
+                    System.out.println("El identificador: " + tv.get(variableId).getId() + ", el nombre: " + tv.get(variableId).getIdProcedimiento());
+                    if (tp.get(tv.get(variableId).getIdProcedimiento()) != null) {
+                        System.out.println("La profundidad de la variable es: " + tp.get(tv.get(variableId).getIdProcedimiento()).getAmbito());
                     } else {
                         System.out.println("No hay profundidad de procedure, o sea que profundidad: 0");
                     }
                     System.out.println("");
-                    System.out.println("La variable tiene un offset de: " + variableTable.get(variableId).getOffset());
+                    System.out.println("La variable tiene un offset de: " + tv.get(variableId).getOffset());
                     System.out.println("-------------------------------------------------------------------------------------------------------------------------");
                 }
                 break;
@@ -387,48 +391,48 @@ public class AssemblyGenerator {
                 assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "#5, D0 ; Prepare read\n");
                 assemblyCode.append(labelSpace + "TRAP" + instSpace + "#15 ; Expect input\n");
                 assemblyCode.append(labelSpace + "AND.L" + instSpace + "#$00FF, D1 ; Mask upper word (we read char = 2 bytes)\n");
-                STORE("D1", variableTable.get(instruction.getOperators()[2].getReference()).getIdProcedimiento(), instruction.getOperators()[2].getReference());
+                STORE("D1", tv.get(instruction.getOperators()[2].getReference()).getIdProcedimiento(), instruction.getOperators()[2].getReference());
                 break;
             case PRINT:
-                Variable variable = variableTable.get(instruction.getOperators()[0].getReference());
+                Variable variable = tv.get(instruction.getOperators()[0].getReference());
 
                 if (variable.getTipo() == TypeEnum.STRING) {
                     LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(),
-                            variableTable.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "A0");
+                            tv.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "A0");
                     assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "A0, A1 ; Ready text\n");
                     assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "#14, D0 ; Prepare display\n");
                     assemblyCode.append(labelSpace + "TRAP" + instSpace + "#15\n ; Expect screen visualization\n");
                 } else if (variable.getTipo() == TypeEnum.CHAR) {
                     LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(),
-                            variableTable.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D1");
+                            tv.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D1");
                     assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "#6, D0 ; Prepare display\n");
                     assemblyCode.append(labelSpace + "TRAP" + instSpace + "#15\n ; Expect screen visualization\n");
                 } else if (variable.getTipo() == TypeEnum.BOOL || variable.getTipo() == TypeEnum.INT) {
                     LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(),
-                            variableTable.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D1");
+                            tv.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D1");
                     assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "#3, D0 ; Prepare display\n");
                     assemblyCode.append(labelSpace + "TRAP" + instSpace + "#15\n ; Expect screen visualization\n");
 
                 }
                 break;
             case PRINTLN:
-                variable = variableTable.get(instruction.getOperators()[0].getReference());
+                variable = tv.get(instruction.getOperators()[0].getReference());
                 if (1 == 0) {
                 } else {
                     if (variable.getTipo() == TypeEnum.STRING) {
                         LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(),
-                                variableTable.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "A0");
+                                tv.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "A0");
                         assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "A0, A1 ; Ready text\n");
                         assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "#14, D0 ; Prepare display\n");
                         assemblyCode.append(labelSpace + "TRAP" + instSpace + "#15\n ; Expect screen visualization\n");
                     } else if (variable.getTipo() == TypeEnum.CHAR) {
                         LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(),
-                                variableTable.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D1");
+                                tv.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D1");
                         assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "#6, D0 ; Prepare display\n");
                         assemblyCode.append(labelSpace + "TRAP" + instSpace + "#15\n ; Expect screen visualization\n");
                     } else if (variable.getTipo() == TypeEnum.BOOL || variable.getTipo() == TypeEnum.INT) {
                         LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(),
-                                variableTable.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D1");
+                                tv.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D1");
                         assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "#3, D0 ; Prepare display\n");
                         assemblyCode.append(labelSpace + "TRAP" + instSpace + "#15\n ; Expect screen visualization\n");
                     }
@@ -465,15 +469,15 @@ public class AssemblyGenerator {
     }
 
     private void LOAD(Operator3Address literal, int variableId, String procedureId, String register) {
-        Variable variable = variableTable.get(variableId);
+        Variable variable = tv.get(variableId);
         //Default scope of both:
         int profx = 0;
         int profp = 0;
-        if (procedureTable.get(variable.getIdProcedimiento()) != null) {
-            profx = procedureTable.get(variable.getIdProcedimiento()).getAmbito();
-            profp = procedureTable.get(procedureId).getAmbito();
+        if (tp.get(variable.getIdProcedimiento()) != null) {
+            profx = tp.get(variable.getIdProcedimiento()).getAmbito();
+            profp = tp.get(procedureId).getAmbito();
         }
-        int dx = variable.getOffset();
+        int dx = variable.getOffset();//- 4; //empezamos en -4(evitando 0?)
         if (literal.getType() == Type.literal) //If we have scalar value
         {
             switch (literal.getCastType()) {
@@ -484,22 +488,29 @@ public class AssemblyGenerator {
                     assemblyCode.append(labelSpace + "MOVE.L" + instSpace + '#' + ((char) literal.getLiteral()) + ", " + register + " ; Load variable\n");
                     break;
                 case BOOL:
-                    assemblyCode.append(labelSpace + "MOVE.L" + instSpace + '#' + ((boolean) literal.getLiteral() ? 1 : 0) + ", " + register + " ; Load variable\n");
+                    assemblyCode.append(labelSpace + "MOVE.L" + instSpace + '#' + ((boolean) literal.getLiteral() ? '1' : '0') + ", " + register + " ; Load variable\n");
                     break;
                 case STRING:
-                    assemblyCode.append(variable.getId() + labelSpace + "DC.B" + instSpace + ((String) literal.getLiteral()).replace('"', '\'') + ", 0 ; Inmediate string\n");
-                    assemblyCode.append(labelSpace + "LEA" + instSpace + variable.getId() + ", A0\n");
+                    if (!stringsDone.contains(variable.getId())) {
+                        assemblyCode.append('.' + variable.getId() + labelSpace + "DC.B" + instSpace + ((String) literal.getLiteral()).replace('"', '\'') + ", 0 ; Inmediate string\n");
+                        stringsDone.add(variable.getId());
+                    }else{
+                        if(stringsDone.contains(variable.getId()) && profx != profp){
+                            assemblyCode.append('.' + variable.getId() + labelSpace + "DC.B" + instSpace + ((String) literal.getLiteral()).replace('"', '\'') + ", 0 ; Inmediate string\n");
+                        }
+                    }
+                    assemblyCode.append(labelSpace + "LEA" + instSpace + '.' + variable.getId() + ", A0\n");
                     assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "A0, " + register + " ; Load variable\n");
                     break;
                 default:
                     throw new UnsupportedOperationException("Trying to load something that is not a variable!");
             }
-        } else if (profx == profp && dx < 0) {
+        } else if (profx == profp && dx < 0) { //Si profundidad de la variable es la misma que el procedure y está en negativo por debajo de BlockPointer
             assemblyCode.append(labelSpace + "MOVE.L" + instSpace + dx + '(' + EBP + "), " + register + " ; Load local variable\n");
-        } else if (profx == profp && dx > 0) {
+        } else if (profx == profp && dx > 0) { //Si profundidad de la variable es la misma que el procedure y está en positivo por encima de BlockPointer
             assemblyCode.append(labelSpace + "MOVE.L" + instSpace + dx + '(' + EBP + "), A0 ; A0 contains store address\n");
             if (register.contains("D")) {
-                assemblyCode.append(labelSpace + "MOVE.L" + instSpace + register + ", A0\n");
+                //assemblyCode.append(labelSpace + "MOVE.L" + instSpace + register + ", A0\n");
                 assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "(A0), " + register + " ; Get parameter\n");
             } else {
                 assemblyCode.append(labelSpace + "MOVE.L" + instSpace + '(' + register + "), " + register + " ; Get parameter\n");
@@ -524,23 +535,23 @@ public class AssemblyGenerator {
 
     private void STORE(String register, String procedureId, int variableId) {
 
-        Variable variable = variableTable.get(variableId);
+        Variable variable = tv.get(variableId);
         //TODO:
         //If it is variable, increment BP and VARSIZE of corresponding method. 
         //If it is parameter, increment HP, store if necessary.
         //Default scope of both:
         int profx = 0;
         int profp = 0;
-        boolean notGlobal = procedureTable.get(variable.getIdProcedimiento()) != null;
+        boolean notGlobal = tp.get(variable.getIdProcedimiento()) != null;
         if (notGlobal) {
-            profx = procedureTable.get(variable.getIdProcedimiento()).getAmbito();
-            profp = procedureTable.get(procedureId).getAmbito();
+            profx = tp.get(variable.getIdProcedimiento()).getAmbito();
+            profp = tp.get(procedureId).getAmbito();
         }
-        int dx = variable.getOffset();
+        int dx = variable.getOffset(); //-4 evitamos 0?
         if (profx == profp && dx < 0) { //Local variable
             assemblyCode.append(labelSpace + "MOVE.L" + instSpace + register + ", " + "-(A7) ; Store local variable\n");
             if (notGlobal) {
-                procedureTable.get(variable.getIdProcedimiento()).setLocalVariablesSize(procedureTable.get(variable.getIdProcedimiento()).getLocalVariablesSize() + wordSize);
+                tp.get(variable.getIdProcedimiento()).setLocalVariablesSize(tp.get(variable.getIdProcedimiento()).getLocalVariablesSize() + wordSize);
             }
         } else if (profx == profp && dx > 0) { //Local parameter
             assemblyCode.append(labelSpace + "MOVE.L" + instSpace + dx + '(' + EBP + "), A0 ; A0 contains parameter @\n");
@@ -575,23 +586,23 @@ public class AssemblyGenerator {
             TV(x).desp = TP(p).ocupVL
         end if
          */
-        for (String procedureId : procedureTable.getKeys()) {
-            Procedimiento procedure = procedureTable.get(procedureId);
+        for (String procedureId : tp.getKeys()) {
+            Procedimiento procedure = tp.get(procedureId);
             procedure.setLocalVariablesSize(0);
-            procedureTable.put(procedureId, procedure);
+            tp.put(procedureId, procedure);
         }
     }
 
     private void updateVariableTable() {
-        for (int variableId = 0; variableId < variableTable.getContador(); variableId++) {
-            String procedureId = variableTable.get(variableId).getIdProcedimiento();
-            if (variableTable.get(variableId).getTipoVariable() == Variable.TipoVariable.VARIABLE) {
-                int variableSize = variableTable.get(variableId).getBytes();
+        for (int variableId = 0; variableId < tv.getContador(); variableId++) {
+            String procedureId = tv.get(variableId).getIdProcedimiento();
+            if (tv.get(variableId).getTipoVariable() == Variable.TipoVariable.VARIABLE) {
+                int variableSize = tv.get(variableId).getBytes();
                 //Update procedure? (when not main)
-                if (procedureTable.get(procedureId) != null) {
-                    procedureTable.get(procedureId).setLocalVariablesSize(variableSize + procedureTable.get(procedureId).getLocalVariablesSize());
+                if (tp.get(procedureId) != null) {
+                    tp.get(procedureId).setLocalVariablesSize(variableSize + tp.get(procedureId).getLocalVariablesSize());
                 }
-                variableTable.get(variableId).setOffset(variableId * variableSize - variableSize); //Global variables be one after another in memory
+                tv.get(variableId).setOffset(variableId * variableSize - variableSize); //Global variables be one after another in memory
             }
         }
     }

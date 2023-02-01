@@ -113,7 +113,7 @@ public class analisisSemantico {
         gc.getInstruccions().forEach(ins -> {
             mvp.semanticCode(new StringBuilder(ins.toString() + '\n'));
         });
-        AssemblyGenerator ensamblado = new AssemblyGenerator(mvp.getActualFile(), tv, tp, gc.getInstruccions());
+        AssemblyGenerator ensamblado = new AssemblyGenerator(mvp.getActualFile(), ts, tv, tp, gc.getInstruccions());
         ensamblado.mainMake();
     }
 

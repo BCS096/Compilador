@@ -31,8 +31,8 @@ main:
 ; Instruction of type: CLONE
 ;Operator 1 -> 0, Store in -> 0
 
-Variable0        DC.B 'Introduce un numero entre 0 y 9: ', 0 ; Inmediate string
-        LEA Variable0, A0
+.Variable0        DC.B 'Introduce un numero entre 0 y 9: ', 0 ; Inmediate string
+        LEA .Variable0, A0
         MOVE.L A0, D0 ; Load variable
         MOVE.L D0, -(A7) ; Store local variable
 ; Instruction of type: PRINT
@@ -59,7 +59,6 @@ Variable0        DC.B 'Introduce un numero entre 0 y 9: ', 0 ; Inmediate string
 ;Operator 1 -> 1, Operator 2 -> ReferenceOp(ref: 2), Store in -> 3
 
         MOVE.L 4(A6), A0 ; A0 contains store address
-        MOVE.L D1, A0
         MOVE.L (A0), D1 ; Get parameter
         SUBM D0, D1
         MOVE.L 8(A6), A0 ; A0 contains parameter @
@@ -68,7 +67,6 @@ Variable0        DC.B 'Introduce un numero entre 0 y 9: ', 0 ; Inmediate string
 ;Operator 1 -> 3, Store in -> 4
 
         MOVE.L 8(A6), A0 ; A0 contains store address
-        MOVE.L D0, A0
         MOVE.L (A0), D0 ; Get parameter
         MOVE.L 12(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
@@ -76,7 +74,6 @@ Variable0        DC.B 'Introduce un numero entre 0 y 9: ', 0 ; Inmediate string
 ;Operator 1 -> 4, Store in -> 5
 
         MOVE.L 12(A6), A0 ; A0 contains store address
-        MOVE.L D0, A0
         MOVE.L (A0), D0 ; Get parameter
         MOVE.L 16(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
@@ -90,10 +87,8 @@ Variable0        DC.B 'Introduce un numero entre 0 y 9: ', 0 ; Inmediate string
 ;Operator 1 -> 5, Operator 2 -> ReferenceOp(ref: 6), Store in -> 0
 
         MOVE.L 16(A6), A0 ; A0 contains store address
-        MOVE.L D0, A0
         MOVE.L (A0), D0 ; Get parameter
         MOVE.L 20(A6), A0 ; A0 contains store address
-        MOVE.L D1, A0
         MOVE.L (A0), D1 ; Get parameter
         CMP.L D1, D0
         BLT Label0
@@ -125,7 +120,6 @@ Label1:
 ;Operator 1 -> 7, Operator 2 -> LiteralOp(value: 0), Store in -> 0
 
         MOVE.L 6(A6), A0 ; A0 contains store address
-        MOVE.L D0, A0
         MOVE.L (A0), D0 ; Get parameter
         MOVE.L #0, D1 ; Load variable
         CMP.L D1, D0
@@ -133,8 +127,7 @@ Label1:
 ; Instruction of type: CLONE
 ;Operator 1 -> 0, Store in -> 8
 
-Variable0        DC.B 'El numero era menor que 5', 0 ; Inmediate string
-        LEA Variable0, A0
+        LEA .Variable0, A0
         MOVE.L A0, D0 ; Load variable
         MOVE.L 896(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
@@ -164,8 +157,7 @@ Label2:
 ; Instruction of type: CLONE
 ;Operator 1 -> 0, Store in -> 9
 
-Variable0        DC.B 'El numero era mayor o igual a 5', 0 ; Inmediate string
-        LEA Variable0, A0
+        LEA .Variable0, A0
         MOVE.L A0, D0 ; Load variable
         MOVE.L 1024(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
@@ -187,8 +179,7 @@ Variable0        DC.B 'El numero era mayor o igual a 5', 0 ; Inmediate string
 ; Instruction of type: CLONE
 ;Operator 1 -> 0, Store in -> 10
 
-Variable0        DC.B 'Linea de final', 0 ; Inmediate string
-        LEA Variable0, A0
+        LEA .Variable0, A0
         MOVE.L A0, D0 ; Load variable
         MOVE.L 1152(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter

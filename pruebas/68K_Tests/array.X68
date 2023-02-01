@@ -65,7 +65,6 @@ main:
 ;Operator 1 -> 4, Operator 2 -> LiteralOp(value: 4), Store in -> 5
 
         MOVE.L 12(A6), A0 ; A0 contains store address
-        MOVE.L D0, A0
         MOVE.L (A0), D0 ; Get parameter
         MOVE.L #4, D1 ; Load variable
         MULTM D0, D1
@@ -75,7 +74,6 @@ main:
 ;Operator 1 -> 5, Store in -> 6
 
         MOVE.L 16(A6), A0 ; A0 contains store address
-        MOVE.L D0, A0
         MOVE.L (A0), D0 ; Get parameter
         MOVE.L 20(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
@@ -90,11 +88,9 @@ main:
 
         LEA (Variable2), A0
         MOVE.L 20(A6), A0 ; A0 contains store address
-        MOVE.L D0, A0
         MOVE.L (A0), D0 ; Get parameter
         ADD.L D0, A0 ; D0 = @B[C]
         MOVE.L 24(A6), A0 ; A0 contains store address
-        MOVE.L D2, A0
         MOVE.L (A0), D2 ; Get parameter
         MOVE.L D2, (A0) ; Store C IN A[B]
 ; Instruction of type: CLONE
@@ -107,7 +103,6 @@ main:
 ;Operator 1 -> 8, Operator 2 -> LiteralOp(value: 4), Store in -> 9
 
         MOVE.L 28(A6), A0 ; A0 contains store address
-        MOVE.L D0, A0
         MOVE.L (A0), D0 ; Get parameter
         MOVE.L #4, D1 ; Load variable
         MULTM D0, D1
@@ -117,7 +112,6 @@ main:
 ;Operator 1 -> 9, Store in -> 10
 
         MOVE.L 32(A6), A0 ; A0 contains store address
-        MOVE.L D0, A0
         MOVE.L (A0), D0 ; Get parameter
         MOVE.L 36(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
@@ -131,7 +125,6 @@ main:
 ;Operator 1 -> 11, Operator 2 -> LiteralOp(value: 4), Store in -> 12
 
         MOVE.L 40(A6), A0 ; A0 contains store address
-        MOVE.L D0, A0
         MOVE.L (A0), D0 ; Get parameter
         MOVE.L #4, D1 ; Load variable
         MULTM D0, D1
@@ -141,7 +134,6 @@ main:
 ;Operator 1 -> 12, Store in -> 13
 
         MOVE.L 44(A6), A0 ; A0 contains store address
-        MOVE.L D0, A0
         MOVE.L (A0), D0 ; Get parameter
         MOVE.L 48(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
@@ -150,7 +142,6 @@ main:
 
         LEA (Variable2), A0
         MOVE.L 48(A6), A0 ; A0 contains store address
-        MOVE.L D0, A0
         MOVE.L (A0), D0 ; Get parameter
         ADD.L D0, A0 ; D0 = @B[C]
         MOVE.L (A0), D0 ; D0 = B[C]
@@ -161,11 +152,9 @@ main:
 
         LEA (Variable0), A0
         MOVE.L 36(A6), A0 ; A0 contains store address
-        MOVE.L D0, A0
         MOVE.L (A0), D0 ; Get parameter
         ADD.L D0, A0 ; D0 = @B[C]
         MOVE.L 52(A6), A0 ; A0 contains store address
-        MOVE.L D2, A0
         MOVE.L (A0), D2 ; Get parameter
         MOVE.L D2, (A0) ; Store C IN A[B]
 ; Instruction of type: CLONE
@@ -190,7 +179,6 @@ main:
 ;Operator 1 -> 19, Operator 2 -> LiteralOp(value: 4), Store in -> 20
 
         MOVE.L 72(A6), A0 ; A0 contains store address
-        MOVE.L D0, A0
         MOVE.L (A0), D0 ; Get parameter
         MOVE.L #4, D1 ; Load variable
         MULTM D0, D1
@@ -200,7 +188,6 @@ main:
 ;Operator 1 -> 20, Store in -> 21
 
         MOVE.L 76(A6), A0 ; A0 contains store address
-        MOVE.L D0, A0
         MOVE.L (A0), D0 ; Get parameter
         MOVE.L 80(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
@@ -215,11 +202,9 @@ main:
 
         LEA (Variable15), A0
         MOVE.L 80(A6), A0 ; A0 contains store address
-        MOVE.L D0, A0
         MOVE.L (A0), D0 ; Get parameter
         ADD.L D0, A0 ; D0 = @B[C]
         MOVE.L 84(A6), A0 ; A0 contains store address
-        MOVE.L D2, A0
         MOVE.L (A0), D2 ; Get parameter
         MOVE.L D2, (A0) ; Store C IN A[B]
 ; Instruction of type: CLONE
@@ -232,7 +217,6 @@ main:
 ;Operator 1 -> 23, Operator 2 -> LiteralOp(value: 4), Store in -> 24
 
         MOVE.L 88(A6), A0 ; A0 contains store address
-        MOVE.L D0, A0
         MOVE.L (A0), D0 ; Get parameter
         MOVE.L #4, D1 ; Load variable
         MULTM D0, D1
@@ -242,7 +226,6 @@ main:
 ;Operator 1 -> 24, Store in -> 25
 
         MOVE.L 92(A6), A0 ; A0 contains store address
-        MOVE.L D0, A0
         MOVE.L (A0), D0 ; Get parameter
         MOVE.L 96(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
@@ -257,18 +240,15 @@ main:
 
         LEA (Variable15), A0
         MOVE.L 96(A6), A0 ; A0 contains store address
-        MOVE.L D0, A0
         MOVE.L (A0), D0 ; Get parameter
         ADD.L D0, A0 ; D0 = @B[C]
         MOVE.L 100(A6), A0 ; A0 contains store address
-        MOVE.L D2, A0
         MOVE.L (A0), D2 ; Get parameter
         MOVE.L D2, (A0) ; Store C IN A[B]
 ; Instruction of type: CLONE
 ;Operator 1 -> 15, Store in -> 27
 
         MOVE.L 56(A6), A0 ; A0 contains store address
-        MOVE.L D0, A0
         MOVE.L (A0), D0 ; Get parameter
         MOVE.L 104(A6), A0 ; A0 contains parameter @
         MOVE.L D0, (A0) ; Store local parameter
