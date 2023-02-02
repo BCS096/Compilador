@@ -165,7 +165,7 @@ public class TablaSimbolos {
         }
         ta.nuevaEntrada(n);
         Data data = new Data("", d, -1, -1, -1);
-        te.put(idxe + 1, data);
+        te.put(ta.get(n), data);
         if (idxep == -1) {
             td.get(id).setFirst(ta.get(n));
         } else {

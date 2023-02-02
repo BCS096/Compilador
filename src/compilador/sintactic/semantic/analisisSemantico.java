@@ -561,7 +561,7 @@ public class analisisSemantico {
                         int nv = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
                         gc.generate(InstructionType.CLONE, new Operator3Address(desp, CastType.INT), null, new Operator3Address(nv));
                         res.desp = nv;
-                    }else{ //caso array : el desplazamiento ya viene en una variable
+                    } else { //caso array : el desplazamiento ya viene en una variable
                         res.desp = desp;
                     }
                 }
@@ -602,7 +602,9 @@ public class analisisSemantico {
         return -1;
     }
 
+    //checked
     public int handleGestArray(GestArrayNode arrayNode, String idArray, Desplazamiento res) {
+        ArrayList<IndexDescripcion> indices = ts.consultarIndices(idArray, arrayNode);
         if (arrayNode.getExp() != null) {
             handleExpresion(arrayNode.getExp());
             if (arrayNode.getExp().getType() != TypeEnum.INT) {
@@ -612,17 +614,22 @@ public class analisisSemantico {
                 if (arrayNode.getGestArray() != null) {
                     int var = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
                     gc.generate(InstructionType.CLONE, new Operator3Address(arrayNode.getExp().getReference()), null, new Operator3Address(var));
-                    return handleGestArrayRecur(arrayNode.getGestArray().getGestArray(), idArray, res, var, 1);
+                    return handleGestArrayRecur(arrayNode.getGestArray(), idArray, res, var, 1, indices.size() - 1);
                 } else {
-                    int var = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
-                    ArrayDescripcion darray = (ArrayDescripcion) ts.consultaId(idArray);
-                    if (darray == null) {
-                        parser.report_error("No existe dicho id", arrayNode);
-                        return -1;
+                    if (indices.size() == 1) {
+                        int var = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
+                        ArrayDescripcion darray = (ArrayDescripcion) ts.consultaId(idArray);
+                        if (darray == null) {
+                            parser.report_error("No existe dicho id", arrayNode);
+                            return -1;
+                        } else {
+                            int nbytes = darray.getType().getBytes();
+                            gc.generate(InstructionType.MUL, new Operator3Address(arrayNode.getExp().getReference()), new Operator3Address(nbytes, CastType.INT), new Operator3Address(var));
+                            return var;
+                        }
                     } else {
-                        int nbytes = darray.getType().getBytes();
-                        gc.generate(InstructionType.MUL, new Operator3Address(arrayNode.getExp().getReference()), new Operator3Address(nbytes, CastType.INT), new Operator3Address(var));
-                        return var;
+                        parser.report_error("El array tienes más indices que se tienen que especificar la dimensión", arrayNode);
+                        return -1;
                     }
                 }
             }
@@ -632,8 +639,9 @@ public class analisisSemantico {
         }
 
     }
-
-    public int handleGestArrayRecur(GestArrayNode arrayNode, String idArray, Desplazamiento res, int ref, int posArray) {
+    
+    //checked
+    public int handleGestArrayRecur(GestArrayNode arrayNode, String idArray, Desplazamiento res, int ref, int posArray, int totalDim) {
         if (arrayNode.getExp() != null) {
             handleExpresion(arrayNode.getExp());
             if (arrayNode.getExp().getType() != TypeEnum.INT) {
@@ -646,17 +654,22 @@ public class analisisSemantico {
                     gc.generate(InstructionType.MUL, new Operator3Address(ref), new Operator3Address(indices.get(posArray).getDim()), new Operator3Address(var));
                     int var1 = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
                     gc.generate(InstructionType.ADD, new Operator3Address(var), new Operator3Address(arrayNode.getExp().getReference()), new Operator3Address(var1));
-                    return handleGestArrayRecur(arrayNode.getGestArray(), idArray, res, var1, posArray + 1);
+                    return handleGestArrayRecur(arrayNode.getGestArray(), idArray, res, var1, posArray + 1, totalDim - 1);
                 } else {
-                    int var = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
-                    ArrayDescripcion darray = (ArrayDescripcion) ts.consultaId(idArray);
-                    if (darray == null) {
-                        parser.report_error("No existe dicho id", arrayNode);
+                    if (totalDim == 1) {
+                        int var = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
+                        ArrayDescripcion darray = (ArrayDescripcion) ts.consultaId(idArray);
+                        if (darray == null) {
+                            parser.report_error("No existe dicho id", arrayNode);
+                            return -1;
+                        } else {
+                            int nbytes = darray.getType().getBytes();
+                            gc.generate(InstructionType.MUL, new Operator3Address(ref), new Operator3Address(nbytes, CastType.INT), new Operator3Address(var));
+                            return var;
+                        }
+                    }else{
+                        parser.report_error("No coinciden el total de dimensiones a indexar con los indices que tiene esta array "+totalDim, arrayNode);
                         return -1;
-                    } else {
-                        int nbytes = darray.getType().getBytes();
-                        gc.generate(InstructionType.MUL, new Operator3Address(ref), new Operator3Address(nbytes, CastType.INT), new Operator3Address(var));
-                        return var;
                     }
                 }
             }
@@ -1221,6 +1234,7 @@ public class analisisSemantico {
         }
     }
 
+    //checked
     public TypeEnum handleMethodCall(MethodCallNode node) {
         TypeEnum resType = TypeEnum.NULL;
         IdDescripcion d = ts.consultaId(node.getIdentifier().getIdentifierLiteral());
@@ -1245,7 +1259,7 @@ public class analisisSemantico {
                 } else {
                     //la llamada no tiene parámetros
                     if (param != null) {
-                        parser.report_error("La llamada requiere de parámetros", node.getParamIn());
+                        parser.report_error("La llamada requiere de parámetros", node);
                     }
                 }
                 int res = -1;
@@ -1275,6 +1289,7 @@ public class analisisSemantico {
         }
     }
 
+    //checked
     public void handleAssig(AssigNode assigNode) {
         Desplazamiento desp = new Desplazamiento();
         if (assigNode.getGestIdx() != null) {
