@@ -269,7 +269,7 @@ public class analisisSemantico {
         if (initialized) {
             //Caso de que ya esté inicializado (tiene su declaración y eso significa que si)
             handleArrayDecl(declArray.getArrayDecl(), tipo, id);
-        }else{
+        } else {
             parser.syntax_error(new java_cup.runtime.Symbol(1));
         }
     }
@@ -309,7 +309,7 @@ public class analisisSemantico {
             if (initArray.getDimArray() != null) {
                 ArrayDescripcion arr = (ArrayDescripcion) ts.consultaId(id);
                 int size = handleDimArray(initArray.getDimArray(), id);
-                gc.generate(InstructionType.MUL, new Operator3Address(type.getBytes(),CastType.INT), new Operator3Address(size), new Operator3Address(size));
+                gc.generate(InstructionType.MUL, new Operator3Address(type.getBytes(), CastType.INT), new Operator3Address(size), new Operator3Address(size));
                 arr.setSize(size);
             } else {
                 parser.report_error("No se ha encontrado la dimensión del array!", initArray);
@@ -533,7 +533,7 @@ public class analisisSemantico {
                     }
                 } else if (desc.getTipoDescripcion() == TipoDescripcion.darray || desc.getTipoDescripcion() == TipoDescripcion.dtupel) {
                     if (gestIdx.getGest() != null) {
-                        //va a devolver el desplazamiento
+                        //va a devolver el desplazamiento en una variable de la tv si es array y si es tupla devuelve el valor de desp directamente
                         desp = handleGestor(gestIdx.getGest(), gestIdx.getId().getIdentifierLiteral(), res);
                         isIdx = true;
                         if (desc.getTipoDescripcion() == IdDescripcion.TipoDescripcion.dtupel) {
@@ -543,11 +543,13 @@ public class analisisSemantico {
                             type = d.getType();
                         }
                     } else {
-                        switch(desc.getTipoDescripcion()){
-                            case darray: type = TypeEnum.ARRAY;
-                            break;
-                            case dtupel: type = TypeEnum.TUPEL;
-                            break;
+                        switch (desc.getTipoDescripcion()) {
+                            case darray:
+                                type = TypeEnum.ARRAY;
+                                break;
+                            case dtupel:
+                                type = TypeEnum.TUPEL;
+                                break;
                         }
                     }
                 } else {
@@ -555,9 +557,13 @@ public class analisisSemantico {
                     return isIdx;
                 }
                 if (isIdx) {
-                    int nv = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
-                    gc.generate(InstructionType.CLONE, new Operator3Address(desp), null, new Operator3Address(nv));
-                    res.desp = nv;
+                    if (desc.getTipoDescripcion() == TipoDescripcion.dtupel) {
+                        int nv = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.INT, false, false);
+                        gc.generate(InstructionType.CLONE, new Operator3Address(desp, CastType.INT), null, new Operator3Address(nv));
+                        res.desp = nv;
+                    }else{ //caso array : el desplazamiento ya viene en una variable
+                        res.desp = desp;
+                    }
                 }
                 res.id = gestIdx.getId().getIdentifierLiteral();
                 res.type = type;
@@ -660,6 +666,7 @@ public class analisisSemantico {
         }
     }
 
+    //checked
     public int handleGestTupel(GestTupelNode node, String idTupla, Desplazamiento res) {
         IdDescripcion dcampo = ts.consultarCampo(idTupla, node.getIdentifier().getIdentifierLiteral(), node);
         if (dcampo == null) {
@@ -747,6 +754,7 @@ public class analisisSemantico {
         }
     }
 
+    //checked
     public void handleDeclTupel(DeclTupelNode declTupel, IdDescripcion.TipoDescripcion tipo) {
         if (tipo == TipoDescripcion.dconst) {
             parser.syntax_error(new java_cup.runtime.Symbol(39));
@@ -772,7 +780,7 @@ public class analisisSemantico {
                             ts.ponerCampo(declTupel.getId().getIdentifierLiteral(), aux.getParam().getId().getIdentifierLiteral(), dcampo, declTupel);
                             aux = aux.getActualParamList();
                         } else if (aux.getParam().getSpecialParam() != null) {
-                            if (aux.getParam().getSpecialParam().getTypeId().getType() == TypeEnum.ARRAY) {
+                            if (aux.getParam().getSpecialParam().getTSB() == TypeEnum.ARRAY) {
                                 parser.syntax_error(new java_cup.runtime.Symbol(25));
                             } else {//tupel case
                                 parser.syntax_error(new java_cup.runtime.Symbol(26));
@@ -795,6 +803,7 @@ public class analisisSemantico {
 
     }
 
+    //checked
     public void handleTupelDecl(TupelDeclNode tupelDecl, String id) {
         if (tupelDecl.getInit() != null) {
             handleInitTupel(tupelDecl.getInit(), id);
@@ -803,6 +812,7 @@ public class analisisSemantico {
         }
     }
 
+    //checked
     public void handleInitTupel(InitTupelNode initTupel, String id) {
         if (initTupel.getParams() != null) {
             ArrayList<ExpressionNode> paramsIn = new ArrayList<>();
@@ -999,6 +1009,7 @@ public class analisisSemantico {
         }
     }
 
+    //checked
     public void handleSentence(SentenceNode node) {
         switch (node.getSentenceType()) {
             case IF:
@@ -1066,7 +1077,7 @@ public class analisisSemantico {
                         if (node.getForInst().getExpression() == null) {
                             handleSpecialOp(node.getForInst().getSpecialOp(), node.getForInst().getIdentifier());
                         } else { // ID = EXP
-                            handleExpresion(node.getExpression());
+                            handleExpresion(node.getForInst().getExpression());
                             IdDescripcion idd = ts.consultaId(node.getForInst().getIdentifier().getIdentifierLiteral());
                             if (d.getTipoDescripcion() == IdDescripcion.TipoDescripcion.dconst) {
                                 parser.report_error("El identificador no es una variable", node.getForInst().getIdentifier());
@@ -1075,7 +1086,7 @@ public class analisisSemantico {
                                     if (node.getForInst().getExpression().getType() != typeFromId(idd)) {
                                         parser.report_error("Se intenta hacer una asignación con diferentes tsb", node.getForInst().getIdentifier());
                                     }
-                                    gc.generate(InstructionType.CLONE, new Operator3Address(node.getExpression().getReference()), null, new Operator3Address(idFromDesc(idd)));
+                                    gc.generate(InstructionType.CLONE, new Operator3Address(node.getForInst().getExpression().getReference()), null, new Operator3Address(idFromDesc(idd)));
                                 }
                             }
                         }
@@ -1097,9 +1108,6 @@ public class analisisSemantico {
                 }
                 String finalRepeat = gc.newLabel();
                 gc.generate(InstructionType.IFEQ, new Operator3Address(node.getExpression().getReference()), new Operator3Address(0, CastType.INT), new Operator3Address(finalRepeat));
-                if (node.getSentenceList() != null) {
-                    handleSentenceList(node.getSentenceList());
-                }
                 gc.generate(InstructionType.GOTO, null, null, new Operator3Address(againRepeat));
                 gc.generate(InstructionType.SKIP, null, null, new Operator3Address(finalRepeat));
                 break;
@@ -1109,6 +1117,7 @@ public class analisisSemantico {
         }
     }
 
+    //checked
     public void handleSpecialOp(SpecialOpNode node, IdentifierNode id) {
         IdDescripcion d = ts.consultaId(id.getIdentifierLiteral());
         if (d == null) {
@@ -1124,7 +1133,7 @@ public class analisisSemantico {
                         //decrement
                         gc.generate(InstructionType.SUB, new Operator3Address(dvar.getVariableNumber()), new Operator3Address(1, CastType.INT), new Operator3Address(result));
                     }
-                    gc.generate(InstructionType.CLONE, new Operator3Address(dvar.getVariableNumber()), null, new Operator3Address(result));
+                    gc.generate(InstructionType.CLONE, new Operator3Address(result), null, new Operator3Address(dvar.getVariableNumber()));
                     node.setReference(result);
                 } else {
                     parser.report_error("La variable a incrementar/decrementar no es de tipo entero", id);
@@ -1135,6 +1144,7 @@ public class analisisSemantico {
         }
     }
 
+    //checked
     public void handleNextIf(NextIfNode node) {
         if (node.getExpression() == null) { // else
             if (node.getSentenceList() != null) {
@@ -1333,7 +1343,7 @@ public class analisisSemantico {
                                 if (desp.type != assigNode.getExpression().getType()) {
                                     parser.report_error("El tipo de la indexación no coincide con el de la expresión", assigNode);
                                 } else {
-                                    gc.generate(InstructionType.ASSINDEX, new Operator3Address(assigNode.getExpression().getReference()), new Operator3Address(desp.desp, CastType.INT), new Operator3Address(idFromDesc(d)));
+                                    gc.generate(InstructionType.ASSINDEX, new Operator3Address(assigNode.getExpression().getReference()), new Operator3Address(desp.desp), new Operator3Address(idFromDesc(d)));
                                 }
                             } else {
                                 //copiar cada campo que tiene la tupla a asignar a cada campo del la tupla de id
