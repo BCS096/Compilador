@@ -21,7 +21,7 @@ public enum InstructionType{
     IFGE("ifge"),
     IFEQ("ifeq"),
     IFNE("ifne"),
-    INIT("preamble"),
+    PMB("preamble"),
     CALL("call"), 
     RETURN("return"),
     SIMPLEPARAM("simpleParam"), 

@@ -55,6 +55,7 @@ public class AssemblyGenerator {
     private final int firstParameter = 12;
     private final int parameterSize = wordSize;
     private final int variableSize = wordSize;
+    private int dx = 0;
 
     private int actualOffset = 0;
     private final String EBP = "A6";
@@ -62,6 +63,10 @@ public class AssemblyGenerator {
     private String HP = "$" + HN;
     private boolean choice = false;
     private ArrayList<String> stringsDone = new ArrayList<>();
+    private int contador = 0;
+    private int actualParam = 1;
+    private boolean isParam = false;
+    private int actualVar = -1;
 
     /**
      *
@@ -313,7 +318,7 @@ public class AssemblyGenerator {
                 assemblyCode.append(labelSpace + "CMP.L" + instSpace + "D1, D0\n");
                 assemblyCode.append(labelSpace + "BNE" + instSpace + instruction.getOperators()[2].getLabel() + '\n');
                 break;
-            case INIT:
+            case PMB:
                 //Preamble
                 if (instruction.getOperators()[2].getLabel() == (mainName)) {
                     assemblyCode.append(";Preamble of MAIN ignored\n");
@@ -348,11 +353,12 @@ public class AssemblyGenerator {
                 assemblyCode.append(labelSpace + "RTS ; Return\n");
                 break;
             case CALL:
+                actualParam = 1;
                 if (instruction.getOperators()[0].getLabel() == mainName) { //Main case
                     makeMain();
                     mainCreated = true;
                     assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "A7, " + EBP + '\n');
-                    actualOffset = parameterNumber * wordSize + 12 + wordSize; //10*4 right now, 12 are the 3 vars (DISP, RET, BP), and we do --, so first is wrong (wordSize corrects it)
+                    actualOffset = 0;//parameterNumber * wordSize + 12 + wordSize; //10*4 right now, 12 are the 3 vars (DISP, RET, BP), and we do --, so first is wrong (wordSize corrects it)
                     break;
                 }
                 Procedimiento procedure = tp.get(instruction.getOperators()[0].getLabel());
@@ -370,9 +376,10 @@ public class AssemblyGenerator {
                 break;
             case SIMPLEPARAM:
                 int variableId = instruction.getOperators()[2].getReference();
-                tv.get(variableId).setOffset((actualOffset -= wordSize));
                 String procedureId = tv.get(variableId).getIdProcedimiento();
+                isParam = true;
                 LOAD(instruction.getOperators()[2], variableId, procedureId, "D0");
+                isParam = false;
                 assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "D0, -(A7)\n");
                 if (choice) {
                     System.out.println("-------------------------------------------------------------------------------------------------------------------------");
@@ -477,7 +484,11 @@ public class AssemblyGenerator {
             profx = tp.get(variable.getIdProcedimiento()).getAmbito();
             profp = tp.get(procedureId).getAmbito();
         }
-        int dx = variable.getOffset();//- 4; //empezamos en -4(evitando 0?)
+        int dx = tv.get(variableId).getOffset();
+        if (isParam) {
+            dx = 8 + 4 * actualParam;
+            actualParam++;
+        }
         if (literal.getType() == Type.literal) //If we have scalar value
         {
             switch (literal.getCastType()) {
@@ -491,16 +502,12 @@ public class AssemblyGenerator {
                     assemblyCode.append(labelSpace + "MOVE.L" + instSpace + '#' + ((boolean) literal.getLiteral() ? '1' : '0') + ", " + register + " ; Load variable\n");
                     break;
                 case STRING:
-                    if (!stringsDone.contains(variable.getId())) {
-                        assemblyCode.append('.' + variable.getId() + labelSpace + "DC.B" + instSpace + ((String) literal.getLiteral()).replace('"', '\'') + ", 0 ; Inmediate string\n");
-                        stringsDone.add(variable.getId());
-                    }else{
-                        if(stringsDone.contains(variable.getId()) && profx != profp){
-                            assemblyCode.append('.' + variable.getId() + labelSpace + "DC.B" + instSpace + ((String) literal.getLiteral()).replace('"', '\'') + ", 0 ; Inmediate string\n");
-                        }
-                    }
-                    assemblyCode.append(labelSpace + "LEA" + instSpace + '.' + variable.getId() + ", A0\n");
-                    assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "A0, " + register + " ; Load variable\n");
+//                    assemblyCode.append(labelSpace + "DS.W 0\n");
+//                    assemblyCode.append(".temp" + contador + labelSpace + "DC.B" + instSpace + ((String) literal.getLiteral()).replace('"', '\'') + ", 0 ; Inmediate string\n");
+//                    assemblyCode.append(labelSpace + "DS.W 0\n");
+//                    stringsDone.add(variable.getId());
+//                    assemblyCode.append(labelSpace + "LEA" + instSpace + ".temp" + contador++ + ", A0\n");
+//                    assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "A0, " + register + " ; Load variable\n");
                     break;
                 default:
                     throw new UnsupportedOperationException("Trying to load something that is not a variable!");
@@ -548,6 +555,10 @@ public class AssemblyGenerator {
             profp = tp.get(procedureId).getAmbito();
         }
         int dx = variable.getOffset(); //-4 evitamos 0?
+        if (isParam) {
+            dx = 8 + 4 * actualParam;
+            actualParam++;
+        }
         if (profx == profp && dx < 0) { //Local variable
             assemblyCode.append(labelSpace + "MOVE.L" + instSpace + register + ", " + "-(A7) ; Store local variable\n");
             if (notGlobal) {
@@ -594,6 +605,7 @@ public class AssemblyGenerator {
     }
 
     private void updateVariableTable() {
+        String actualProcedure = "noProc";
         for (int variableId = 0; variableId < tv.getContador(); variableId++) {
             String procedureId = tv.get(variableId).getIdProcedimiento();
             if (tv.get(variableId).getTipoVariable() == Variable.TipoVariable.VARIABLE) {
@@ -602,7 +614,15 @@ public class AssemblyGenerator {
                 if (tp.get(procedureId) != null) {
                     tp.get(procedureId).setLocalVariablesSize(variableSize + tp.get(procedureId).getLocalVariablesSize());
                 }
-                tv.get(variableId).setOffset(variableId * variableSize - variableSize); //Global variables be one after another in memory
+                if (procedureId == actualProcedure) {
+                    tv.get(variableId).setOffset(actualVar-- * 4); //Global variables be one after another in memory}
+                } else if (actualProcedure == "noProc") {
+                    actualProcedure = procedureId;
+                    tv.get(variableId).setOffset(actualVar-- * 4);
+                } else {
+                    actualVar = -1;
+                    tv.get(variableId).setOffset(actualVar-- * 4);
+                }
             }
         }
     }
