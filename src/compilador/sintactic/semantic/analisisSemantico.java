@@ -90,8 +90,10 @@ public class analisisSemantico {
         gc.getInstruccions().forEach(ins -> {
             mvp.semanticCode(new StringBuilder(ins.toString() + '\n'));
         });
-        AssemblyGenerator ensamblado = new AssemblyGenerator(mvp.getActualFile(), tv, tp, gc.getInstruccions());
-        ensamblado.mainMake();
+        if (parser.getNumberErrors() == 0) {
+            AssemblyGenerator ensamblado = new AssemblyGenerator(mvp.getActualFile(), tv, tp, gc.getInstruccions());
+            ensamblado.mainMake();
+        }
     }
 
     //checked
@@ -639,7 +641,7 @@ public class analisisSemantico {
         }
 
     }
-    
+
     //checked
     public int handleGestArrayRecur(GestArrayNode arrayNode, String idArray, Desplazamiento res, int ref, int posArray, int totalDim) {
         if (arrayNode.getExp() != null) {
@@ -667,8 +669,8 @@ public class analisisSemantico {
                             gc.generate(InstructionType.MUL, new Operator3Address(ref), new Operator3Address(nbytes, CastType.INT), new Operator3Address(var));
                             return var;
                         }
-                    }else{
-                        parser.report_error("No coinciden el total de dimensiones a indexar con los indices que tiene esta array "+totalDim, arrayNode);
+                    } else {
+                        parser.report_error("No coinciden el total de dimensiones a indexar con los indices que tiene esta array " + totalDim, arrayNode);
                         return -1;
                     }
                 }
