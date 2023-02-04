@@ -12,12 +12,12 @@ import java.util.ArrayList;
  *
  * @author tomeu
  */
-public class Peenhole {
+public class Peephole {
 
     private final CodeGeneration3Address cg;
     private final ArrayList<Instruction3Address> code;
     
-    public Peenhole(CodeGeneration3Address cg) {
+    public Peephole(CodeGeneration3Address cg) {
         this.cg = cg;
         this.code = new ArrayList<>(cg.getInstruccions());
     }
