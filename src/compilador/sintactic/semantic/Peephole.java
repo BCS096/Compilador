@@ -16,13 +16,13 @@ public class Peephole {
 
     private final CodeGeneration3Address cg;
     private final ArrayList<Instruction3Address> code;
-    
+
     public Peephole(CodeGeneration3Address cg) {
         this.cg = cg;
         this.code = new ArrayList<>(cg.getInstruccions());
     }
 
-    private void brancamentAdjacent() {
+    public void brancamentAdjacent() {
         for (int i = 0; i < code.size(); i++) {
             if (isIf(code.get(i).getInstructionType())) { //if cond goto e1
                 //guardo la etiqueta
@@ -34,20 +34,20 @@ public class Peephole {
                     Operator3Address e2 = code.get(i).getOperators()[2];
                     int posGoto = i;
                     i++;
-                    if (code.get(i).getInstructionType() == InstructionType.SKIP && code.get(i).getOperators()[2].getLabel().equals(e1.getLabel())&& i < code.size()) { //e1 : skip
-                        
+                    if (code.get(i).getInstructionType() == InstructionType.SKIP && code.get(i).getOperators()[2].getLabel().equals(e1.getLabel()) && i < code.size()) { //e1 : skip
+
                         code.get(posIf).setInstructionType(negCond(code.get(posIf).getInstructionType()));
                         code.get(posIf).setOperator(2, e2);
                         code.remove(posGoto);
                         //miramos si podemos borrar el e1:skip
                         boolean borrar = true;
                         for (int j = 0; j < code.size(); j++) {
-                            if(code.get(j).getInstructionType() == InstructionType.GOTO && code.get(j).getOperators()[2].getLabel().equals(e1.getLabel())){
+                            if (code.get(j).getInstructionType() == InstructionType.GOTO && code.get(j).getOperators()[2].getLabel().equals(e1.getLabel())) {
                                 borrar = false;
                                 break;
                             }
                         }
-                        if(borrar){
+                        if (borrar) {
                             //el skip e1 ahora estará en la posición del goto porque como hemos borrado el goto, todas las
                             //instrucciones por delante del goto han retrocedido una posición.
                             code.remove(posGoto);
@@ -57,24 +57,24 @@ public class Peephole {
             }
         }
     }
-    
-    private void brancamentSobreBrancament(){
+
+    public void brancamentSobreBrancament() {
         for (int i = 0; i < code.size(); i++) {
-            if(isIf(code.get(i).getInstructionType())){
+            if (isIf(code.get(i).getInstructionType())) {
                 int posIf = i;
                 Operator3Address e1 = code.get(i).getOperators()[2];
                 for (int j = i + 1; j < code.size(); j++) {
-                    if(code.get(j).getInstructionType() == InstructionType.SKIP && code.get(j).getOperators()[2].getLabel().equals(e1.getLabel())){
-                        if(j + 1 < code.size() && code.get(j + 1).getInstructionType() == InstructionType.GOTO){
+                    if (code.get(j).getInstructionType() == InstructionType.SKIP && code.get(j).getOperators()[2].getLabel().equals(e1.getLabel())) {
+                        if (j + 1 < code.size() && code.get(j + 1).getInstructionType() == InstructionType.GOTO) {
                             code.get(posIf).setOperator(2, code.get(j + 1).getOperators()[2]);
                             boolean borrar = true;
                             for (int k = 0; k < code.size(); k++) {
-                                if(code.get(k).getInstructionType() == InstructionType.GOTO && code.get(k).getOperators()[2].getLabel().endsWith(e1.getLabel())){
+                                if (code.get(k).getInstructionType() == InstructionType.GOTO && code.get(k).getOperators()[2].getLabel().endsWith(e1.getLabel())) {
                                     borrar = false;
                                     break;
                                 }
                             }
-                            if(borrar){
+                            if (borrar) {
                                 code.remove(j);
                             }
                         }
@@ -83,188 +83,276 @@ public class Peephole {
             }
         }
     }
-    
+
     //assignacions booleanes ja optimitzades en el propi analisiSemantic
     
-    private void operacioConstant1(){
+    //checked
+    public void operacioConstant1() {
         for (int i = 0; i < code.size(); i++) {
-            if(isOp(code.get(i).getInstructionType()) && code.get(i).getOperators()[0].getType() == Type.literal &&
-                    code.get(i).getOperators()[1].getType() == Type.literal){
-                int a = (int)code.get(i).getOperators()[0].getLiteral();
-                int b = (int)code.get(i).getOperators()[1].getLiteral();
-                switch(code.get(i).getInstructionType()){
-                    case ADD: a = a + b;
-                    break;
-                    case DIV: a = a / b;
-                    break;
-                    case MOD: a = a % b;
-                    break;
-                    case MUL: a = a * b;
-                    break;
-                    case SUB: a = a - b;
-                    break;      
+            if (isOp(code.get(i).getInstructionType()) && code.get(i).getOperators()[0].getType() == Type.literal
+                    && code.get(i).getOperators()[1].getType() == Type.literal) {
+                int a = (int) code.get(i).getOperators()[0].getLiteral();
+                int b = (int) code.get(i).getOperators()[1].getLiteral();
+                switch (code.get(i).getInstructionType()) {
+                    case ADD:
+                        a = a + b;
+                        break;
+                    case DIV:
+                        a = a / b;
+                        break;
+                    case MOD:
+                        a = a % b;
+                        break;
+                    case MUL:
+                        a = a * b;
+                        break;
+                    case SUB:
+                        a = a - b;
+                        break;
                 }
                 code.get(i).setInstructionType(InstructionType.CLONE);
-                code.get(i).setOperator(0, new Operator3Address(a,CastType.INT));
+                code.get(i).setOperator(0, new Operator3Address(a, CastType.INT));
                 code.get(i).setOperator(1, null);
             }
         }
     }
-    
-    private void operacioConstant2(){
+
+    public void operacioConstant2() {
         for (int i = 0; i < code.size(); i++) {
-            if(isIf(code.get(i).getInstructionType()) && code.get(i).getOperators()[0].getType() == Type.literal &&
-                    code.get(i).getOperators()[1].getType() == Type.literal){
+            if (isIf(code.get(i).getInstructionType()) && code.get(i).getOperators()[0].getType() == Type.literal
+                    && code.get(i).getOperators()[1].getType() == Type.literal) {
                 boolean res = false;
-                switch(code.get(i).getOperators()[0].getCastType()){ 
-                    case INT: 
-                        int a = (int)code.get(i).getOperators()[0].getLiteral();
-                        int b = (int)code.get(i).getOperators()[1].getLiteral();
-                        switch(code.get(i).getInstructionType()){
-                            case IFEQ: if(a == b){
-                                res = true;
-                            }
-                            break;
-                            case IFGE: if(a >= b){
-                                res = true;
-                            }
-                            break;
-                            case IFGT: if(a > b){
-                                res = true;
-                            }
-                            break;
-                            case IFLE: if(a <= b){
-                                res = true;
-                            }
-                            break;
-                            case IFLT: if(a < b){
-                                res = true;
-                            }
-                            break;
-                            case IFNE: if(a != b){
-                                res = true;
-                            }
-                            break;
+                switch (code.get(i).getOperators()[0].getCastType()) {
+                    case INT:
+                        int a = (int) code.get(i).getOperators()[0].getLiteral();
+                        int b = (int) code.get(i).getOperators()[1].getLiteral();
+                        switch (code.get(i).getInstructionType()) {
+                            case IFEQ:
+                                if (a == b) {
+                                    res = true;
+                                }
+                                break;
+                            case IFGE:
+                                if (a >= b) {
+                                    res = true;
+                                }
+                                break;
+                            case IFGT:
+                                if (a > b) {
+                                    res = true;
+                                }
+                                break;
+                            case IFLE:
+                                if (a <= b) {
+                                    res = true;
+                                }
+                                break;
+                            case IFLT:
+                                if (a < b) {
+                                    res = true;
+                                }
+                                break;
+                            case IFNE:
+                                if (a != b) {
+                                    res = true;
+                                }
+                                break;
                         }
-                    break;
+                        break;
                     case CHAR:
-                        char c = (char)code.get(i).getOperators()[0].getLiteral();
-                        char d = (char)code.get(i).getOperators()[1].getLiteral();
-                        switch(code.get(i).getInstructionType()){
-                            case IFEQ: if(c == d){
-                                res = true;
-                            }
-                            break;
-                            case IFGE: if(c >= d){
-                                res = true;
-                            }
-                            break;
-                            case IFGT: if(c > d){
-                                res = true;
-                            }
-                            break;
-                            case IFLE: if(c <= d){
-                                res = true;
-                            }
-                            break;
-                            case IFLT: if(c < d){
-                                res = true;
-                            }
-                            break;
-                            case IFNE: if(c != d){
-                                res = true;
-                            }
-                            break;
+                        char c = (char) code.get(i).getOperators()[0].getLiteral();
+                        char d = (char) code.get(i).getOperators()[1].getLiteral();
+                        switch (code.get(i).getInstructionType()) {
+                            case IFEQ:
+                                if (c == d) {
+                                    res = true;
+                                }
+                                break;
+                            case IFGE:
+                                if (c >= d) {
+                                    res = true;
+                                }
+                                break;
+                            case IFGT:
+                                if (c > d) {
+                                    res = true;
+                                }
+                                break;
+                            case IFLE:
+                                if (c <= d) {
+                                    res = true;
+                                }
+                                break;
+                            case IFLT:
+                                if (c < d) {
+                                    res = true;
+                                }
+                                break;
+                            case IFNE:
+                                if (c != d) {
+                                    res = true;
+                                }
+                                break;
                         }
-                    break;
+                        break;
                     case BOOL:
-                        boolean e = (boolean)code.get(i).getOperators()[0].getLiteral();
-                        boolean f = (boolean)code.get(i).getOperators()[1].getLiteral();
-                        switch(code.get(i).getInstructionType()){
-                            case IFEQ: if(e == f){
-                                res = true;
-                            }
-                            break;
-                            case IFNE: if(e != f){
-                                res = true;
-                            }
-                            break;
+                        boolean e = (boolean) code.get(i).getOperators()[0].getLiteral();
+                        boolean f = (boolean) code.get(i).getOperators()[1].getLiteral();
+                        switch (code.get(i).getInstructionType()) {
+                            case IFEQ:
+                                if (e == f) {
+                                    res = true;
+                                }
+                                break;
+                            case IFNE:
+                                if (e != f) {
+                                    res = true;
+                                }
+                                break;
                         }
-                    break;
+                        break;
                     case STRING:
-                        String g = (String)code.get(i).getOperators()[0].getLiteral();
-                        String h = (String)code.get(i).getOperators()[1].getLiteral();
-                        switch(code.get(i).getInstructionType()){
-                            case IFEQ: if(g.equals(h)){
-                                res = true;
-                            }
-                            break;
-                            case IFNE: if(!g.equals(h)){
-                                res = true;
-                            }
-                            break;
+                        String g = (String) code.get(i).getOperators()[0].getLiteral();
+                        String h = (String) code.get(i).getOperators()[1].getLiteral();
+                        switch (code.get(i).getInstructionType()) {
+                            case IFEQ:
+                                if (g.equals(h)) {
+                                    res = true;
+                                }
+                                break;
+                            case IFNE:
+                                if (!g.equals(h)) {
+                                    res = true;
+                                }
+                                break;
                         }
-                    break;
+                        break;
                 }
-                if(res){
+                if (res) {
                     code.get(i).setInstructionType(InstructionType.GOTO);
                     code.get(i).setOperator(0, null);
                     code.get(i).setOperator(1, null);
-                }else{
+                } else {
                     code.remove(i);
                 }
             }
         }
     }
-    
-    private void codiInaccesible1(){
+
+    public void codiInaccesible1() {
         for (int i = 0; i < code.size(); i++) {
             //borrar goto innecesarios
-            if(code.get(i).getInstructionType() == InstructionType.GOTO
-                && i + 1 < code.size() && code.get(i + 1).getInstructionType() == InstructionType.GOTO){
+            if (code.get(i).getInstructionType() == InstructionType.GOTO
+                    && i + 1 < code.size() && code.get(i + 1).getInstructionType() == InstructionType.GOTO) {
                 code.remove(i + 1);
             }
         }
     }
-    
-    private void codiInaccesible2(){
+
+    public void codiInaccesible2() {
         for (int i = 0; i < code.size(); i++) {
-            if(code.get(i).getInstructionType() == InstructionType.GOTO){
+            if (code.get(i).getInstructionType() == InstructionType.GOTO) {
                 String label = code.get(i).getOperators()[2].getLabel();
                 for (int j = i + 1; j < code.size(); j++) {
-                    if(code.get(j).getInstructionType() == InstructionType.SKIP){
-                        if(code.get(j).getOperators()[2].getLabel().equals(label)){
+                    if (code.get(j).getInstructionType() == InstructionType.SKIP) {
+                        if (code.get(j).getOperators()[2].getLabel().equals(label)) {
                             //borrar codigo desde el goto e1 hasta skip e1
                             for (int k = i + 1; k < j; k++) {
                                 code.remove(i + 1);
                             }
                             break;
-                        }else{
+                        } else {
                             //mirar si tiene un goto en el codigo
                             String aux = code.get(j).getOperators()[2].getLabel();
                             boolean trobat = false;
                             for (int k = 0; k < code.size(); k++) {
-                                if(code.get(k).getInstructionType() == InstructionType.GOTO
-                                   && code.get(k).getOperators()[2].getLabel().equals(aux)){
+                                if (code.get(k).getInstructionType() == InstructionType.GOTO
+                                        && code.get(k).getOperators()[2].getLabel().equals(aux)) {
                                     trobat = true;
                                     break;
                                 }
                             }
-                            if(trobat){
+                            if (trobat) {
                                 break;
                             }
-                        }                     
+                        }
                     }
                 }
             }
         }
     }
     
+    //checked
+    public void assignacioDiferida() {
+        for (int i = 0; i < code.size(); i++) {
+            if (isOp(code.get(i).getInstructionType()) || code.get(i).getInstructionType() == InstructionType.CLONE
+                    || code.get(i).getInstructionType() == InstructionType.NEG || code.get(i).getInstructionType() == InstructionType.INDVALUE) {
+                int res = code.get(i).getOperators()[2].getReference();
+                int cont = 0;
+                int pos = -1;
+                int j;
+                for (j = 0; j < code.size(); j++) {
+                    if (j != i) {
+                        if ((code.get(j).getOperators()[0] != null && code.get(j).getOperators()[0].getReference() == res)
+                                || (code.get(j).getOperators()[1] != null && code.get(j).getOperators()[1].getReference() == res)) {
+                            if (cont == 1) {
+                                cont++;
+                                break;
+                            } else {
+                                cont++;
+                                pos = j;
+                            }
+                        }
+                        if ((isOp(code.get(j).getInstructionType()) || code.get(j).getInstructionType() == InstructionType.CLONE
+                                || code.get(j).getInstructionType() == InstructionType.NEG || code.get(j).getInstructionType() == InstructionType.INDVALUE) && code.get(j).getOperators()[2].getReference() == res) {
+                            cont = 2;
+                            break;
+                        }
+                    }
+
+                }
+                if (cont == 1) {
+                    if (code.get(i).getInstructionType() == InstructionType.CLONE || code.get(i).getInstructionType() == InstructionType.NEG) {
+                        Operator3Address op = code.get(i).getOperators()[0];
+                        if (code.get(pos).getInstructionType() == InstructionType.CLONE || code.get(pos).getInstructionType() == InstructionType.NEG
+                                || code.get(pos).getInstructionType() == InstructionType.SIMPLEPARAM || code.get(pos).getInstructionType() == InstructionType.RETURN
+                                || code.get(pos).getInstructionType() == InstructionType.PRINT || code.get(pos).getInstructionType() == InstructionType.PRINTLN
+                                || code.get(pos).getInstructionType() == InstructionType.READ) {
+                            code.get(pos).setOperator(0, op);
+                            code.remove(i);
+                            i--;
+                        } else {
+                            if (code.get(pos).getOperators()[0] != null && code.get(pos).getOperators()[0].getReference() == res) {
+                                code.get(pos).setOperator(0, op);
+                            } else { // sera el otro operador el que ha coincidido
+                                code.get(pos).setOperator(1, op);
+                            }
+                            code.remove(i);
+                            i--;
+                        }
+                    } else {
+                        Operator3Address op1 = code.get(i).getOperators()[0];
+                        Operator3Address op2 = code.get(i).getOperators()[1];
+                        if (code.get(pos).getInstructionType() == InstructionType.CLONE) {
+                            code.get(pos).setInstructionType(code.get(i).getInstructionType());
+                            code.get(pos).setOperator(0, op1);
+                            code.get(pos).setOperator(1, op2);
+                            code.remove(i);
+                            i--;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    //checked
     private boolean isIf(InstructionType inst) {
         return inst == InstructionType.IFEQ || inst == InstructionType.IFGE || inst == InstructionType.IFGT
                 || inst == InstructionType.IFLE || inst == InstructionType.IFLT || inst == InstructionType.IFNE;
     }
 
+    //checked
     private InstructionType negCond(InstructionType inst) {
         switch (inst) {
             case IFLT:
@@ -284,8 +372,13 @@ public class Peephole {
         }
     }
 
+    //checked
     private boolean isOp(InstructionType inst) {
         return inst == InstructionType.ADD || inst == InstructionType.DIV || inst == InstructionType.MOD
                 || inst == InstructionType.MUL || inst == InstructionType.SUB;
+    }
+
+    public ArrayList<Instruction3Address> getCode(){
+        return code;
     }
 }

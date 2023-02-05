@@ -30,6 +30,7 @@ public class analisisSemantico {
     private final TablaProcedimientos tp;
     private final CodeGeneration3Address gc;
     private static String tempId = null;
+    private static Peephole opt;
 
     public analisisSemantico(ProgramNode program, Parser parser) {
         this.programNode = program;
@@ -94,6 +95,17 @@ public class analisisSemantico {
             AssemblyGenerator ensamblado = new AssemblyGenerator(mvp.getActualFile(), tv, tp, gc.getInstruccions());
             ensamblado.mainMake();
         }
+        opt = new Peephole(gc);
+        opt.assignacioDiferida();
+        opt.brancamentAdjacent();
+        opt.brancamentSobreBrancament();
+        opt.operacioConstant1();
+        opt.operacioConstant2();
+        opt.codiInaccesible1();
+        opt.codiInaccesible2();
+        opt.getCode().forEach(ins -> {
+            mvp.semanticCodeOp(new StringBuilder(ins.toString() + '\n'));
+        });
     }
 
     //checked
