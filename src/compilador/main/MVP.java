@@ -331,6 +331,7 @@ public class MVP extends javax.swing.JFrame {
         ++currentSemTextIdx;
         this.semanticCode = new StringBuilder("");
         this.semanticError = new StringBuilder("");
+        this.semanticCodeOp = new StringBuilder("");
         semPanesError[currentSemTextIdx] = new JTextArea("No semantic errors for now...");
         semPanesError[currentSemTextIdx].setEditable(false);
         semPanesCode[currentSemTextIdx] = new JTextArea("Generating code...");

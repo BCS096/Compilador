@@ -15,13 +15,13 @@ import java.util.ArrayList;
 public class Peephole {
 
     private final CodeGeneration3Address cg;
-    private final ArrayList<Instruction3Address> code;
+    private  ArrayList<Instruction3Address> code;
 
     public Peephole(CodeGeneration3Address cg) {
         this.cg = cg;
         this.code = new ArrayList<>(cg.getInstruccions());
     }
-
+    
     public void brancamentAdjacent() {
         for (int i = 0; i < code.size(); i++) {
             if (isIf(code.get(i).getInstructionType())) { //if cond goto e1
