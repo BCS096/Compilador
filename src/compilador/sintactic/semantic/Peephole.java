@@ -14,15 +14,14 @@ import java.util.ArrayList;
  */
 public class Peephole {
 
-    private final CodeGeneration3Address cg;
-    private  ArrayList<Instruction3Address> code;
+    private final ArrayList<Instruction3Address> code;
 
     public Peephole(CodeGeneration3Address cg) {
-        this.cg = cg;
         this.code = new ArrayList<>(cg.getInstruccions());
     }
-    
-    public void brancamentAdjacent() {
+
+    public boolean brancamentAdjacent() {
+        boolean canvi = false;
         for (int i = 0; i < code.size(); i++) {
             if (isIf(code.get(i).getInstructionType())) { //if cond goto e1
                 //guardo la etiqueta
@@ -39,6 +38,7 @@ public class Peephole {
                         code.get(posIf).setInstructionType(negCond(code.get(posIf).getInstructionType()));
                         code.get(posIf).setOperator(2, e2);
                         code.remove(posGoto);
+                        canvi = true;
                         //miramos si podemos borrar el e1:skip
                         boolean borrar = true;
                         for (int j = 0; j < code.size(); j++) {
@@ -56,9 +56,11 @@ public class Peephole {
                 }
             }
         }
+        return canvi;
     }
 
-    public void brancamentSobreBrancament() {
+    public boolean brancamentSobreBrancament() {
+        boolean canvi = false;
         for (int i = 0; i < code.size(); i++) {
             if (isIf(code.get(i).getInstructionType())) {
                 int posIf = i;
@@ -75,6 +77,7 @@ public class Peephole {
                                 }
                             }
                             if (borrar) {
+                                canvi = true;
                                 code.remove(j);
                             }
                         }
@@ -82,15 +85,17 @@ public class Peephole {
                 }
             }
         }
+        return canvi;
     }
 
     //assignacions booleanes ja optimitzades en el propi analisiSemantic
-    
     //checked
-    public void operacioConstant1() {
+    public boolean operacioConstant1() {
+        boolean canvi = false;
         for (int i = 0; i < code.size(); i++) {
             if (isOp(code.get(i).getInstructionType()) && code.get(i).getOperators()[0].getType() == Type.literal
                     && code.get(i).getOperators()[1].getType() == Type.literal) {
+                canvi = true;
                 int a = (int) code.get(i).getOperators()[0].getLiteral();
                 int b = (int) code.get(i).getOperators()[1].getLiteral();
                 switch (code.get(i).getInstructionType()) {
@@ -115,9 +120,11 @@ public class Peephole {
                 code.get(i).setOperator(1, null);
             }
         }
+        return canvi;
     }
 
-    public void operacioConstant2() {
+    public boolean operacioConstant2() {
+        boolean canvi = false;
         for (int i = 0; i < code.size(); i++) {
             if (isIf(code.get(i).getInstructionType()) && code.get(i).getOperators()[0].getType() == Type.literal
                     && code.get(i).getOperators()[1].getType() == Type.literal) {
@@ -229,27 +236,34 @@ public class Peephole {
                         break;
                 }
                 if (res) {
+                    canvi = true;
                     code.get(i).setInstructionType(InstructionType.GOTO);
                     code.get(i).setOperator(0, null);
                     code.get(i).setOperator(1, null);
                 } else {
+                    canvi = true;
                     code.remove(i);
                 }
             }
         }
+        return canvi;
     }
 
-    public void codiInaccesible1() {
+    public boolean codiInaccesible1() {
+        boolean canvi = false;
         for (int i = 0; i < code.size(); i++) {
             //borrar goto innecesarios
             if (code.get(i).getInstructionType() == InstructionType.GOTO
                     && i + 1 < code.size() && code.get(i + 1).getInstructionType() == InstructionType.GOTO) {
+                canvi = true;
                 code.remove(i + 1);
             }
         }
+        return canvi;
     }
 
-    public void codiInaccesible2() {
+    public boolean codiInaccesible2() {
+        boolean canvi = false;
         for (int i = 0; i < code.size(); i++) {
             if (code.get(i).getInstructionType() == InstructionType.GOTO) {
                 String label = code.get(i).getOperators()[2].getLabel();
@@ -258,6 +272,7 @@ public class Peephole {
                         if (code.get(j).getOperators()[2].getLabel().equals(label)) {
                             //borrar codigo desde el goto e1 hasta skip e1
                             for (int k = i + 1; k < j; k++) {
+                                canvi = true;
                                 code.remove(i + 1);
                             }
                             break;
@@ -266,7 +281,7 @@ public class Peephole {
                             String aux = code.get(j).getOperators()[2].getLabel();
                             boolean trobat = false;
                             for (int k = 0; k < code.size(); k++) {
-                                if (code.get(k).getInstructionType() == InstructionType.GOTO
+                                if ((code.get(k).getInstructionType() == InstructionType.GOTO || isIf(code.get(k).getInstructionType()))
                                         && code.get(k).getOperators()[2].getLabel().equals(aux)) {
                                     trobat = true;
                                     break;
@@ -280,10 +295,12 @@ public class Peephole {
                 }
             }
         }
+        return canvi;
     }
-    
+
     //checked
-    public void assignacioDiferida() {
+    public boolean assignacioDiferida() {
+        boolean canvi = false;
         for (int i = 0; i < code.size(); i++) {
             if (isOp(code.get(i).getInstructionType()) || code.get(i).getInstructionType() == InstructionType.CLONE
                     || code.get(i).getInstructionType() == InstructionType.NEG || code.get(i).getInstructionType() == InstructionType.INDVALUE) {
@@ -291,10 +308,14 @@ public class Peephole {
                 int cont = 0;
                 int pos = -1;
                 int j;
-                for (j = 0; j < code.size(); j++) {
+                for (j = 1; j < code.size(); j++) {
                     if (j != i) {
-                        if ((code.get(j).getOperators()[0] != null && code.get(j).getOperators()[0].getReference() == res)
-                                || (code.get(j).getOperators()[1] != null && code.get(j).getOperators()[1].getReference() == res)) {
+                        if ((code.get(j).getOperators()[0] != null && code.get(j).getOperators()[0].getType() == Type.reference && code.get(j).getOperators()[0].getReference() == res)
+                                || (code.get(j).getOperators()[1] != null&& code.get(j).getOperators()[1].getType() == Type.reference && code.get(j).getOperators()[1].getReference() == res)
+                                || (code.get(j).getInstructionType() == InstructionType.SIMPLEPARAM
+                                && code.get(j).getOperators()[2] != null && code.get(j).getOperators()[2].getReference() == res)
+                                || (code.get(j).getInstructionType() == InstructionType.RETURN
+                                && code.get(j).getOperators()[2] != null && code.get(j).getOperators()[2].getReference() == res)) {
                             if (cont == 1) {
                                 cont++;
                                 break;
@@ -315,19 +336,25 @@ public class Peephole {
                     if (code.get(i).getInstructionType() == InstructionType.CLONE || code.get(i).getInstructionType() == InstructionType.NEG) {
                         Operator3Address op = code.get(i).getOperators()[0];
                         if (code.get(pos).getInstructionType() == InstructionType.CLONE || code.get(pos).getInstructionType() == InstructionType.NEG
-                                || code.get(pos).getInstructionType() == InstructionType.SIMPLEPARAM || code.get(pos).getInstructionType() == InstructionType.RETURN
                                 || code.get(pos).getInstructionType() == InstructionType.PRINT || code.get(pos).getInstructionType() == InstructionType.PRINTLN
                                 || code.get(pos).getInstructionType() == InstructionType.READ) {
                             code.get(pos).setOperator(0, op);
                             code.remove(i);
+                            canvi = true;
+                            i--;
+                        } else if (code.get(pos).getInstructionType() == InstructionType.SIMPLEPARAM || code.get(pos).getInstructionType() == InstructionType.RETURN) {
+                            code.get(pos).setOperator(2, op);
+                            code.remove(i);
+                            canvi = true;
                             i--;
                         } else {
-                            if (code.get(pos).getOperators()[0] != null && code.get(pos).getOperators()[0].getReference() == res) {
+                            if (code.get(pos).getOperators()[0] != null && code.get(pos).getOperators()[0].getType() == Type.reference && code.get(pos).getOperators()[0].getReference() == res) {
                                 code.get(pos).setOperator(0, op);
                             } else { // sera el otro operador el que ha coincidido
                                 code.get(pos).setOperator(1, op);
                             }
                             code.remove(i);
+                            canvi = true;
                             i--;
                         }
                     } else {
@@ -339,11 +366,13 @@ public class Peephole {
                             code.get(pos).setOperator(1, op2);
                             code.remove(i);
                             i--;
+                            canvi = true;
                         }
                     }
                 }
             }
         }
+        return canvi;
     }
 
     //checked
@@ -378,7 +407,7 @@ public class Peephole {
                 || inst == InstructionType.MUL || inst == InstructionType.SUB;
     }
 
-    public ArrayList<Instruction3Address> getCode(){
+    public ArrayList<Instruction3Address> getCode() {
         return code;
     }
 }

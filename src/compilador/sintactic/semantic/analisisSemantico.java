@@ -96,13 +96,31 @@ public class analisisSemantico {
             ensamblado.mainMake();
         }
         opt = new Peephole(gc);
-        opt.assignacioDiferida();
-        opt.brancamentAdjacent();
-        opt.brancamentSobreBrancament();
-        opt.operacioConstant1();
-        opt.operacioConstant2();
-        opt.codiInaccesible1();
-        opt.codiInaccesible2();
+        boolean cambio = true;
+        while (cambio) {
+            cambio = false;
+            if(opt.assignacioDiferida()){
+                cambio = true;
+            }
+            if(opt.brancamentAdjacent()){
+            cambio = true;
+            }
+            if(opt.brancamentSobreBrancament()){
+                cambio = true;
+            }
+            if(opt.operacioConstant1()){
+                cambio = true;
+            }
+            if(opt.operacioConstant2()){
+                cambio = true;
+            }if(opt.codiInaccesible1()){
+                cambio = true;
+            }
+            if(opt.codiInaccesible2()){
+                cambio = true;
+            }
+        }
+
         opt.getCode().forEach(ins -> {
             mvp.semanticCodeOp(new StringBuilder(ins.toString() + '\n'));
         });
