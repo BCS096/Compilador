@@ -34,6 +34,7 @@ main:
 ; Instruction of type: PRINT
 ;Operator 1 -> 0
 
+        LEA        Variable0, A0 ; Cargar la string
         MOVE.L A0, A1 ; Ready text
         MOVE.L #14, D0 ; Prepare display
         TRAP #15
@@ -111,11 +112,9 @@ Label1:
 ; Instruction of type: CLONE
 ;Operator 1 -> 0, Store in -> 8
 
-        MOVE.L D0, -(A7) ; Store local variable
 ; Instruction of type: PRINTLN
 ;Operator 1 -> 8
 
-        MOVE.L -32(A6), A0 ; Load local variable
         MOVE.L A0, A1 ; Ready text
         MOVE.L #14, D0 ; Prepare display
         TRAP #15
@@ -137,11 +136,9 @@ Label2:
 ; Instruction of type: CLONE
 ;Operator 1 -> 0, Store in -> 9
 
-        MOVE.L D0, -(A7) ; Store local variable
 ; Instruction of type: PRINTLN
 ;Operator 1 -> 9
 
-        MOVE.L -36(A6), A0 ; Load local variable
         MOVE.L A0, A1 ; Ready text
         MOVE.L #14, D0 ; Prepare display
         TRAP #15
@@ -155,11 +152,10 @@ Label2:
 ; Instruction of type: CLONE
 ;Operator 1 -> 0, Store in -> 10
 
-        MOVE.L D0, -(A7) ; Store local variable
 ; Instruction of type: PRINT
 ;Operator 1 -> 10
 
-        MOVE.L -40(A6), A0 ; Load local variable
+        LEA        Variable10, A0 ; Cargar la string
         MOVE.L A0, A1 ; Ready text
         MOVE.L #14, D0 ; Prepare display
         TRAP #15

@@ -29,9 +29,11 @@ globals:
 ;Operator 1 -> 0, Store in -> 0
 
         MOVE.L #4, D0 ; Load variable
+        MOVE.L D0, -(A7) ; Store local variable
 ; Instruction of type: CLONE
 ;Operator 1 -> 0, Store in -> 1
 
+        MOVE.L -4(A6), D0 ; Load local variable
         MOVE.L D0, -(A7) ; Store local variable
 ; Instruction of type: SKIP
 ;, Store in -> 0
@@ -45,11 +47,17 @@ Label0:
         MOVE.L 8(A0), -(A7)
         MOVE.L A6, -(A7)
         MOVE.L A7, A6 ;BP = SP
-        MOVE.L A6, 8(A7) ; DISP(prof) = BP
-        SUB.L #VARSIZE, A7 ; SP changed to assign Variable Space
+        MOVE.L A6, 4(A7) ; DISP(prof) = BP
+        MOVE.L A6, D0 ; D0=EBP
+        SUB.L #80, D0 ;
+        MOVE.L D0, A7 ; Vars added to SP
 ; Instruction of type: CLONE
 ;Operator 1 -> 2, Store in -> 3
 
+        MOVE.L A6, D0
+        ADD.L #4, D0
+        MOVE.L D0, A0 ; A0 contains store address
+        MOVE.L (A0), D0 ; Get parameter
         MOVE.L D0, -(A7) ; Store local variable
 ; Instruction of type: CLONE
 ;Operator 1 -> 0, Store in -> 4
@@ -96,11 +104,10 @@ Label0:
 ; Instruction of type: CLONE
 ;Operator 1 -> 0, Store in -> 11
 
-        MOVE.L D0, -(A7) ; Store local variable
 ; Instruction of type: PRINT
 ;Operator 1 -> 11
 
-        MOVE.L -4(A6), A0 ; Load local variable
+        LEA        Variable11, A0 ; Cargar la string
         MOVE.L A0, A1 ; Ready text
         MOVE.L #14, D0 ; Prepare display
         TRAP #15
@@ -139,12 +146,18 @@ main:
 ; Instruction of type: CLONE
 ;Operator 1 -> 1, Store in -> 13
 
-        MOVE.L -4(A6), D0 ; Load local variable
+        MOVE.L -8(A6), D0 ; Load local variable
         MOVE.L D0, -(A7) ; Store local variable
 ; Instruction of type: SIMPLEPARAM
 ;, Store in -> 13
 
-        MOVE.L 12(A6), A0 ; A0 contains store address
+        MOVE.L A6, A5
+        SUB.L #40, A6
+        MOVE.L A6, A7
+        MOVE.L A5, A6
+        MOVE.L A6, D0
+        ADD.L #4, D0
+        MOVE.L D0, A0 ; A0 contains store address
         MOVE.L (A0), D0 ; Get parameter
         MOVE.L D0, -(A7)
 ; Instruction of type: CALL

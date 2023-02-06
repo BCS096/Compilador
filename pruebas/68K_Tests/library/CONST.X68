@@ -55,11 +55,12 @@ VARSPACE    EQU     DMMBSIZE-PARSPACE       ; WE SUBSTRACT PARAMETER SPACE AND
 
 ; --- TP CONSTANTS ------------------------------------------------------------
 
-VARSIZE     EQU     10
+VARSIZE     EQU     10*4
 
 ; USED FOR OFFSET PURPOUSES, AS GETTING THE CORRECT VALUE WHEN CHECKING THE TP 
 
 DISP        DS.L    10                      ; DISP allows 10 as max profundity ([0-9])
+
 
 
 
