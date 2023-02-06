@@ -12,6 +12,7 @@ import compilador.sintactic.ParserSym;
 import compilador.sintactic.nodes.*;
 import compilador.sintactic.semantic.Operator3Address.CastType;
 import java.util.ArrayList;
+import java_cup.runtime.Symbol;
 import tablas.*;
 import tablas.IdDescripcion.TipoDescripcion;
 import types.RelOpType;
@@ -264,10 +265,10 @@ public class analisisSemantico {
                 if (tipo == TypeEnum.ARRAY || tipo == TypeEnum.TUPEL) {
                     switch (tipo) {
                         case ARRAY:
-                            parser.syntax_error(new java_cup.runtime.Symbol(25));
+                            parser.report_error("No se permite una array de tipo array", declArray);
                             break;
                         case TUPEL:
-                            parser.syntax_error(new java_cup.runtime.Symbol(26));
+                            parser.report_error("No se permite una array de tipo tupel", declArray);
                             break;
                     }
                 } else {
@@ -281,7 +282,8 @@ public class analisisSemantico {
                     break;
                 }
             case dconst:
-                parser.syntax_error(new java_cup.runtime.Symbol(ParserSym.r_const));
+                parser.report_error("No se permite una array constante", declArray);
+                break;
             default:
                 throw new RuntimeException("No es una constante ni una variable!");
         }
@@ -290,7 +292,7 @@ public class analisisSemantico {
             //Caso de que ya esté inicializado (tiene su declaración y eso significa que si)
             handleArrayDecl(declArray.getArrayDecl(), tipo, id);
         } else {
-            parser.syntax_error(new java_cup.runtime.Symbol(1));
+            parser.report_error("No se permite una array sin inicializar", declArray);
         }
     }
 
@@ -327,9 +329,11 @@ public class analisisSemantico {
         } else {
             if (initArray.getDimArray() != null) {
                 ArrayDescripcion arr = (ArrayDescripcion) ts.consultaId(id);
-                int size = handleDimArray(initArray.getDimArray(), id);
-                gc.generate(InstructionType.MUL, new Operator3Address(type.getBytes(), CastType.INT), new Operator3Address(size), new Operator3Address(size));
-                arr.setSize(size);
+                if (arr != null) {
+                    int size = handleDimArray(initArray.getDimArray(), id);
+                    gc.generate(InstructionType.MUL, new Operator3Address(type.getBytes(), CastType.INT), new Operator3Address(size), new Operator3Address(size));
+                    arr.setSize(size);
+                }
             } else {
                 parser.report_error("No se ha encontrado la dimensión del array!", initArray);
             }
@@ -795,7 +799,7 @@ public class analisisSemantico {
     //checked
     public void handleDeclTupel(DeclTupelNode declTupel, IdDescripcion.TipoDescripcion tipo) {
         if (tipo == TipoDescripcion.dconst) {
-            parser.syntax_error(new java_cup.runtime.Symbol(39));
+            parser.report_error("No se permite una tupla constante", declTupel);
         } else {
             if (declTupel.getId() != null) {
                 int nVar = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.TUPEL, false, true);
@@ -817,9 +821,9 @@ public class analisisSemantico {
                             aux = aux.getActualParamList();
                         } else if (aux.getParam().getSpecialParam() != null) {
                             if (aux.getParam().getSpecialParam().getTSB() == TypeEnum.ARRAY) {
-                                parser.syntax_error(new java_cup.runtime.Symbol(25));
+                                parser.report_error("No se permite una tupla con campos de tipo array", declTupel);
                             } else {//tupel case
-                                parser.syntax_error(new java_cup.runtime.Symbol(26));
+                                parser.report_error("No se permite una tupla con campos de tipo tupel", declTupel);
                             }
                         } else {
                             parser.report_error("No se ha indicado el tipo del campo", aux.getParam());
@@ -944,7 +948,7 @@ public class analisisSemantico {
         }
 
         gc.generate(InstructionType.RETURN, new Operator3Address(idProc), null, null);
-        
+
         gc.removeFunctionId(); //quitamos el procedimiento de la pila de procedimientos activos
 
         ts.salirBloque();
@@ -982,8 +986,8 @@ public class analisisSemantico {
             parser.report_error("Se intenta devolver un dato cuyo tipo no es el mismo que el definido por la función", node);
         }
         gc.generate(InstructionType.RETURN, new Operator3Address(idFunc), null, new Operator3Address(node.getExp().getReference()));
-        
-         gc.removeFunctionId(); //quitamos el procedimiento de la pila de procedimientos activos
+
+        gc.removeFunctionId(); //quitamos el procedimiento de la pila de procedimientos activos
 
         ts.salirBloque();
     }

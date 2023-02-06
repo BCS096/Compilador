@@ -44,7 +44,7 @@ public class TablaSimbolos {
 
     //checked
     public IdDescripcion consultaId(String id) {
-        if(td.existe(id)){
+        if (td.existe(id)) {
             return td.get(id).getDescripcion();
         }
         return null;
@@ -98,32 +98,34 @@ public class TablaSimbolos {
         if (!td.existe(idTupel)) {
             parser.report_error("No existe la tupla con este nombre: " + idTupel, node);
             //throw new UnsupportedOperationException("No existe la tupla con este nombre: " + idTupel);
+        } else {
+            IdDescripcion tupelDesc = td.get(idTupel).getDescripcion();
+            if (tupelDesc.getTipoDescripcion() != IdDescripcion.TipoDescripcion.dtupel) {
+                parser.report_error("Se intenta poner un campo en una variable que no corresponde a una tupla", node);
+                //throw new UnsupportedOperationException("Se intenta poner un campo en una variable que no corresponde a una tupla");
+            } else {
+                int idxe = td.get(idTupel).getFirst();
+                int idxep = -1;
+                while (idxe != -1 && !(te.get(idxe).getId().equals(idCampo))) {
+                    idxep = idxe;
+                    idxe = te.get(idxe).getNext();
+                }
+                if (idxe != -1) {
+                    parser.report_error("Ya existe un campo con este nombre: " + idCampo, node);
+                    //throw new UnsupportedOperationException("Ya existe un campo con este nombre: " + idCampo);
+                } else {
+                    ta.nuevaEntrada(n);
+                    idxe = ta.get(n);
+                    Data data = new Data(idCampo, dCampo, -1, -1, -1);
+                    te.put(idxe, data);
+                    if (idxep == -1) {
+                        td.get(idTupel).setFirst(idxe);
+                    } else {
+                        te.get(idxep).setNext(idxe);
+                    }
+                }
+            }
         }
-        IdDescripcion tupelDesc = td.get(idTupel).getDescripcion();
-        if (tupelDesc.getTipoDescripcion() != IdDescripcion.TipoDescripcion.dtupel) {
-            parser.report_error("Se intenta poner un campo en una variable que no corresponde a una tupla", node);
-            //throw new UnsupportedOperationException("Se intenta poner un campo en una variable que no corresponde a una tupla");
-        }
-        int idxe = td.get(idTupel).getFirst();
-        int idxep = -1;
-        while (idxe != -1 && !(te.get(idxe).getId().equals(idCampo))) {
-            idxep = idxe;
-            idxe = te.get(idxe).getNext();
-        }
-        if (idxe != -1) {
-            parser.report_error("Ya existe un campo con este nombre: " + idCampo, node);
-            //throw new UnsupportedOperationException("Ya existe un campo con este nombre: " + idCampo);
-        }
-        ta.nuevaEntrada(n);
-        idxe = ta.get(n);
-        Data data = new Data(idCampo, dCampo, -1, -1, -1);
-        te.put(idxe, data);
-        if(idxep == -1){
-            td.get(idTupel).setFirst(idxe);
-        }else{
-            te.get(idxep).setNext(idxe);
-        }
-        
     }
 
     //checked
@@ -131,62 +133,69 @@ public class TablaSimbolos {
         if (!td.existe(idTupel)) {
             //throw new UnsupportedOperationException("No existe la tupla con este nombre: " + idTupel);
             parser.report_error("No existe la tupla con este nombre: " + idTupel, node);
+        } else {
+            IdDescripcion d = td.get(idTupel).getDescripcion();
+            if (d.getTipoDescripcion() != IdDescripcion.TipoDescripcion.dtupel) {
+                //throw new UnsupportedOperationException("Se intenta consultar un campo en una variable que no corresponde a una tupla");
+                parser.report_error("Se intenta consultar un campo en una variable que no corresponde a una tupla", node);
+            } else {
+                int i = td.get(idTupel).getFirst();
+                while (i != -1 && !(te.get(i).getId().equals(idCampo))) {
+                    i = te.get(i).getNext();
+                }
+                if (i != -1) {
+                    return te.get(i).getDescripcion();
+                }
+            }
         }
-        IdDescripcion d = td.get(idTupel).getDescripcion();
-        if (d.getTipoDescripcion() != IdDescripcion.TipoDescripcion.dtupel) {
-            //throw new UnsupportedOperationException("Se intenta consultar un campo en una variable que no corresponde a una tupla");
-            parser.report_error("Se intenta consultar un campo en una variable que no corresponde a una tupla", node);
-        }
-        int i = td.get(idTupel).getFirst();
-        while (i != -1 && !(te.get(i).getId().equals(idCampo))) {
-            i = te.get(i).getNext();
-        }
-        if (i != -1) {
-            return te.get(i).getDescripcion();
-        }
+
         return null;
     }
 
-    
     //checked
     public void ponerIndice(String id, IdDescripcion d, BaseNode node) {
         if (!td.existe(id)) {
             parser.report_error("No existe el array con este nombre: " + id, node);
             //throw new UnsupportedOperationException("No existe el array con este nombre: " + id);
-        }
-        IdDescripcion darray = td.get(id).getDescripcion();
-        if (darray.getTipoDescripcion() != IdDescripcion.TipoDescripcion.darray) {
-            //throw new UnsupportedOperationException("No es un array");
-            parser.report_error("No es un array", node);
-        }
-        int idxe = td.get(id).getFirst();
-        int idxep = -1;
-        while (idxe != -1) {
-            idxep = idxe;
-            idxe = te.get(idxe).getNext();
-        }
-        ta.nuevaEntrada(n);
-        Data data = new Data("", d, -1, -1, -1);
-        te.put(ta.get(n), data);
-        if (idxep == -1) {
-            td.get(id).setFirst(ta.get(n));
         } else {
-            te.get(idxep).setNext(ta.get(n));
+            IdDescripcion darray = td.get(id).getDescripcion();
+            if (darray.getTipoDescripcion() != IdDescripcion.TipoDescripcion.darray) {
+                //throw new UnsupportedOperationException("No es un array");
+                parser.report_error("No es un array", node);
+            } else {
+                int idxe = td.get(id).getFirst();
+                int idxep = -1;
+                while (idxe != -1) {
+                    idxep = idxe;
+                    idxe = te.get(idxe).getNext();
+                }
+                ta.nuevaEntrada(n);
+                Data data = new Data("", d, -1, -1, -1);
+                te.put(ta.get(n), data);
+                if (idxep == -1) {
+                    td.get(id).setFirst(ta.get(n));
+                } else {
+                    te.get(idxep).setNext(ta.get(n));
+                }
+            }
+
         }
     }
-    
+
     //checked
     public int firstIndice(String id, BaseNode node) {
         if (!td.existe(id)) {
             //throw new UnsupportedOperationException("No existe el array con este nombre: " + id);
             parser.report_error("No existe el array con este nombre ", node);
+        } else {
+            IdDescripcion darray = td.get(id).getDescripcion();
+            if (darray.getTipoDescripcion() != IdDescripcion.TipoDescripcion.darray) {
+                //throw new UnsupportedOperationException("No es un array");
+                parser.report_error("No es una array", node);
+            }
+            return td.get(id).getFirst();
         }
-        IdDescripcion darray = td.get(id).getDescripcion();
-        if (darray.getTipoDescripcion() != IdDescripcion.TipoDescripcion.darray) {
-            //throw new UnsupportedOperationException("No es un array");
-            parser.report_error("No es una array", node);
-        }
-        return td.get(id).getFirst();
+        return -1;
     }
 
     //checked
@@ -194,26 +203,30 @@ public class TablaSimbolos {
         if (!td.existe(id)) {
             //throw new UnsupportedOperationException("No existe el procedimiento/función con este nombre: " + id);
             parser.report_error("No existe el procedimiento/función con este nombre: ", node);
+            return -1;
         }
         IdDescripcion dProc = td.get(id).getDescripcion();
         if (dProc.getTipoDescripcion() != IdDescripcion.TipoDescripcion.dproc
                 && dProc.getTipoDescripcion() != IdDescripcion.TipoDescripcion.dfunc) {
             //throw new UnsupportedOperationException("No es un procedimiento/función");
             parser.report_error("No es un procedimiento/función", node);
+            return -1;
         }
         return td.get(id).getFirst();
     }
-    
+
     //checked
     public int firstCampo(String id, BaseNode node) {
         if (!td.existe(id)) {
             //throw new UnsupportedOperationException("No existe la tupla con este nombre: " + id);
             parser.report_error("No existe la tupla con este nombre: " + id, node);
+            return -1;
         }
         IdDescripcion dtupla = td.get(id).getDescripcion();
         if (dtupla.getTipoDescripcion() != IdDescripcion.TipoDescripcion.dtupel) {
             //throw new UnsupportedOperationException("No es una tupla");
             parser.report_error("No es una tupla", node);
+            return -1;
         }
         return td.get(id).getFirst();
     }
@@ -227,7 +240,7 @@ public class TablaSimbolos {
         }
         //meto el primero
         res.add((ArgDescripcion) consultarTe(actual));
-        if(last(actual)){
+        if (last(actual)) {
             //solo hay un elemento
             return res;
         }
@@ -247,7 +260,7 @@ public class TablaSimbolos {
         }
         //meto el primero
         res.add((CampoDescripcion) consultarTe(actual));
-        if(last(actual)){
+        if (last(actual)) {
             //solo hay un elemento
             return res;
         }
@@ -257,7 +270,7 @@ public class TablaSimbolos {
         }
         return res;
     }
-    
+
     //checked
     public int next(int idx, BaseNode node) { //puede servir tanto para indices,campos,parametros
         if (te.get(idx).getNext() == -1) {
@@ -278,37 +291,39 @@ public class TablaSimbolos {
         return te.get(idx).getDescripcion();
     }
 
-
     //checked
     public void ponerParam(String idProc, String idParam, IdDescripcion d, BaseNode node) {
         if (!td.existe(idProc)) {
             //throw new UnsupportedOperationException("No existe el procedimiento/función con este nombre: " + idProc);
             parser.report_error("No existe el procedimiento/función con este nombre: " + idProc, node);
-        }
-        IdDescripcion dProc = td.get(idProc).getDescripcion();
-        if (dProc.getTipoDescripcion() != IdDescripcion.TipoDescripcion.dproc
-                && dProc.getTipoDescripcion() != IdDescripcion.TipoDescripcion.dfunc) {
-            //throw new UnsupportedOperationException("Intentando pasar parámetros a elemento que no es ni procedimiento ni función!");
-            parser.report_error("Intentando pasar parámetros a elemento que no es ni procedimiento ni función!", node);
-        }
-        int idxe = td.get(idProc).getFirst();
-        int idxep = -1;
-        while (idxe != -1 && !(te.get(idxe).getId().equals(idParam))) {
-            idxep = idxe;
-            idxe = te.get(idxe).getNext();
-        }
-        if (idxe != -1) {
-            //throw new UnsupportedOperationException("Ya hay un parámetro en este procedimiento/funcion con el mismo nombre");
-            parser.report_error("Ya hay un parámetro en este procedimiento/funcion con el mismo nombre", node);
-        }
-        ta.nuevaEntrada(n);
-        idxe = ta.get(n);
-        Data data = new Data(idParam, d, -1, -1, -1);
-        te.put(idxe, data);
-        if (idxep == -1) {
-            td.get(idProc).setFirst(idxe);
         } else {
-            te.get(idxep).setNext(idxe);
+            IdDescripcion dProc = td.get(idProc).getDescripcion();
+            if (dProc.getTipoDescripcion() != IdDescripcion.TipoDescripcion.dproc
+                    && dProc.getTipoDescripcion() != IdDescripcion.TipoDescripcion.dfunc) {
+                //throw new UnsupportedOperationException("Intentando pasar parámetros a elemento que no es ni procedimiento ni función!");
+                parser.report_error("Intentando pasar parámetros a elemento que no es ni procedimiento ni función!", node);
+            } else {
+                int idxe = td.get(idProc).getFirst();
+                int idxep = -1;
+                while (idxe != -1 && !(te.get(idxe).getId().equals(idParam))) {
+                    idxep = idxe;
+                    idxe = te.get(idxe).getNext();
+                }
+                if (idxe != -1) {
+                    //throw new UnsupportedOperationException("Ya hay un parámetro en este procedimiento/funcion con el mismo nombre");
+                    parser.report_error("Ya hay un parámetro en este procedimiento/funcion con el mismo nombre", node);
+                } else {
+                    ta.nuevaEntrada(n);
+                    idxe = ta.get(n);
+                    Data data = new Data(idParam, d, -1, -1, -1);
+                    te.put(idxe, data);
+                    if (idxep == -1) {
+                        td.get(idProc).setFirst(idxe);
+                    } else {
+                        te.get(idxep).setNext(idxe);
+                    }
+                }
+            }
         }
     }
 
@@ -326,7 +341,7 @@ public class TablaSimbolos {
         }
         //meto el primero
         res.add((IndexDescripcion) consultarTe(actual));
-        if(last(actual)){
+        if (last(actual)) {
             //solo hay un elemento
             return res;
         }
