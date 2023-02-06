@@ -19,7 +19,6 @@ import compilador.sintactic.semantic.InstructionType;
 import compilador.sintactic.semantic.Operator3Address;
 import compilador.sintactic.semantic.Operator3Address.CastType;
 import compilador.sintactic.semantic.Operator3Address.Type;
-import compilador.sintactic.semantic.VariableNumberTypePair;
 import tablas.*;
 
 /**

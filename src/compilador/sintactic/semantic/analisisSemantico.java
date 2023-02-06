@@ -13,6 +13,7 @@ import compilador.sintactic.semantic.Operator3Address.CastType;
 import java.util.ArrayList;
 import tablas.*;
 import tablas.IdDescripcion.TipoDescripcion;
+import types.RelOpType;
 import types.SpecialOpType;
 import types.TypeEnum;
 
@@ -99,25 +100,25 @@ public class analisisSemantico {
         boolean cambio = true;
         while (cambio) {
             cambio = false;
-            if(opt.assignacioDiferida()){
+            if (opt.assignacioDiferida()) {
                 cambio = true;
             }
-            if(opt.brancamentAdjacent()){
-            cambio = true;
-            }
-            if(opt.brancamentSobreBrancament()){
+            if (opt.brancamentAdjacent()) {
                 cambio = true;
             }
-            if(opt.operacioConstant1()){
+            if (opt.brancamentSobreBrancament()) {
                 cambio = true;
             }
-            if(opt.operacioConstant2()){
+            if (opt.operacioConstant1()) {
                 cambio = true;
             }
-            if(opt.codiInaccesible1()){
+            if (opt.operacioConstant2()) {
                 cambio = true;
             }
-            if(opt.codiInaccesible2()){
+            if (opt.codiInaccesible1()) {
+                cambio = true;
+            }
+            if (opt.codiInaccesible2()) {
                 cambio = true;
             }
         }
@@ -426,35 +427,41 @@ public class analisisSemantico {
                     if (expressionNode.getExp1().getType() != null && expressionNode.getExp2().getType() != null) {
                         //Si pasa el check, miramos que sean del mismo tipo y la expresion será una comporbación, por tanto booleana
                         if (expressionNode.getExp1().getType().equals(expressionNode.getExp2().getType())) {
-                            expressionNode.setType(TypeEnum.BOOL);
+                            if ((expressionNode.getExp1().getType() != TypeEnum.BOOL && expressionNode.getExp1().getType() != TypeEnum.STRING)
+                                    || ((expressionNode.getExp1().getType() == TypeEnum.BOOL || expressionNode.getExp1().getType() == TypeEnum.STRING)
+                                    && (expressionNode.getBinOp().getRel().getType() == RelOpType.EQ || expressionNode.getBinOp().getRel().getType() == RelOpType.NEQ))) {
+                                expressionNode.setType(TypeEnum.BOOL);
 
-                            Integer var = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.BOOL, false, false);
-                            String label1 = gc.newLabel();
-                            String label2 = gc.newLabel();
-                            gc.generate(
-                                    InstructionTypeUtils.getRelationalIf(expressionNode.getBinOp().getRel().getType()),
-                                    new Operator3Address(expressionNode.getExp1().getReference()),
-                                    new Operator3Address(expressionNode.getExp2().getReference()),
-                                    new Operator3Address(label1));
+                                Integer var = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.BOOL, false, false);
+                                String label1 = gc.newLabel();
+                                String label2 = gc.newLabel();
+                                gc.generate(
+                                        InstructionTypeUtils.getRelationalIf(expressionNode.getBinOp().getRel().getType()),
+                                        new Operator3Address(expressionNode.getExp1().getReference()),
+                                        new Operator3Address(expressionNode.getExp2().getReference()),
+                                        new Operator3Address(label1));
 
-                            gc.generate(
-                                    InstructionType.CLONE,
-                                    new Operator3Address(false, CastType.BOOL),
-                                    null,
-                                    new Operator3Address(var));
+                                gc.generate(
+                                        InstructionType.CLONE,
+                                        new Operator3Address(false, CastType.BOOL),
+                                        null,
+                                        new Operator3Address(var));
 
-                            gc.generate(InstructionType.GOTO, null, null, new Operator3Address(label2));
+                                gc.generate(InstructionType.GOTO, null, null, new Operator3Address(label2));
 
-                            gc.generate(InstructionType.SKIP, null, null, new Operator3Address(label1));
+                                gc.generate(InstructionType.SKIP, null, null, new Operator3Address(label1));
 
-                            gc.generate(
-                                    InstructionType.CLONE,
-                                    new Operator3Address(true, CastType.BOOL),
-                                    null,
-                                    new Operator3Address(var));
+                                gc.generate(
+                                        InstructionType.CLONE,
+                                        new Operator3Address(true, CastType.BOOL),
+                                        null,
+                                        new Operator3Address(var));
 
-                            gc.generate(InstructionType.SKIP, null, null, new Operator3Address(label2));
-                            expressionNode.setReference(var);
+                                gc.generate(InstructionType.SKIP, null, null, new Operator3Address(label2));
+                                expressionNode.setReference(var);
+                            } else {
+                                parser.report_error("No se puede hacer una operación relacional con string/booleano a menos que no sea == o !=", expressionNode.getBinOp().getRel());
+                            }
                         } else {
                             parser.report_error("EXP error: El tipo de los operadores no coincide: " + expressionNode.getExp1().getType() + " y " + expressionNode.getExp2().getType() + " difieren.", expressionNode.getExp1());
                         }
