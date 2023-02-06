@@ -95,7 +95,7 @@ public class analisisSemantico {
             mvp.semanticCode(new StringBuilder(ins.toString() + '\n'));
         });
         if (parser.getNumberErrors() == 0) {
-            AssemblyGenerator ensamblado = new AssemblyGenerator(mvp.getActualFile(), tv, tp, gc.getInstruccions());
+            AssemblyGenerator ensamblado = new AssemblyGenerator(mvp.getActualFile(), ts, tv, tp, gc.getInstruccions());
             ensamblado.mainMake();
         }
         opt = new Peephole(gc);
@@ -941,7 +941,7 @@ public class analisisSemantico {
         }
 
         gc.generate(InstructionType.SKIP, null, null, new Operator3Address(label)); //generamos SKIP para saber donde saltar al hacer call de este procedimiento
-        gc.generate(InstructionType.INIT, null, null, new Operator3Address(idProc));
+        gc.generate(InstructionType.PMB, null, null, new Operator3Address(idProc));
 
         if (node.getSentenceList() != null) {
             handleSentenceList(node.getSentenceList());
@@ -974,7 +974,7 @@ public class analisisSemantico {
         }
 
         gc.generate(InstructionType.SKIP, null, null, new Operator3Address(label)); //generamos SKIP para saber donde saltar al hacer call de este procedimiento
-        gc.generate(InstructionType.INIT, null, null, new Operator3Address(idFunc));
+        gc.generate(InstructionType.PMB, null, null, new Operator3Address(idFunc));
 
         if (node.getSentenceList() != null) {
             handleSentenceList(node.getSentenceList());

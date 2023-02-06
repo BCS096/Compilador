@@ -81,4 +81,9 @@ public class Variable {
     public void setOffset(int offset) {
         this.offset = offset;
     }
+    
+    @Override
+    public String toString(){
+        return "Id variable: " + id + ", tipo: " + tipoVar + ", offset: " + offset + ", del procedimiento: " + idProc + " y con tamaño de bytes: " + bytes;
+    }
 }
