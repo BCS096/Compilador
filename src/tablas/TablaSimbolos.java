@@ -57,16 +57,18 @@ public class TablaSimbolos {
     }
 
     //checked
-    public void poner(String id, IdDescripcion d, BaseNode node) {
+    public boolean poner(String id, IdDescripcion d, BaseNode node) {
         if (td.existe(id)) {
             if (td.get(id).getNp() == n) {
                 //throw new UnsupportedOperationException("Símbolo ya declarado en el ámbito actual");
                 parser.report_error("Símbolo ya declarado en el ámbito actual", node);
+                return true;
             }
             ta.nuevaEntrada(n);
             te.put(ta.get(n), td.get(id));
         }
         td.put(id, new Data(id, d, n, -1, -1));
+        return false;
     }
 
     public void salirBloque() {

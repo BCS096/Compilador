@@ -8,6 +8,7 @@ package compilador.sintactic.semantic;
 import compilador.ensamblado.AssemblyGenerator;
 import compilador.main.MVP;
 import compilador.sintactic.Parser;
+import compilador.sintactic.ParserSym;
 import compilador.sintactic.nodes.*;
 import compilador.sintactic.semantic.Operator3Address.CastType;
 import java.util.ArrayList;
@@ -208,9 +209,7 @@ public class analisisSemantico {
                     nVar = gc.newVar(Variable.TipoVariable.VARIABLE, type, false, false);
                     mvp.semanticCode(new StringBuilder(nVar + " = " + id + '\n'));
                     VarDescripcion var = new VarDescripcion(nVar, type);
-                    try {
-                        ts.poner(id, var, elemIdAssig);
-                    } catch (IllegalArgumentException e) {
+                    if (ts.poner(id, var, elemIdAssig)) {
                         parser.report_error("Variable " + id + " ya se ha definido", elemIdAssig);
                         tv.decrement();
                     }
@@ -218,9 +217,7 @@ public class analisisSemantico {
                     nVar = gc.newVar(Variable.TipoVariable.VARIABLE, type, false, false);
                     StringDescripcion var = new StringDescripcion(nVar, true, expression != null);
                     mvp.semanticCode(new StringBuilder(nVar + " = " + id + '\n'));
-                    try {
-                        ts.poner(id, var, elemIdAssig);
-                    } catch (IllegalArgumentException e) {
+                    if (ts.poner(id, var, elemIdAssig)) {
                         parser.report_error("Variable " + id + " ya se ha definido", elemIdAssig);
                         tv.decrement();
                     }
@@ -234,18 +231,14 @@ public class analisisSemantico {
                 if (type != TypeEnum.STRING) {
                     nVar = gc.newVar(Variable.TipoVariable.VARIABLE, type, false, false);
                     ConstDescripcion constant = new ConstDescripcion(nVar, type, expression != null);
-                    try {
-                        ts.poner(id, constant, elemIdAssig);
-                    } catch (IllegalArgumentException e) {
+                    if (ts.poner(id, constant, elemIdAssig)) {
                         parser.report_error("Constante " + id + " ya está definida", elemIdAssig);
                         tv.decrement();
                     }
                 } else {
                     nVar = gc.newVar(Variable.TipoVariable.VARIABLE, type, false, false);
                     StringDescripcion var = new StringDescripcion(nVar, false, expression != null);
-                    try {
-                        ts.poner(id, var, elemIdAssig);
-                    } catch (IllegalArgumentException e) {
+                    if (ts.poner(id, var, elemIdAssig)) {
                         parser.report_error("Constante " + id + " ya está definida", elemIdAssig);
                         tv.decrement();
                     }
@@ -281,16 +274,14 @@ public class analisisSemantico {
                     int nVar = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.ARRAY, true, false);
                     mvp.semanticCode(new StringBuilder(nVar + " = " + id + '\n'));
                     arr = new ArrayDescripcion(nVar, tipo, initialized);
-                    try {
-                        ts.poner(id, arr, declArray);
-                    } catch (IllegalArgumentException e) {
+                    if (ts.poner(id, arr, declArray)) {
                         parser.report_error("Variable " + id + " ya está definida", declArray);
                         tv.decrement();
                     }
                     break;
                 }
             case dconst:
-                parser.syntax_error(new java_cup.runtime.Symbol(39));
+                parser.syntax_error(new java_cup.runtime.Symbol(ParserSym.r_const));
             default:
                 throw new RuntimeException("No es una constante ni una variable!");
         }
@@ -810,9 +801,7 @@ public class analisisSemantico {
                 int nVar = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.TUPEL, false, true);
                 mvp.semanticCode(new StringBuilder(nVar + " = " + declTupel.getId().getIdentifierLiteral() + '\n'));
                 boolean init = declTupel.getTupeldecl() != null;
-                try {
-                    ts.poner(declTupel.getId().getIdentifierLiteral(), new TupelDescripcion(nVar, TypeEnum.TUPEL, init), declTupel);
-                } catch (IllegalArgumentException e) {
+                if (ts.poner(declTupel.getId().getIdentifierLiteral(), new TupelDescripcion(nVar, TypeEnum.TUPEL, init), declTupel)) {
                     parser.report_error("Ya existe un identificador con este nombre", declTupel.getId());
                     tv.decrement();
                 }
@@ -936,9 +925,7 @@ public class analisisSemantico {
         String label = gc.newLabel();
         int numProc = gc.newProcedure(idProc, ts.getActual(), label, 0);
         ProcDescripcion d = new ProcDescripcion(numProc);
-        try {
-            ts.poner(idProc, d, node);
-        } catch (IllegalArgumentException e) {
+        if (ts.poner(idProc, d, node)) {
             parser.report_error("Procedimiento " + idProc + " ya está definido", node);
             tp.decrement();
         }
@@ -956,9 +943,9 @@ public class analisisSemantico {
             handleSentenceList(node.getSentenceList());
         }
 
-        gc.removeFunctionId(); //quitamos el procedimiento de la pila de procedimientos activos
-
         gc.generate(InstructionType.RETURN, new Operator3Address(idProc), null, null);
+        
+        gc.removeFunctionId(); //quitamos el procedimiento de la pila de procedimientos activos
 
         ts.salirBloque();
     }
@@ -971,9 +958,7 @@ public class analisisSemantico {
         String label = gc.newLabel();
         int numFunc = gc.newProcedure(idFunc, ts.getActual(), label, 0);
         FuncDescripcion d = new FuncDescripcion(numFunc, tipo);
-        try {
-            ts.poner(idFunc, d, node);
-        } catch (IllegalArgumentException e) {
+        if (ts.poner(idFunc, d, node)) {
             parser.report_error("Función " + idFunc + " ya está definido", node);
             tp.decrement();
         }
@@ -991,14 +976,14 @@ public class analisisSemantico {
             handleSentenceList(node.getSentenceList());
         }
 
-        gc.removeFunctionId(); //quitamos el procedimiento de la pila de procedimientos activos
-
         handleExpresion(node.getExp());
 
         if (tipo != node.getExp().getType()) {
             parser.report_error("Se intenta devolver un dato cuyo tipo no es el mismo que el definido por la función", node);
         }
         gc.generate(InstructionType.RETURN, new Operator3Address(idFunc), null, new Operator3Address(node.getExp().getReference()));
+        
+         gc.removeFunctionId(); //quitamos el procedimiento de la pila de procedimientos activos
 
         ts.salirBloque();
     }
@@ -1038,9 +1023,7 @@ public class analisisSemantico {
         //metemos en la tabla de descripción dicho parametro para ser usado cuando se invoque el programa asociado
         int numParam = gc.newVar(Variable.TipoVariable.PARAM, tipo, isArray, isTupel);
         VarDescripcion dvar = new VarDescripcion(numParam, tipo);
-        try {
-            ts.poner(id, dvar, node);
-        } catch (IllegalArgumentException e) {
+        if (ts.poner(id, dvar, node)) {
             parser.report_error("Variable " + id + " ya está definida", node);
             tv.decrement();
         }
