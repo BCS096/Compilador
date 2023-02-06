@@ -20,6 +20,7 @@ public class Peephole {
         this.code = new ArrayList<>(cg.getInstruccions());
     }
 
+    //checked
     public boolean brancamentAdjacent() {
         boolean canvi = false;
         for (int i = 0; i < code.size(); i++) {
@@ -28,12 +29,12 @@ public class Peephole {
                 Operator3Address e1 = code.get(i).getOperators()[2];
                 int posIf = i;
                 i++;
-                if (code.get(i).getInstructionType() == InstructionType.GOTO && i < code.size()) { //goto e2
+                if (i < code.size() && code.get(i).getInstructionType() == InstructionType.GOTO) { //goto e2
                     //guardamos la etiqueta del goto
                     Operator3Address e2 = code.get(i).getOperators()[2];
                     int posGoto = i;
                     i++;
-                    if (code.get(i).getInstructionType() == InstructionType.SKIP && code.get(i).getOperators()[2].getLabel().equals(e1.getLabel()) && i < code.size()) { //e1 : skip
+                    if (i < code.size() && code.get(i).getInstructionType() == InstructionType.SKIP && code.get(i).getOperators()[2].getLabel().equals(e1.getLabel())) { //e1 : skip
 
                         code.get(posIf).setInstructionType(negCond(code.get(posIf).getInstructionType()));
                         code.get(posIf).setOperator(2, e2);
@@ -42,7 +43,7 @@ public class Peephole {
                         //miramos si podemos borrar el e1:skip
                         boolean borrar = true;
                         for (int j = 0; j < code.size(); j++) {
-                            if (code.get(j).getInstructionType() == InstructionType.GOTO && code.get(j).getOperators()[2].getLabel().equals(e1.getLabel())) {
+                            if ((isIf(code.get(j).getInstructionType()) || code.get(j).getInstructionType() == InstructionType.GOTO) && code.get(j).getOperators()[2].getLabel().equals(e1.getLabel())) {
                                 borrar = false;
                                 break;
                             }
@@ -59,6 +60,7 @@ public class Peephole {
         return canvi;
     }
 
+    //checked
     public boolean brancamentSobreBrancament() {
         boolean canvi = false;
         for (int i = 0; i < code.size(); i++) {
@@ -71,7 +73,7 @@ public class Peephole {
                             code.get(posIf).setOperator(2, code.get(j + 1).getOperators()[2]);
                             boolean borrar = true;
                             for (int k = 0; k < code.size(); k++) {
-                                if (code.get(k).getInstructionType() == InstructionType.GOTO && code.get(k).getOperators()[2].getLabel().endsWith(e1.getLabel())) {
+                                if ((isIf(code.get(k).getInstructionType()) || code.get(k).getInstructionType() == InstructionType.GOTO) && code.get(k).getOperators()[2].getLabel().equals(e1.getLabel())) {
                                     borrar = false;
                                     break;
                                 }
@@ -88,7 +90,6 @@ public class Peephole {
         return canvi;
     }
 
-    //assignacions booleanes ja optimitzades en el propi analisiSemantic
     //checked
     public boolean operacioConstant1() {
         boolean canvi = false;
@@ -123,6 +124,7 @@ public class Peephole {
         return canvi;
     }
 
+    //checked
     public boolean operacioConstant2() {
         boolean canvi = false;
         for (int i = 0; i < code.size(); i++) {
@@ -131,8 +133,27 @@ public class Peephole {
                 boolean res = false;
                 switch (code.get(i).getOperators()[0].getCastType()) {
                     case INT:
-                        int a = (int) code.get(i).getOperators()[0].getLiteral();
-                        int b = (int) code.get(i).getOperators()[1].getLiteral();
+                    case BOOL:
+                        int a;
+                        int b;
+                        if (code.get(i).getOperators()[0].getCastType() == CastType.BOOL) {
+                            if ((boolean) code.get(i).getOperators()[0].getLiteral() == true) {
+                                a = 1;
+                            } else {
+                                a = 0;
+                            }
+                        } else {
+                            a = (int) code.get(i).getOperators()[0].getLiteral();
+                        }
+                        if (code.get(i).getOperators()[1].getCastType() == CastType.BOOL) {
+                            if ((boolean) code.get(i).getOperators()[1].getLiteral() == true) {
+                                b = 1;
+                            } else {
+                                b = 0;
+                            }
+                        } else {
+                            b = (int) code.get(i).getOperators()[1].getLiteral();
+                        }
                         switch (code.get(i).getInstructionType()) {
                             case IFEQ:
                                 if (a == b) {
@@ -202,22 +223,6 @@ public class Peephole {
                                 break;
                         }
                         break;
-                    case BOOL:
-                        boolean e = (boolean) code.get(i).getOperators()[0].getLiteral();
-                        boolean f = (boolean) code.get(i).getOperators()[1].getLiteral();
-                        switch (code.get(i).getInstructionType()) {
-                            case IFEQ:
-                                if (e == f) {
-                                    res = true;
-                                }
-                                break;
-                            case IFNE:
-                                if (e != f) {
-                                    res = true;
-                                }
-                                break;
-                        }
-                        break;
                     case STRING:
                         String g = (String) code.get(i).getOperators()[0].getLiteral();
                         String h = (String) code.get(i).getOperators()[1].getLiteral();
@@ -249,6 +254,7 @@ public class Peephole {
         return canvi;
     }
 
+    //checked
     public boolean codiInaccesible1() {
         boolean canvi = false;
         for (int i = 0; i < code.size(); i++) {
@@ -262,6 +268,7 @@ public class Peephole {
         return canvi;
     }
 
+    //checked
     public boolean codiInaccesible2() {
         boolean canvi = false;
         for (int i = 0; i < code.size(); i++) {
@@ -311,7 +318,7 @@ public class Peephole {
                 for (j = 1; j < code.size(); j++) {
                     if (j != i) {
                         if ((code.get(j).getOperators()[0] != null && code.get(j).getOperators()[0].getType() == Type.reference && code.get(j).getOperators()[0].getReference() == res)
-                                || (code.get(j).getOperators()[1] != null&& code.get(j).getOperators()[1].getType() == Type.reference && code.get(j).getOperators()[1].getReference() == res)
+                                || (code.get(j).getOperators()[1] != null && code.get(j).getOperators()[1].getType() == Type.reference && code.get(j).getOperators()[1].getReference() == res)
                                 || (code.get(j).getInstructionType() == InstructionType.SIMPLEPARAM
                                 && code.get(j).getOperators()[2] != null && code.get(j).getOperators()[2].getReference() == res)
                                 || (code.get(j).getInstructionType() == InstructionType.RETURN

@@ -87,7 +87,7 @@ public class analisisSemantico {
         } else {
             parser.report_error("ERROR - No se ha declarado 'main'", programNode);
         }
-        mvp.semanticCode(new StringBuilder("instructionType | operator1 | operator2 | result\n"));
+        mvp.semanticCode(new StringBuilder("instructionType | operator1 | operator2 | result\n\n"));
         gc.getInstruccions().forEach(ins -> {
             mvp.semanticCode(new StringBuilder(ins.toString() + '\n'));
         });
@@ -113,7 +113,8 @@ public class analisisSemantico {
             }
             if(opt.operacioConstant2()){
                 cambio = true;
-            }if(opt.codiInaccesible1()){
+            }
+            if(opt.codiInaccesible1()){
                 cambio = true;
             }
             if(opt.codiInaccesible2()){
@@ -190,8 +191,6 @@ public class analisisSemantico {
     public void handleElemIdAssig(ElemIdAssigNode elemIdAssig, TypeEnum type, IdDescripcion.TipoDescripcion modifier) {
         String id = elemIdAssig.getIdentifier().getIdentifierLiteral();
         ExpressionNode expression = elemIdAssig.getExp();
-        //IdDescripcion.TipoDescripcion modifier = ts.consultaId(elemIdAssig.getIdentifier().getIdentifierLiteral()).getTipoDescripcion();
-        //check si tiene valor literal (será constante), si no es dvar.
         int expResultVarNumber = -9;
         if (expression != null) {
             handleExpresion(expression);
@@ -226,7 +225,6 @@ public class analisisSemantico {
                     }
                 }
 
-                // If expression given, make the assignation
                 if (expResultVarNumber != -9) {
                     gc.generate(InstructionType.CLONE, new Operator3Address(expResultVarNumber), null, new Operator3Address(nVar));
                 }
@@ -247,12 +245,10 @@ public class analisisSemantico {
                     try {
                         ts.poner(id, var, elemIdAssig);
                     } catch (IllegalArgumentException e) {
-                        parser.report_error("Constant " + id + " is already defined", elemIdAssig);
+                        parser.report_error("Constante " + id + " ya está definida", elemIdAssig);
                         tv.decrement();
                     }
                 }
-
-                // If expression given, make the assignation
                 if (expResultVarNumber != -9) {
                     gc.generate(InstructionType.CLONE, new Operator3Address(expResultVarNumber), null, new Operator3Address(nVar));
                 }
@@ -327,14 +323,13 @@ public class analisisSemantico {
             }
 
         } else {
-            parser.report_error("No valid dimension found!", dimArray);
+            parser.report_error("Dimension no válida!", dimArray);
             return -1;
         }
     }
 
     //checked
     public void handleInitArray(InitArrayNode initArray, TypeEnum type, String id) {
-        //Comprobación de tipo ya no es posible, no está en la producción. Pasarla como parámetro de alguna manera?????
         if (type != initArray.getTypeId().getType()) {
             parser.report_error("No coincide el tipo en la istancia de la array", initArray.getTypeId());
         } else {
@@ -367,7 +362,7 @@ public class analisisSemantico {
                 if (expressionNode.getNegOp() != null) {
                     //Si queremos negar, tendremos que negar un booleano, no puede ser otra cosa
                     if (expressionNode.getExp1().getType() != TypeEnum.BOOL) {
-                        parser.report_error("Trying to apply not to a non boolean value, got type: " + expressionNode.getExp1().getType(), expressionNode.getNegOp());
+                        parser.report_error("Tratando de negar un tipo no booleano, tipo: " + expressionNode.getExp1().getType(), expressionNode.getNegOp());
                     }
                     //Entonces nuestra expresion será booleana
                     expressionNode.setType(TypeEnum.BOOL);
@@ -423,7 +418,7 @@ public class analisisSemantico {
 
                         expressionNode.setReference(var);
                     } else {
-                        parser.report_error("EXP error: One or both operators type not detected", expressionNode.getBinOp());
+                        parser.report_error("EXP error: Uno o ambos tipos de los operadores no detectados", expressionNode.getBinOp());
                     }
                     //Si no es aritmetico, es relacional?
                 } else if (expressionNode.getBinOp().getRel() != null) {
@@ -473,7 +468,7 @@ public class analisisSemantico {
                         if (expressionNode.getExp1().getType().equals(expressionNode.getExp2().getType())) {
                             expressionNode.setType(TypeEnum.BOOL);
                         } else {
-                            parser.report_error("EXP error: Type of operators not matching or it should be \"boolean\"", expressionNode.getExp1());
+                            parser.report_error("EXP error: Tipo de operador no coincide o deberia ser booleano", expressionNode.getExp1());
                         }
 
                         // Generate resulting code
@@ -485,7 +480,7 @@ public class analisisSemantico {
 
                         expressionNode.setReference(var);
                     } else {
-                        parser.report_error("EXP error: One or both operators type not detected", expressionNode.getExp1());
+                        parser.report_error("EXP error: Uno o varios tipos de operadores no detectados", expressionNode.getExp1());
                     }
                 }
                 //If no more expressions found and we find a simple value...
@@ -498,7 +493,7 @@ public class analisisSemantico {
 
             }
         } else {
-            parser.report_error("Trying to handle assignation with null expression", expressionNode);
+            parser.report_error("Tratando de gestionar una asignación sin expresión", expressionNode);
         }
     }
 
@@ -784,9 +779,9 @@ public class analisisSemantico {
             handleInstExp(simpleValue.getInstExp());
             simpleValue.setType(simpleValue.getInstExp().getType());
             if (simpleValue.getType() != null && simpleValue.getType() == TypeEnum.VOID) {
-                parser.report_error("Method does not return anything", simpleValue.getInstExp());
+                parser.report_error("El método no devuelve nada", simpleValue.getInstExp());
             } else if (simpleValue.getType() == TypeEnum.NULL) {
-                parser.report_error("Invalid expression", simpleValue.getInstExp());
+                parser.report_error("Expresión no válida", simpleValue.getInstExp());
             } else {
                 simpleValue.setReference(simpleValue.getInstExp().getReference());
             }
@@ -795,7 +790,7 @@ public class analisisSemantico {
             simpleValue.setReference(handleLiteral(simpleValue.getLiteral().getLiteral(), simpleValue.getLiteral().getType()));
             simpleValue.setType(simpleValue.getLiteral().getType());
         } else {
-            parser.report_error("No suitable development found!", simpleValue);
+            parser.report_error("No se encontró ningún desarrollo adecuado!", simpleValue);
         }
     }
 
@@ -1157,7 +1152,6 @@ public class analisisSemantico {
                 gc.generate(InstructionType.SKIP, null, null, new Operator3Address(finalRepeat));
                 break;
             case NONE:
-                //no hacer nada dado que se trata de un error que se gestiona más tarde
                 break;
         }
     }
@@ -1457,32 +1451,26 @@ public class analisisSemantico {
 
     //checked
     private int handleLiteral(String value, TypeEnum tipo) {
-        //temporalPointer for latter assignment of reference if needed
         int varRef = gc.newVar(Variable.TipoVariable.VARIABLE, tipo, false, false);
         Operator3Address opValue;
         switch (tipo) {
             case INT:
-                //Code generation for int literal
                 opValue = new Operator3Address(Integer.parseInt(value), CastType.INT);
                 break;
             case CHAR:
-                //Code generation for char literal
                 opValue = new Operator3Address(value.charAt(1), CastType.CHAR);
                 break;
             case BOOL:
-                //Code generation for bool literal
                 opValue = new Operator3Address(Boolean.parseBoolean(value), CastType.BOOL);
                 break;
             case STRING:
-                //Code generation for string literal
                 opValue = new Operator3Address(value, CastType.STRING);
                 break;
             default:
-                parser.report_error("Trying to generate code for literal type: " + tipo.getTypeString(), null);
+                parser.report_error("Tratando de generar un tipo literal: " + tipo.getTypeString(), null);
                 opValue = new Operator3Address(value);
                 break;
         }
-        //Code generation for an assignment of a variable
         gc.generate(InstructionType.CLONE, opValue, null, new Operator3Address(varRef));
 
         return varRef;
@@ -1490,8 +1478,6 @@ public class analisisSemantico {
 
     //checked
     private void handleMain(MainNode mainNode) {
-        // TODO: A better solution would be to attach each variable in descriptionTable
-        // to a procedure, so we can have the same var, in the same scope, for different procedures
         ts.entrarBloque();
         ts.entrarBloque();
         if (mainNode.getSentenceList() != null && !mainNode.getSentenceList().isEmpty()) {
