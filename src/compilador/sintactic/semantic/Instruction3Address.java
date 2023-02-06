@@ -2,7 +2,7 @@ package compilador.sintactic.semantic;
 
 public class Instruction3Address {
 
-    private final InstructionType instructionType;
+    private InstructionType instructionType;
     private final Operator3Address[] operators;
 
     public Instruction3Address(InstructionType instruction, Operator3Address operator1, Operator3Address operator2, Operator3Address result) {
@@ -19,6 +19,14 @@ public class Instruction3Address {
     
     public InstructionType getInstructionType(){
         return this.instructionType;
+    }
+    
+    public void setInstructionType(InstructionType type){
+        this.instructionType = type;
+    }
+    
+    public void setOperator(int pos,Operator3Address op){
+        this.operators[pos] = op;
     }
     
     @Override
