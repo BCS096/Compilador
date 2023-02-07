@@ -433,7 +433,7 @@ public class Scanner implements java_cup.runtime.Scanner {
 
     public Scanner(java.io.Reader in, MVP mvp) {
     this.zzReader = in;
-    this.mvp = mvp
+    this.mvp = mvp;
   }
 
     utils u = new utils();

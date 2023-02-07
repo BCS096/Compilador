@@ -12,7 +12,7 @@ function sumTo(int n, string b): int {
 
 main () {
     print("Introduce un numero entre 0 y 9: ");
-    int num = read() - 48;
+    into num = read() - 48;
 
     print("La suma de 1 hasta tu numero es: ");
     println(sumTo(num, "koalas"));

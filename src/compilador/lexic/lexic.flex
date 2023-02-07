@@ -248,6 +248,6 @@ r_tupel         = "tupel"
 {ws}                        { mvp.setLexic("White space '}' -> "+this.yytext()+"\n"); }
 {newline}                   { mvp.setLexic("New line -> "+this.yytext()+"\n"); }
 
-[^]                         { mvp.setLexic("Símbol desconegut -> "+this.yytext()+"\n"); return symbol(ParserSym.error); }
+[^]                         { mvp.setLexic("Símbol desconegut -> "+this.yytext()+", Levenshtein retorna ->" + u.Levenshtein(this.yytext()) + "\n"); return symbol(ParserSym.error); }
 
 /****************************************************************************/
