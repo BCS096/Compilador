@@ -54,6 +54,7 @@ public class AssemblyGenerator {
     private final int firstParameter = 12;
     private final int parameterSize = wordSize;
     private final int variableSize = wordSize;
+    private final int initialSP = 0x01000000;
     private int dx = 0;
 
     private int actualOffset = 0;
@@ -63,9 +64,17 @@ public class AssemblyGenerator {
     private boolean choice = false;
     private ArrayList<String> stringsDone = new ArrayList<>();
     private int contador = 0;
+    private int contadorStr = 0;
     private int actualParam = 1;
     private boolean isParam = false;
     private int actualVar = -1;
+    private boolean isSimpleP = false;
+    private boolean callMade = false;
+    private ArrayList<Integer> declaredVars;
+    private ArrayList<Integer> paramList;
+    private String currentSubProgram = "";
+    int randomCounter = 99;
+    private boolean isString = false;
 
     /**
      *
@@ -76,6 +85,8 @@ public class AssemblyGenerator {
      * @param instructions
      */
     public AssemblyGenerator(String filename, TablaSimbolos symbolTable, TablaVariables tv, TablaProcedimientos tp, ArrayList<Instruction3Address> instructions) {
+        this.declaredVars = new ArrayList<>();
+        this.paramList = new ArrayList<>();
         this.filename = filename;
         this.ts = symbolTable;
         this.tv = tv;
@@ -112,6 +123,17 @@ public class AssemblyGenerator {
                 }
             }
         }
+        //strings+otros hacer
+        for (int i = 0; i < 5; i++) {
+            assemblyCode.append("SParam" + i + labelSpace + "DS.B" + instSpace + "128\n");
+            assemblyCode.append(labelSpace + "DC.B" + instSpace + "0\n");
+        }
+        for (int i = 0; i < 10; i++) {
+            assemblyCode.append("Param" + i + labelSpace + "DS.L" + instSpace + "1\n");
+        }
+//        for (int i = 7; i < 10; i++) {
+//            assemblyCode.append("Param" + i + labelSpace + "DS.L" + instSpace + "1\n");
+//        }
 
         completeProcedureTable();
         updateVariableTable();
@@ -182,10 +204,13 @@ public class AssemblyGenerator {
         switch (instruction.getInstructionType()) {
             case CLONE:
                 //Case A=B, Valor in A, store in C ta mal
-                if (!(instruction.getOperators()[0].getType() == Type.literal && instruction.getOperators()[0].getCastType() == CastType.STRING)) {
-                    LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), tv.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D0");
+                LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), tv.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D0");
+                if (((tv.get(instruction.getOperators()[0].getReference()).getTipo() == TypeEnum.STRING) && (tv.get(instruction.getOperators()[2].getReference()).getTipo() == TypeEnum.STRING))
+                        || (instruction.getOperators()[0].getType() != Type.literal && tv.get(instruction.getOperators()[2].getReference()).getTipo() == TypeEnum.STRING)) {
+                    isString = true;
                 }
                 STORE("D0", tv.get(instruction.getOperators()[2].getReference()).getIdProcedimiento(), instruction.getOperators()[2].getReference());
+                isString = false;
                 break;
             case ADD:
 
@@ -289,42 +314,42 @@ public class AssemblyGenerator {
                 LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), tv.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D0");
                 LOAD(instruction.getOperators()[1], instruction.getOperators()[1].getReference(), tv.get(instruction.getOperators()[1].getReference()).getIdProcedimiento(), "D1");
                 assemblyCode.append(labelSpace + "CMP.L" + instSpace + "D1, D0\n");
-                assemblyCode.append(labelSpace + "BLT" + instSpace + instruction.getOperators()[2].getLabel() + '\n');
+                assemblyCode.append(labelSpace + "BGE" + instSpace + instruction.getOperators()[2].getLabel() + '\n');
                 break;
             case IFLE:
                 LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), tv.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D0");
                 LOAD(instruction.getOperators()[1], instruction.getOperators()[1].getReference(), tv.get(instruction.getOperators()[1].getReference()).getIdProcedimiento(), "D1");
                 assemblyCode.append(labelSpace + "CMP.L" + instSpace + "D1, D0\n");
-                assemblyCode.append(labelSpace + "BLE" + instSpace + instruction.getOperators()[2].getLabel() + '\n');
+                assemblyCode.append(labelSpace + "BGT" + instSpace + instruction.getOperators()[2].getLabel() + '\n');
                 break;
             case IFGT:
                 LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), tv.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D0");
                 LOAD(instruction.getOperators()[1], instruction.getOperators()[1].getReference(), tv.get(instruction.getOperators()[1].getReference()).getIdProcedimiento(), "D1");
                 assemblyCode.append(labelSpace + "CMP.L" + instSpace + "D1, D0\n");
-                assemblyCode.append(labelSpace + "BGT" + instSpace + instruction.getOperators()[2].getLabel() + '\n');
+                assemblyCode.append(labelSpace + "BLE" + instSpace + instruction.getOperators()[2].getLabel() + '\n');
                 break;
             case IFGE:
                 LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), tv.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D0");
                 LOAD(instruction.getOperators()[1], instruction.getOperators()[1].getReference(), tv.get(instruction.getOperators()[1].getReference()).getIdProcedimiento(), "D1");
                 assemblyCode.append(labelSpace + "CMP.L" + instSpace + "D1, D0\n");
-                assemblyCode.append(labelSpace + "BGE" + instSpace + instruction.getOperators()[2].getLabel() + '\n');
+                assemblyCode.append(labelSpace + "BLT" + instSpace + instruction.getOperators()[2].getLabel() + '\n');
                 break;
             case IFEQ:
                 LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), tv.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D0");
                 LOAD(instruction.getOperators()[1], instruction.getOperators()[1].getReference(), tv.get(instruction.getOperators()[1].getReference()).getIdProcedimiento(), "D1");
                 assemblyCode.append(labelSpace + "CMP.L" + instSpace + "D1, D0\n");
-                assemblyCode.append(labelSpace + "BEQ" + instSpace + instruction.getOperators()[2].getLabel() + '\n');
+                assemblyCode.append(labelSpace + "BNE" + instSpace + instruction.getOperators()[2].getLabel() + '\n');
                 break;
             case IFNE:
                 LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(), tv.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "D0");
                 LOAD(instruction.getOperators()[1], instruction.getOperators()[1].getReference(), tv.get(instruction.getOperators()[1].getReference()).getIdProcedimiento(), "D1");
                 assemblyCode.append(labelSpace + "CMP.L" + instSpace + "D1, D0\n");
-                assemblyCode.append(labelSpace + "BNE" + instSpace + instruction.getOperators()[2].getLabel() + '\n');
+                assemblyCode.append(labelSpace + "BEQ" + instSpace + instruction.getOperators()[2].getLabel() + '\n');
                 break;
             case PMB:
                 //Preamble
                 if (instruction.getOperators()[2].getLabel() == (mainName)) {
-                    assemblyCode.append(";Preamble of MAIN ignored\n");                    
+                    assemblyCode.append(";Preamble of MAIN ignored\n");
                     break;
                 } else {
                     //We already have the parameters and return address. We just put in the DISP and BP
@@ -338,10 +363,28 @@ public class AssemblyGenerator {
                     assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "A7, " + EBP + " ;BP = SP\n");
                     assemblyCode.append(labelSpace + "MOVE.L" + instSpace + EBP + ", " + (prof4x - 4) + "(A7) ; DISP(prof) = BP\n");
                     assemblyCode.append(labelSpace + "MOVE.L" + instSpace + EBP + ", D0 ; D0=EBP\n");
-                    assemblyCode.append(labelSpace + "SUB.L" + instSpace + "#" + (variableNumber * variableSize) + ", D0 ;\n");
-                    assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "D0, A7 ; Vars added to SP\n");
+                    //assemblyCode.append(labelSpace + "SUB.L" + instSpace + "#" + (variableNumber * variableSize) + ", D0 ;\n");
                     //assemblyCode.append(labelSpace + "SUB.L" + instSpace + '#' + "VARSIZE, A7 ; SP changed to assign Variable Space\n");
+                    ArrayList<ArgDescripcion> params = ts.consultarParams(instruction.getOperators()[2].getLabel(), null);
+                    int contadorStrings = 0;
+                    int contadorVars = 0;
+                    for (int i = 0; i < params.size(); i++) {
+                        VarDescripcion desc = (VarDescripcion) ts.consultaId(params.get(i).getName());
+                        if (desc.getType() == TypeEnum.STRING) {
+                            assemblyCode.append(labelSpace + "LEA" + instSpace + "SParam" + contadorStrings + ", " + "A0 ; Param gest\n");
+                            assemblyCode.append(labelSpace + "LEA" + instSpace + "Variable" + desc.getVariableNumber() + ", " + "A1 ; Param gest\n");
+                            assemblyCode.append(".loop" + contadorStrings + ':' + '\n');
+                            assemblyCode.append(labelSpace + "MOVE.B" + instSpace + "(A0)+, (A1)+ \n");
+                            assemblyCode.append(labelSpace + "TST.B (A0) \n");
+                            assemblyCode.append(labelSpace + "BNE .loop" + contadorStrings + '\n');
+                            assemblyCode.append(labelSpace + "MOVE.B" + instSpace + "#0, (A1)+ \n");
+                            contadorStrings++;
+                        } else {
+                            assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "(Param" + contadorVars++ + "), " + "(Variable" + desc.getVariableNumber() + ") ; Param gest\n");
+                        }
+                    }
                 }
+                paramList = new ArrayList<>();
                 break;
             case RETURN:
                 if (instruction.getOperators()[0].getLabel() == mainName) {
@@ -370,6 +413,7 @@ public class AssemblyGenerator {
                     break;
                 }
                 Procedimiento procedure = tp.get(instruction.getOperators()[0].getLabel());
+                currentSubProgram = instruction.getOperators()[0].getLabel();
                 String label = procedure.getEtiquetaInicial();
 
                 int numberParameters = procedure.getNumberParameters(); //How many parameters (max ->parameterNumber)
@@ -381,20 +425,29 @@ public class AssemblyGenerator {
 
                 assemblyCode.append(labelSpace + "MOVE.L" + instSpace + EBP + ", A7\n");
                 actualOffset = parameterNumber * wordSize + 12 + wordSize; //Restore offset for any later calls
+                contador = 0;
+                contadorStr = 0;
                 break;
             case SIMPLEPARAM:
                 int variableId = instruction.getOperators()[2].getReference();
                 String procedureId = tv.get(variableId).getIdProcedimiento();
                 isParam = true;
-                if(actualParam == 1 && mainCreated){//caso primer param, hay que modificar EBP, SI MAIN ESTÁ CREADO
-                    assemblyCode.append(labelSpace + "MOVE.L" + instSpace + EBP + ", A5\n");
-                    assemblyCode.append(labelSpace + "SUB.L" + instSpace + '#' + (parameterNumber * parameterSize) + ", " + EBP + "\n"); //sumar a EBP la zona params
+                if (actualParam == 1 && mainCreated) {//caso primer param, hay que modificar EBP, SI MAIN ESTÁ CREADO
+                    assemblyCode.append(labelSpace + "SUB.L" + instSpace + '#' + ((parameterNumber * parameterSize)) + ", " + EBP + "\n"); //sumar a EBP la zona params
                     assemblyCode.append(labelSpace + "MOVE.L" + instSpace + EBP + ", A7\n");
-                    assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "A5, " + EBP + "\n");
                 }
+                isSimpleP = true;
                 LOAD(instruction.getOperators()[2], variableId, procedureId, "D0");
+                isSimpleP = false;
                 isParam = false;
-                assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "D0, -(A7)\n");
+                if (true) {
+                    if (tv.get(variableId).getTipo() == TypeEnum.STRING) {
+
+                    } else {
+                        assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "D0, (Variable" + variableId + ") \n");
+                    }
+                    paramList.add(variableId);
+                }
                 if (choice) {
                     System.out.println("-------------------------------------------------------------------------------------------------------------------------");
                     System.out.println("El identificador: " + tv.get(variableId).getId() + ", el nombre: " + tv.get(variableId).getIdProcedimiento());
@@ -407,6 +460,18 @@ public class AssemblyGenerator {
                     System.out.println("La variable tiene un offset de: " + tv.get(variableId).getOffset());
                     System.out.println("-------------------------------------------------------------------------------------------------------------------------");
                 }
+                if (tv.get(variableId).getTipo() == TypeEnum.STRING) {
+                    assemblyCode.append(labelSpace + "LEA" + instSpace + "SParam" + contadorStr + ", " + "A1 ; Param gest\n");
+                    assemblyCode.append(labelSpace + "LEA" + instSpace + "Variable" + variableId + ", " + "A0 ; Param gest\n");
+                    assemblyCode.append(".loop" + randomCounter + ": \n");
+                    assemblyCode.append(labelSpace + "MOVE.B" + instSpace + "(A0)+, (A1)+ \n");
+                    assemblyCode.append(labelSpace + "TST.B (A0) \n");
+                    assemblyCode.append(labelSpace + "BNE .loop" + randomCounter-- + '\n');
+                    assemblyCode.append(labelSpace + "MOVE.B" + instSpace + "#0, (A1)+ \n");
+                } else {
+                    assemblyCode.append(labelSpace + "MOVE.L" + instSpace + '(' + "Variable" + variableId + "), " + '(' + "Param" + contador + ") ; Param\n");
+                }
+                contador++;
                 break;
             case READ:
                 assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "#5, D0 ; Prepare read\n");
@@ -440,8 +505,7 @@ public class AssemblyGenerator {
                 if (1 == 0) {
                 } else {
                     if (variable.getTipo() == TypeEnum.STRING) {
-                        LOAD(instruction.getOperators()[0], instruction.getOperators()[0].getReference(),
-                                tv.get(instruction.getOperators()[0].getReference()).getIdProcedimiento(), "A0");
+                        assemblyCode.append(labelSpace + "LEA" + labelSpace + "Variable" + instruction.getOperators()[0].getReference() + ", A0 ; Cargar la string\n");
                         assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "A0, A1 ; Ready text\n");
                         assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "#14, D0 ; Prepare display\n");
                         assemblyCode.append(labelSpace + "TRAP" + instSpace + "#15\n ; Expect screen visualization\n");
@@ -528,17 +592,42 @@ public class AssemblyGenerator {
                     throw new UnsupportedOperationException("Trying to load something that is not a variable!");
             }
         } else if (profx == profp && dx < 0) { //Si profundidad de la variable es la misma que el procedure y está en negativo por debajo de BlockPointer
-            assemblyCode.append(labelSpace + "MOVE." + size + instSpace + dx + '(' + EBP + "), " + register + " ; Load local variable\n");
+            assemblyCode.append(labelSpace + "MOVE." + size + instSpace + '(' + "Variable" + variableId + "), " + register + " ; Load local variable\n");
         } else if (profx == profp && dx > 0) { //Si profundidad de la variable es la misma que el procedure y está en positivo por encima de BlockPointer
             //dx = tv.get(variableId).getOffset() + 4;
-            assemblyCode.append(labelSpace + "MOVE." + size + instSpace + EBP + ", D0\n");
-            assemblyCode.append(labelSpace + "ADD.L" + instSpace + '#' + dx + ", D0\n");
-            assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "D0, A0 ; A0 contains store address\n");
-            if (register.contains("D")) {
-                //assemblyCode.append(labelSpace + "MOVE.L" + instSpace + register + ", A0\n");
-                assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "(A0), " + register + " ; Get parameter\n");
+            if (true) {
+                if (!(variable.getTipo() == TypeEnum.STRING)) {
+                    assemblyCode.append(labelSpace + "MOVE." + size + instSpace + "(Variable" + variableId + "), " + register + " ; Load local param\n");
+                } else {
+                    assemblyCode.append(labelSpace + "LEA" + instSpace + "Variable" + variableId + ", A0 ; Load local param\n");
+                    assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "A0, " + register + " ; Load it to register \n");
+                }
             } else {
-                assemblyCode.append(labelSpace + "MOVE.L" + instSpace + '(' + register + "), " + register + " ; Get parameter\n");
+                if (isSimpleP) {
+                    assemblyCode.append(labelSpace + "MOVE." + size + instSpace + EBP + ", D0\n");
+                    //assemblyCode.append(labelSpace + "ADD.L" + instSpace + '#' + dx + ", D0\n");
+                    assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "D0, A0 ; A0 contains store address\n");
+                    int dxVar = 0; //offset de la variable local en memoria (caso parametro local claro)
+                    if (tp.get(procedureId) == null) {
+                        dxVar = initialSP;
+                        dxVar += tv.get(variableId).getOffset() - 4;
+                    } else {
+                        dxVar = tv.get(variableId).getOffset();
+                        dxVar += (parameterNumber * parameterSize) + (variableNumber * variableSize) + 4; //antic BP
+                    }
+                    assemblyCode.append(labelSpace + "CLR.L" + instSpace + "D1 ; Get D1 cleaned\n");
+                    //modify to hex, 99999 is FFFFF            
+                    assemblyCode.append(labelSpace + "ADD.L" + instSpace + "#" + dxVar + ", D1 ; Get variable address into D1\n");
+                    assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "D1, A1 ; Get variable address into A1\n");
+                    if (register.contains("D")) {
+                        assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "A1, (A0) ; Get parameter\n");
+                    } else {
+                        assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "A1, (" + register + ") ; Get parameter\n");
+                    }//revisar loop del sumTo HACE LO MISMO TODO EL RATO CHECK EVERY STEP AND THAT IS DONE
+                } else {
+                    assemblyCode.append(labelSpace + "MOVE." + size + instSpace + (dx + 8) + '(' + EBP + "), A0 ; Load local param @\n");
+                    assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "(A0), " + register + " ; Load local param \n");
+                }
             }
         } else if (profx < profp && dx < 0) {
             assemblyCode.append(labelSpace + "LEA" + instSpace + "DISP, A0 ; @DISP in A0\n");
@@ -550,8 +639,9 @@ public class AssemblyGenerator {
             assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "(A0), A0\n");
             assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "(A0), " + register + " ; Load outsider parameter in " + register + '\n');
         } else {
-            if (dx == 0) {
-                System.out.println("LA VARIABLE NO ESTA BIEN, pero me da pereza mirarlo");
+            if (dx == 0) { //es una string, chapó
+                assemblyCode.append(labelSpace + "LEA" + instSpace + "Variable" + variableId + ", " + "A0 ; Param gest\n");
+                assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "A0, " + register + " ; Param gest\n");
             } else {
                 throw new UnsupportedOperationException("Variable or parameter not valid for loading!");
             }
@@ -559,7 +649,7 @@ public class AssemblyGenerator {
     }
 
     private void STORE(String register, String procedureId, int variableId) {
-
+//add (variableNumber * variableSize) to vars, so go back to good pos
         Variable variable = tv.get(variableId);
         System.out.println("STORING... -> " + variable.toString());
         char size = 'L';
@@ -581,13 +671,28 @@ public class AssemblyGenerator {
             actualParam++;
         }
         if (profx == profp && dx < 0) { //Local variable
-            assemblyCode.append(labelSpace + "MOVE.L" + instSpace + register + ", " + "-(A7) ; Store local variable\n");
+            //Look up variable space, if sums correctly and add all the space to A7 and we win jejeje
+            if (true) {
+                assemblyCode.append(labelSpace + "MOVE.L" + instSpace + register + ", " + "(Variable" + variableId + ") ; Store local variable\n");
+            } else {
+                if (declaredVars.contains(variableId)) {
+                    //Not bien, no se como pero hay que modificar para que las vars se modifiquen en su contexto revisar oduisgnwiebnowiqgenbwoenv
+                    assemblyCode.append(labelSpace + "MOVE.L" + instSpace + register + ", " + dx + '(' + EBP + ") ; Store local variable\n");
+                } else {
+                    declaredVars.add(variableId);
+                    assemblyCode.append(labelSpace + "MOVE.L" + instSpace + register + ", " + "-(A7) ; Store local variable\n");
+                }
+            }
             if (notGlobal) {
                 tp.get(variable.getIdProcedimiento()).setLocalVariablesSize(tp.get(variable.getIdProcedimiento()).getLocalVariablesSize() + tv.get(variableId).getBytes());
             }
         } else if (profx == profp && dx > 0) { //Local parameter
-            assemblyCode.append(labelSpace + "MOVE." + size + instSpace + dx + '(' + EBP + "), A0 ; A0 contains parameter @\n");
-            assemblyCode.append(labelSpace + "MOVE.L" + instSpace + register + ", (A0) ; Store local parameter\n");
+            if (true) {
+                assemblyCode.append(labelSpace + "MOVE.L" + instSpace + register + ", " + "(Variable" + variableId + ") ; Store local parameter\n");
+            } else {
+                assemblyCode.append(labelSpace + "MOVE." + size + instSpace + dx + '(' + EBP + "), A0 ; A0 contains parameter @\n");
+                assemblyCode.append(labelSpace + "MOVE.L" + instSpace + register + ", (A0) ; Store local parameter\n");
+            }
         } else if (profx < profp && dx < 0) { //Foreign variable
             assemblyCode.append(labelSpace + "LEA" + instSpace + "DISP, A0 ; Get DISP @\n");
             assemblyCode.append(labelSpace + "MOVE.L" + instSpace + profx + "(A0), A0 ; A0 contains BPx, from DISP[profx]\n");
@@ -599,7 +704,15 @@ public class AssemblyGenerator {
             assemblyCode.append(labelSpace + "MOVE.L" + instSpace + register + ", (A0) ; Store foreign parameter\n");
         } else {
             if (dx == 0) {
-                System.out.println("Hay que arreglar los zeros xd ------------------------------------------");
+                if (isString) {
+                    assemblyCode.append(labelSpace + "MOVE.L" + instSpace + register + ", " + "A0 ; Param gest\n");
+                    assemblyCode.append(labelSpace + "LEA" + instSpace + "Variable" + variableId + ", " + "A1 ; Param gest\n");
+                    assemblyCode.append(".loop" + randomCounter + ':' + '\n');
+                    assemblyCode.append(labelSpace + "MOVE.B" + instSpace + "(A0)+, (A1)+ \n");
+                    assemblyCode.append(labelSpace + "TST.B (A0) \n");
+                    assemblyCode.append(labelSpace + "BNE .loop" + randomCounter-- + '\n');
+                    assemblyCode.append(labelSpace + "MOVE.B" + instSpace + "#0, (A1)+ \n");
+                }
             } else {
                 throw new UnsupportedOperationException("Variable or parameter not valid for storing!");
             }
@@ -648,17 +761,16 @@ public class AssemblyGenerator {
                     actualVar = -1;
                     tv.get(variableId).setOffset(actualVar-- * (variableSize < 4 ? 4 : variableSize));
                 }
-                if(actualProcedure == null){
-                System.out.println(tv.get(variableId) + ", de offset -> " + tv.get(variableId).getOffset() + '\n');
-            }
-            }else if(tv.get(variableId).getTipoVariable() == Variable.TipoVariable.PARAM){
+                if (actualProcedure == null) {
+                    System.out.println(tv.get(variableId) + ", de offset -> " + tv.get(variableId).getOffset() + '\n');
+                }
+            } else if (tv.get(variableId).getTipoVariable() == Variable.TipoVariable.PARAM) {
                 int variableSize = tv.get(variableId).getBytes();
                 tvParam = true;
                 tv.get(variableId).setOffset(currentParam * (variableSize < 4 ? 2 : variableSize));
-                if(currentParam <= tp.get(procedureId).getNumberParameters()){
+                if (currentParam <= tp.get(procedureId).getNumberParameters()) {
                     currentParam++;
-                }
-                else{
+                } else {
                     currentParam = 1;
                 }
             }
@@ -676,10 +788,13 @@ public class AssemblyGenerator {
         for (Instruction3Address instruction : instructions) {
             if (instruction.getInstructionType() == InstructionType.CLONE) {
                 if (instruction.getOperators()[2].getReference() == i) {
+                    if (instruction.getOperators()[0].getLiteral() == null) {
+                        return getStringValue(instruction.getOperators()[0].getReference());
+                    }
                     return ((String) instruction.getOperators()[0].getLiteral()).replace('"', '\'');
                 }
             }
         }
-        return "Sorry, no String found at given variable\n";
+        return "'Sorry, no String found at given variable'";
     }
 }

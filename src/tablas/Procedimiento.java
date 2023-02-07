@@ -20,6 +20,7 @@ public class Procedimiento {
     //private final ArrayList<ObjetoParametro> parametros;
     private int numParams;
     private int localVariablesSize;
+    private String name;
 
     public int getLocalVariablesSize() {
         return this.localVariablesSize;
@@ -34,11 +35,12 @@ public class Procedimiento {
     * @param etiquetaInicial: la etiqueta inicial, es decir donde empieza el procedimiento
     * @param numParams: Nombre de parámetros que tendrá el procedimiento
     */
-    public Procedimiento(int ambito, String etiquetaInicial, int numParams) {
+    public Procedimiento(int ambito, String etiquetaInicial, int numParams, String name) {
         this.ambito = ambito;
         this.etiquetaInicial = etiquetaInicial;
         //this.parametros = new ArrayList<>();
         this.numParams = numParams;
+        this.name = name;
     }
 
     public int getAmbito() {
@@ -63,6 +65,10 @@ public class Procedimiento {
 
     public void setNumberParameters(int numParams) {
         this.numParams = numParams;
+    }
+
+    public String getName() {
+        return this.name;
     }
 }
 

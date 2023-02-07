@@ -50,7 +50,7 @@ public class CodeGeneration3Address {
     }
 
     public int newProcedure(String procedureId, int scope, String firstLabel, int params) {
-        procedureTable.put(procedureId, new Procedimiento(scope, firstLabel, params));
+        procedureTable.put(procedureId, new Procedimiento(scope, firstLabel, params, procedureId));
         //Counter automatically increments one to preapre for next procedure. We want the one we just inserted (counter-1)
         return procedureTable.getContador() - 1;
     }
