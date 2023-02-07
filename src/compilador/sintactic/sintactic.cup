@@ -186,7 +186,6 @@ non terminal FuncNode             FUNC;
 non terminal ParamListNode        PARAM_LIST;
 non terminal ActualParamListNode  ACTUAL_PARAM_LIST;
 non terminal ParamNode            PARAM;
-non terminal SpecialParamNode     SPECIAL_PARAM; 
 non terminal SentenceListNode     SENTENCE_LIST;
 non terminal SentenceNode         SENTENCE;
 non terminal ForInstNode          FOR_INST;
@@ -265,7 +264,6 @@ DIM_ARRAY         ::= DIM_ARRAY:dim sym_lbracket EXP:e sym_rbracket             
                     ;
 
 ARRAY_DECL        ::= INIT_ARRAY:ia                                                                                                                                                       {: RESULT = new ArrayDeclNode(ia, ia.getLine(), ia.getColumn());                                        :}
-                    |                                                                                                                                                                     {: RESULT = new ArrayDeclNode();                                                                        :}
                     ;
 
 INIT_ARRAY        ::= sym_eq:e r_new TYPE_ID:t DIM_ARRAY:da                                                                                                                               {: RESULT = new InitArrayNode(t, da, extractLine(da), extractColumn(da));                               :}
@@ -302,14 +300,9 @@ ACTUAL_PARAM_LIST ::= PARAM:p                                                   
                     | PARAM:p sym_comma ACTUAL_PARAM_LIST:apl                                                                                                                             {: RESULT = new ActualParamListNode(p, apl, p.getLine(), p.getColumn());                                :}
                     ;
 
-PARAM             ::= TYPE_ID:t ID:id                                                                                                                                                     {: RESULT = new ParamNode(t, null, id, t.getLine(), t.getColumn());                                           :}
-                    | SPECIAL_PARAM:t ID:id                                                                                                                                               {: RESULT = new ParamNode(null, t, id, t.getLine(), t.getColumn());                                           :}
+PARAM             ::= TYPE_ID:t ID:id                                                                                                                                                     {: RESULT = new ParamNode(t, id, t.getLine(), t.getColumn());                                           :}
                     ;
-
-SPECIAL_PARAM     ::= r_tupel:t                                                                                                                                                           {: RESULT = new SpecialParamNode(TypeEnum.TUPEL, null, extractLine(t), extractColumn(t));                             :}                                                                                                                      
-                    | r_array:t TYPE_ID:tid                                                                                                                                               {: RESULT = new SpecialParamNode(TypeEnum.ARRAY, tid, extractLine(t), extractColumn(t));                             :}
-                    ;                                                                                                                                                         
-
+                                                                                                                                                         
 SENTENCE_LIST     ::= SENTENCE:sentence SENTENCE_LIST:sentence_list                                                                                                                       {: RESULT = new SentenceListNode(sentence, sentence_list, sentence.getLine(), sentence.getColumn());    :}
                     |                                                                                                                                                                     {: RESULT = new SentenceListNode();                                                                     :}
                     ;

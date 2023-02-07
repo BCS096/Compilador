@@ -8,11 +8,9 @@ package compilador.sintactic.semantic;
 import compilador.ensamblado.AssemblyGenerator;
 import compilador.main.MVP;
 import compilador.sintactic.Parser;
-import compilador.sintactic.ParserSym;
 import compilador.sintactic.nodes.*;
 import compilador.sintactic.semantic.Operator3Address.CastType;
 import java.util.ArrayList;
-import java_cup.runtime.Symbol;
 import tablas.*;
 import tablas.IdDescripcion.TipoDescripcion;
 import types.RelOpType;
@@ -819,12 +817,6 @@ public class analisisSemantico {
                             CampoDescripcion dcampo = new CampoDescripcion(type, aux.getParam().getId().getIdentifierLiteral());
                             ts.ponerCampo(declTupel.getId().getIdentifierLiteral(), aux.getParam().getId().getIdentifierLiteral(), dcampo, declTupel);
                             aux = aux.getActualParamList();
-                        } else if (aux.getParam().getSpecialParam() != null) {
-                            if (aux.getParam().getSpecialParam().getTSB() == TypeEnum.ARRAY) {
-                                parser.report_error("No se permite una tupla con campos de tipo array", declTupel);
-                            } else {//tupel case
-                                parser.report_error("No se permite una tupla con campos de tipo tupel", declTupel);
-                            }
                         } else {
                             parser.report_error("No se ha indicado el tipo del campo", aux.getParam());
                         }
@@ -1006,26 +998,13 @@ public class analisisSemantico {
     public void handleParam(ParamNode node) {
         String actualProc = gc.getCurrentFunction();
         String id = node.getId().getIdentifierLiteral();
-        TypeEnum tipo = TypeEnum.NULL;
-        boolean isArray = false;
-        boolean isTupel = false;
-        if (node.getSpecialParam() == null) {
-            tipo = node.getTypeId().getType();
-        } else {
-            if (node.getSpecialParam().getTypeId() == null) {
-                isTupel = true;
-            } else {
-                isArray = true;
-                tipo = node.getSpecialParam().getTypeId().getType();
-            }
-        }
+        TypeEnum tipo = node.getTypeId().getType();
         // metemos dentro de la tabla de expansión el paràmetro
         ArgDescripcion d = new ArgDescripcion(tipo, id);
         ts.ponerParam(actualProc, id, d, node);
         tp.get(actualProc).setNumberParameters(tp.get(actualProc).getNumberParameters() + 1);
-
         //metemos en la tabla de descripción dicho parametro para ser usado cuando se invoque el programa asociado
-        int numParam = gc.newVar(Variable.TipoVariable.PARAM, tipo, isArray, isTupel);
+        int numParam = gc.newVar(Variable.TipoVariable.PARAM, tipo, false, false);
         VarDescripcion dvar = new VarDescripcion(numParam, tipo);
         if (ts.poner(id, dvar, node)) {
             parser.report_error("Variable " + id + " ya está definida", node);
