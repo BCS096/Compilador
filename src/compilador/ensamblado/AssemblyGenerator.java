@@ -127,7 +127,6 @@ public class AssemblyGenerator {
                 }
             }
         }
-        //strings+otros hacer
         for (int i = 0; i < 5; i++) {
             assemblyCode.append("SParam" + i + labelSpace + "DS.B" + instSpace + "128\n");
             assemblyCode.append(labelSpace + "DC.B" + instSpace + "0\n");
@@ -135,9 +134,6 @@ public class AssemblyGenerator {
         for (int i = 0; i < 10; i++) {
             assemblyCode.append("Param" + i + labelSpace + "DS.L" + instSpace + "1\n");
         }
-//        for (int i = 7; i < 10; i++) {
-//            assemblyCode.append("Param" + i + labelSpace + "DS.L" + instSpace + "1\n");
-//        }
 
         completeProcedureTable();
         updateVariableTable();
@@ -711,7 +707,6 @@ public class AssemblyGenerator {
                 }
             } else {
                 if (declaredVars.contains(variableId)) {
-                    //Not bien, no se como pero hay que modificar para que las vars se modifiquen en su contexto revisar oduisgnwiebnowiqgenbwoenv
                     assemblyCode.append(labelSpace + "MOVE.L" + instSpace + register + ", " + dx + '(' + EBP + ") ; Store local variable\n");
                 } else {
                     declaredVars.add(variableId);

@@ -98,28 +98,30 @@ public class analisisSemantico {
         }
         opt = new Peephole(gc);
         boolean cambio = true;
-        while (cambio) {
-            cambio = false;
-            if (opt.assignacioDiferida()) {
-                cambio = true;
-            }
-            if (opt.brancamentAdjacent()) {
-                cambio = true;
-            }
-            if (opt.brancamentSobreBrancament()) {
-                cambio = true;
-            }
-            if (opt.operacioConstant1()) {
-                cambio = true;
-            }
-            if (opt.operacioConstant2()) {
-                cambio = true;
-            }
-            if (opt.codiInaccesible1()) {
-                cambio = true;
-            }
-            if (opt.codiInaccesible2()) {
-                cambio = true;
+        if (parser.getNumberErrors() == 0) {
+            while (cambio) {
+                cambio = false;
+                if (opt.assignacioDiferida()) {
+                    cambio = true;
+                }
+                if (opt.brancamentAdjacent()) {
+                    cambio = true;
+                }
+                if (opt.brancamentSobreBrancament()) {
+                    cambio = true;
+                }
+                if (opt.operacioConstant1()) {
+                    cambio = true;
+                }
+                if (opt.operacioConstant2()) {
+                    cambio = true;
+                }
+                if (opt.codiInaccesible1()) {
+                    cambio = true;
+                }
+                if (opt.codiInaccesible2()) {
+                    cambio = true;
+                }
             }
         }
 
