@@ -59,7 +59,7 @@ Variable48        DS.L 1
 Variable49        DS.L 1
 Variable50        DS.L 1
 Variable51        DC.B 'Arrays multidimensionales?',0
-Variable52        DS.L 1
+Variable52        DC.B 'Array cuidado[0][0][2] vale: ',0
 Variable53        DS.L 1
 Variable54        DS.L 1
 Variable55        DS.L 1
@@ -67,9 +67,9 @@ Variable56        DS.L 1
 Variable57        DS.L 1
 Variable58        DS.L 1
 Variable59        DS.L 1
-Variable60        DC.B 'Ahora a ver la copia',0
-Variable61        DS.L 15
-Variable62        DS.L 1
+Variable60        DS.L 1
+Variable61        DC.B 'Ahora a ver la copia (llamada peligro) misma posición -> ',0
+Variable62        DS.L 15
 Variable63        DS.L 1
 Variable64        DS.L 1
 Variable65        DS.L 1
@@ -83,6 +83,7 @@ Variable72        DS.L 1
 Variable73        DS.L 1
 Variable74        DS.L 1
 Variable75        DS.L 1
+Variable76        DS.L 1
 SParam0        DS.B 128
         DC.B 0
 SParam1        DS.B 128
@@ -338,9 +339,16 @@ main:
 ;Operator 1 -> 28, Store in -> 17
 
         MOVE.L (Variable28), D0 ; Load local variable
-        MOVE.L D0, (A0) ; Store local variable
+        MOVE.L D0, A0 ; Store local variable
         LEA Variable17, A1 ; Store local variable
-        MOVE.L 0(A0), 0(A1) ; Store local variable
+        CLR.L D1
+        CLR.L D2
+        MOVE.L (Variable18), D2 
+        DIVS #4, D2 
+        MOVE.L D2, D1 
+.arrayCopy0:
+        MOVE.L (A0)+, (A1)+ ; Store local variable
+        DBRA D1, .arrayCopy0
 ; Instruction of type: CLONE
 ;Operator 1 -> 0, Store in -> 29
 
@@ -545,68 +553,12 @@ main:
 ; Instruction of type: CLONE
 ;Operator 1 -> 0, Store in -> 52
 
-        MOVE.L #0, D0 ; Load variable
-        MOVE.L D0, (Variable52) ; Store local variable
-; Instruction of type: CLONE
-;Operator 1 -> 52, Store in -> 53
-
-        MOVE.L (Variable52), D0 ; Load local variable
-        MOVE.L D0, (Variable53) ; Store local variable
-; Instruction of type: CLONE
-;Operator 1 -> 0, Store in -> 54
-
-        MOVE.L #0, D0 ; Load variable
-        MOVE.L D0, (Variable54) ; Store local variable
-; Instruction of type: MUL
-;Operator 1 -> 53, Operator 2 -> ReferenceOp(ref: 39), Store in -> 55
-
-        MOVE.L (Variable53), D0 ; Load local variable
-        MOVE.L (Variable39), D1 ; Load local variable
-        MULTM D0, D1
-        MOVE.L D1, (Variable55) ; Store local variable
-; Instruction of type: ADD
-;Operator 1 -> 55, Operator 2 -> ReferenceOp(ref: 54), Store in -> 56
-
-        MOVE.L (Variable55), D0 ; Load local variable
-        MOVE.L (Variable54), D1 ; Load local variable
-        ADDM D0, D1
-        MOVE.L D1, (Variable56) ; Store local variable
-; Instruction of type: CLONE
-;Operator 1 -> 0, Store in -> 57
-
-        MOVE.L #2, D0 ; Load variable
-        MOVE.L D0, (Variable57) ; Store local variable
-; Instruction of type: MUL
-;Operator 1 -> 56, Operator 2 -> LiteralOp(value: 4), Store in -> 58
-
-        MOVE.L (Variable56), D0 ; Load local variable
-        MOVE.L #4, D1 ; Load variable
-        MULTM D0, D1
-        MOVE.L D1, (Variable58) ; Store local variable
-; Instruction of type: INDVALUE
-;Operator 1 -> 37, Operator 2 -> ReferenceOp(ref: 58), Store in -> 59
-
-        LEA (Variable37), A0
-        MOVE.L (Variable58), D0 ; Load local variable
-        ADD.L D0, A0 ; D0 = @B[C]
-        MOVE.L (A0), D0 ; D0 = B[C]
-        MOVE.L D0, (Variable59) ; Store local variable
-; Instruction of type: PRINT
-;Operator 1 -> 59
-
-        MOVE.L (Variable59), D1 ; Load local variable
-        MOVE.L #3, D0 ; Prepare display
-        TRAP #15
- ; Expect screen visualization
-; Instruction of type: CLONE
-;Operator 1 -> 0, Store in -> 60
-
         LEA Variable0, A0
         MOVE.L A0, D0 ; Load variable
 ; Instruction of type: PRINTLN
-;Operator 1 -> 60
+;Operator 1 -> 52
 
-        LEA        Variable60, A0 ; Cargar la string
+        LEA        Variable52, A0 ; Cargar la string
         MOVE.L A0, A1 ; Ready text
         MOVE.L #14, D0 ; Prepare display
         TRAP #15
@@ -618,10 +570,80 @@ main:
         ADDQ.B #1, D1 ; We increment the current row by 1
         TRAP #15 ; Set new coordinates (next line ready)
 ; Instruction of type: CLONE
-;Operator 1 -> 0, Store in -> 62
+;Operator 1 -> 0, Store in -> 53
 
-        MOVE.L #3, D0 ; Load variable
-        MOVE.L D0, (Variable62) ; Store local variable
+        MOVE.L #0, D0 ; Load variable
+        MOVE.L D0, (Variable53) ; Store local variable
+; Instruction of type: CLONE
+;Operator 1 -> 53, Store in -> 54
+
+        MOVE.L (Variable53), D0 ; Load local variable
+        MOVE.L D0, (Variable54) ; Store local variable
+; Instruction of type: CLONE
+;Operator 1 -> 0, Store in -> 55
+
+        MOVE.L #0, D0 ; Load variable
+        MOVE.L D0, (Variable55) ; Store local variable
+; Instruction of type: MUL
+;Operator 1 -> 54, Operator 2 -> ReferenceOp(ref: 39), Store in -> 56
+
+        MOVE.L (Variable54), D0 ; Load local variable
+        MOVE.L (Variable39), D1 ; Load local variable
+        MULTM D0, D1
+        MOVE.L D1, (Variable56) ; Store local variable
+; Instruction of type: ADD
+;Operator 1 -> 56, Operator 2 -> ReferenceOp(ref: 55), Store in -> 57
+
+        MOVE.L (Variable56), D0 ; Load local variable
+        MOVE.L (Variable55), D1 ; Load local variable
+        ADDM D0, D1
+        MOVE.L D1, (Variable57) ; Store local variable
+; Instruction of type: CLONE
+;Operator 1 -> 0, Store in -> 58
+
+        MOVE.L #2, D0 ; Load variable
+        MOVE.L D0, (Variable58) ; Store local variable
+; Instruction of type: MUL
+;Operator 1 -> 57, Operator 2 -> LiteralOp(value: 4), Store in -> 59
+
+        MOVE.L (Variable57), D0 ; Load local variable
+        MOVE.L #4, D1 ; Load variable
+        MULTM D0, D1
+        MOVE.L D1, (Variable59) ; Store local variable
+; Instruction of type: INDVALUE
+;Operator 1 -> 37, Operator 2 -> ReferenceOp(ref: 59), Store in -> 60
+
+        LEA (Variable37), A0
+        MOVE.L (Variable59), D0 ; Load local variable
+        ADD.L D0, A0 ; D0 = @B[C]
+        MOVE.L (A0), D0 ; D0 = B[C]
+        MOVE.L D0, (Variable60) ; Store local variable
+; Instruction of type: PRINTLN
+;Operator 1 -> 60
+
+        MOVE.L (Variable60), D1 ; Load local variable
+        MOVE.L #3, D0 ; Prepare display
+        TRAP #15
+ ; Expect screen visualization
+        MOVE.B #11, D0 ; Next line prepare
+        MOVE.L #$00FF, D1 ; Request current coordinates
+        TRAP #15 ; Get them in D1.L (HIGH=COL, LOW = ROW)
+        AND.L #$00FF, D1 ; We want always column = 0
+        ADDQ.B #1, D1 ; We increment the current row by 1
+        TRAP #15 ; Set new coordinates (next line ready)
+; Instruction of type: CLONE
+;Operator 1 -> 0, Store in -> 61
+
+        LEA Variable0, A0
+        MOVE.L A0, D0 ; Load variable
+; Instruction of type: PRINT
+;Operator 1 -> 61
+
+        LEA        Variable61, A0 ; Cargar la string
+        MOVE.L A0, A1 ; Ready text
+        MOVE.L #14, D0 ; Prepare display
+        TRAP #15
+ ; Expect screen visualization
 ; Instruction of type: CLONE
 ;Operator 1 -> 0, Store in -> 63
 
@@ -630,95 +652,107 @@ main:
 ; Instruction of type: CLONE
 ;Operator 1 -> 0, Store in -> 64
 
-        MOVE.L #2, D0 ; Load variable
+        MOVE.L #3, D0 ; Load variable
         MOVE.L D0, (Variable64) ; Store local variable
-; Instruction of type: ADD
-;Operator 1 -> 64, Operator 2 -> ReferenceOp(ref: 63), Store in -> 65
+; Instruction of type: CLONE
+;Operator 1 -> 0, Store in -> 65
 
-        MOVE.L (Variable64), D0 ; Load local variable
-        MOVE.L (Variable63), D1 ; Load local variable
-        ADDM D0, D1
-        MOVE.L D1, (Variable65) ; Store local variable
+        MOVE.L #2, D0 ; Load variable
+        MOVE.L D0, (Variable65) ; Store local variable
 ; Instruction of type: ADD
-;Operator 1 -> 65, Operator 2 -> ReferenceOp(ref: 62), Store in -> 66
+;Operator 1 -> 65, Operator 2 -> ReferenceOp(ref: 64), Store in -> 66
 
         MOVE.L (Variable65), D0 ; Load local variable
-        MOVE.L (Variable62), D1 ; Load local variable
+        MOVE.L (Variable64), D1 ; Load local variable
         ADDM D0, D1
         MOVE.L D1, (Variable66) ; Store local variable
+; Instruction of type: ADD
+;Operator 1 -> 66, Operator 2 -> ReferenceOp(ref: 63), Store in -> 67
+
+        MOVE.L (Variable66), D0 ; Load local variable
+        MOVE.L (Variable63), D1 ; Load local variable
+        ADDM D0, D1
+        MOVE.L D1, (Variable67) ; Store local variable
 ; Instruction of type: MUL
-;Operator 1 -> 0, Operator 2 -> ReferenceOp(ref: 66), Store in -> 66
+;Operator 1 -> 0, Operator 2 -> ReferenceOp(ref: 67), Store in -> 67
 
         MOVE.L #4, D0 ; Load variable
-        MOVE.L (Variable66), D1 ; Load local variable
+        MOVE.L (Variable67), D1 ; Load local variable
         MULTM D0, D1
-        MOVE.L D1, (Variable66) ; Store local variable
+        MOVE.L D1, (Variable67) ; Store local variable
 ; Instruction of type: CLONE
-;Operator 1 -> 37, Store in -> 67
+;Operator 1 -> 37, Store in -> 68
 
         LEA Variable37, A0 ; Load local variable
         MOVE.L A0, D0 ; Load local variable
-        MOVE.L D0, (Variable67) ; Store local variable
-; Instruction of type: CLONE
-;Operator 1 -> 67, Store in -> 61
-
-        MOVE.L (Variable67), D0 ; Load local variable
-        MOVE.L D0, (A0) ; Store local variable
-        LEA Variable61, A1 ; Store local variable
-        MOVE.L 0(A0), 0(A1) ; Store local variable
-; Instruction of type: CLONE
-;Operator 1 -> 0, Store in -> 68
-
-        MOVE.L #0, D0 ; Load variable
         MOVE.L D0, (Variable68) ; Store local variable
 ; Instruction of type: CLONE
-;Operator 1 -> 68, Store in -> 69
+;Operator 1 -> 68, Store in -> 62
 
         MOVE.L (Variable68), D0 ; Load local variable
-        MOVE.L D0, (Variable69) ; Store local variable
+        MOVE.L D0, A0 ; Store local variable
+        LEA Variable62, A1 ; Store local variable
+        CLR.L D1
+        CLR.L D2
+        MOVE.L (Variable67), D2 
+        DIVS #4, D2 
+        MOVE.L D2, D1 
+.arrayCopy1:
+        MOVE.L (A0)+, (A1)+ ; Store local variable
+        DBRA D1, .arrayCopy1
 ; Instruction of type: CLONE
-;Operator 1 -> 0, Store in -> 70
+;Operator 1 -> 0, Store in -> 69
 
         MOVE.L #0, D0 ; Load variable
-        MOVE.L D0, (Variable70) ; Store local variable
-; Instruction of type: MUL
-;Operator 1 -> 69, Operator 2 -> ReferenceOp(ref: 63), Store in -> 71
+        MOVE.L D0, (Variable69) ; Store local variable
+; Instruction of type: CLONE
+;Operator 1 -> 69, Store in -> 70
 
         MOVE.L (Variable69), D0 ; Load local variable
-        MOVE.L (Variable63), D1 ; Load local variable
-        MULTM D0, D1
-        MOVE.L D1, (Variable71) ; Store local variable
-; Instruction of type: ADD
-;Operator 1 -> 71, Operator 2 -> ReferenceOp(ref: 70), Store in -> 72
-
-        MOVE.L (Variable71), D0 ; Load local variable
-        MOVE.L (Variable70), D1 ; Load local variable
-        ADDM D0, D1
-        MOVE.L D1, (Variable72) ; Store local variable
+        MOVE.L D0, (Variable70) ; Store local variable
 ; Instruction of type: CLONE
-;Operator 1 -> 0, Store in -> 73
+;Operator 1 -> 0, Store in -> 71
 
-        MOVE.L #2, D0 ; Load variable
-        MOVE.L D0, (Variable73) ; Store local variable
+        MOVE.L #0, D0 ; Load variable
+        MOVE.L D0, (Variable71) ; Store local variable
 ; Instruction of type: MUL
-;Operator 1 -> 72, Operator 2 -> LiteralOp(value: 4), Store in -> 74
+;Operator 1 -> 70, Operator 2 -> ReferenceOp(ref: 64), Store in -> 72
+
+        MOVE.L (Variable70), D0 ; Load local variable
+        MOVE.L (Variable64), D1 ; Load local variable
+        MULTM D0, D1
+        MOVE.L D1, (Variable72) ; Store local variable
+; Instruction of type: ADD
+;Operator 1 -> 72, Operator 2 -> ReferenceOp(ref: 71), Store in -> 73
 
         MOVE.L (Variable72), D0 ; Load local variable
+        MOVE.L (Variable71), D1 ; Load local variable
+        ADDM D0, D1
+        MOVE.L D1, (Variable73) ; Store local variable
+; Instruction of type: CLONE
+;Operator 1 -> 0, Store in -> 74
+
+        MOVE.L #2, D0 ; Load variable
+        MOVE.L D0, (Variable74) ; Store local variable
+; Instruction of type: MUL
+;Operator 1 -> 73, Operator 2 -> LiteralOp(value: 4), Store in -> 75
+
+        MOVE.L (Variable73), D0 ; Load local variable
         MOVE.L #4, D1 ; Load variable
         MULTM D0, D1
-        MOVE.L D1, (Variable74) ; Store local variable
+        MOVE.L D1, (Variable75) ; Store local variable
 ; Instruction of type: INDVALUE
-;Operator 1 -> 61, Operator 2 -> ReferenceOp(ref: 74), Store in -> 75
+;Operator 1 -> 62, Operator 2 -> ReferenceOp(ref: 75), Store in -> 76
 
-        LEA (Variable61), A0
-        MOVE.L (Variable74), D0 ; Load local variable
+        LEA (Variable62), A0
+        MOVE.L (Variable75), D0 ; Load local variable
         ADD.L D0, A0 ; D0 = @B[C]
         MOVE.L (A0), D0 ; D0 = B[C]
-        MOVE.L D0, (Variable75) ; Store local variable
+        MOVE.L D0, (Variable76) ; Store local variable
 ; Instruction of type: PRINTLN
-;Operator 1 -> 75
+;Operator 1 -> 76
 
-        MOVE.L (Variable75), D1 ; Load local variable
+        MOVE.L (Variable76), D1 ; Load local variable
         MOVE.L #3, D0 ; Prepare display
         TRAP #15
  ; Expect screen visualization

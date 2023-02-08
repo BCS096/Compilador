@@ -76,6 +76,7 @@ public class AssemblyGenerator {
     int randomCounter = 99;
     private boolean isString = false;
     private int arrayCIdx = 0;
+    private int tupelCIdx = 0;
 
     /**
      *
@@ -578,7 +579,7 @@ public class AssemblyGenerator {
                     assemblyCode.append(labelSpace + "MOVE.L" + instSpace + '#' + ((int) literal.getLiteral()) + ", " + register + " ; Load variable\n");
                     break;
                 case CHAR:
-                    assemblyCode.append(labelSpace + "MOVE.L" + instSpace + '#' + ((char) literal.getLiteral()) + ", " + register + " ; Load variable\n");
+                    assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "#'" + ((char) literal.getLiteral()) + "', " + register + " ; Load variable\n");
                     break;
                 case BOOL:
                     assemblyCode.append(labelSpace + "MOVE.L" + instSpace + '#' + ((boolean) literal.getLiteral() ? '1' : '0') + ", " + register + " ; Load variable\n");
@@ -682,15 +683,30 @@ public class AssemblyGenerator {
             //Look up variable space, if sums correctly and add all the space to A7 and we win jejeje
             if (true) {
                 if (variable.isArray()) {
-                    ArrayDescripcion array = (ArrayDescripcion) ts.consultaId(tv.get(variableId).getId());
-                    assemblyCode.append(labelSpace + "MOVE.L" + instSpace + register + ", " + "(A0) ; Store local variable\n");
+                    int sizeArray = tv.get(variableId).getBytes();
+                    assemblyCode.append(labelSpace + "MOVE.L" + instSpace + register + ", " + "A0 ; Store local variable\n");
                     assemblyCode.append(labelSpace + "LEA" + instSpace + "Variable" + variableId + ", " + "A1 ; Store local variable\n");
                     assemblyCode.append(labelSpace + "CLR.L" + instSpace + "D1\n");
-                    assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "(Variable" + array.getSize() + "), D1 \n");
+                    assemblyCode.append(labelSpace + "CLR.L" + instSpace + "D2\n");
+                    assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "(Variable" + sizeArray + "), D2 \n");
+                    assemblyCode.append(labelSpace + "DIVS" + instSpace + "#4, D2 \n");
+                    assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "D2, D1 \n");
                     assemblyCode.append(".arrayCopy" + arrayCIdx + ":\n");
                     assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "(A0)+, " + "(A1)+ ; Store local variable\n");
                     assemblyCode.append(labelSpace + "DBRA" + instSpace + "D1, .arrayCopy" + arrayCIdx++ + '\n');
-                } else {
+                } else if(variable.isTupel()){
+                    int sizeArray = tv.get(variableId).getBytes();
+                    assemblyCode.append(labelSpace + "MOVE.L" + instSpace + register + ", " + "A0 ; Store local variable\n");
+                    assemblyCode.append(labelSpace + "LEA" + instSpace + "Variable" + variableId + ", " + "A1 ; Store local variable\n");
+                    assemblyCode.append(labelSpace + "CLR.L" + instSpace + "D1\n");
+                    assemblyCode.append(labelSpace + "CLR.L" + instSpace + "D2\n");
+                    assemblyCode.append(labelSpace + "MOVE.L" + instSpace + '#' + sizeArray + ", D2 \n");
+                    assemblyCode.append(labelSpace + "DIVS" + instSpace + "#4, D2 \n");
+                    assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "D2, D1 \n");
+                    assemblyCode.append(".tupelCopy" + tupelCIdx + ":\n");
+                    assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "(A0)+, " + "(A1)+ ; Store local variable\n");
+                    assemblyCode.append(labelSpace + "DBRA" + instSpace + "D1, .arrayCopy" + arrayCIdx++ + '\n');
+                }else {
                     assemblyCode.append(labelSpace + "MOVE.L" + instSpace + register + ", " + "(Variable" + variableId + ") ; Store local variable\n");
                 }
             } else {
