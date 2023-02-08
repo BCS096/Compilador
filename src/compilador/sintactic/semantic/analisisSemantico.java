@@ -258,6 +258,7 @@ public class analisisSemantico {
         ArrayDeclNode init = declArray.getArrayDecl();
         Boolean initialized = (init != null && !init.isEmpty());
         ArrayDescripcion arr;
+        int nVar = -1;
         switch (modifier) {
             case dvar:
                 if (tipo == TypeEnum.ARRAY || tipo == TypeEnum.TUPEL) {
@@ -270,7 +271,7 @@ public class analisisSemantico {
                             break;
                     }
                 } else {
-                    int nVar = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.ARRAY, true, false);
+                    nVar = gc.newVar(Variable.TipoVariable.VARIABLE, TypeEnum.ARRAY, true, false);
                     mvp.semanticCode(new StringBuilder(nVar + " = " + id + '\n'));
                     arr = new ArrayDescripcion(nVar, tipo, initialized);
                     if (ts.poner(id, arr, declArray)) {
@@ -288,7 +289,7 @@ public class analisisSemantico {
 
         if (initialized) {
             //Caso de que ya esté inicializado (tiene su declaración y eso significa que si)
-            handleArrayDecl(declArray.getArrayDecl(), tipo, id);
+            handleArrayDecl(declArray.getArrayDecl(), tipo, id, nVar);
         } else {
             parser.report_error("No se permite una array sin inicializar", declArray);
         }
@@ -321,7 +322,7 @@ public class analisisSemantico {
     }
 
     //checked
-    public void handleInitArray(InitArrayNode initArray, TypeEnum type, String id) {
+    public void handleInitArray(InitArrayNode initArray, TypeEnum type, String id, int nVar) {
         if (type != initArray.getTypeId().getType()) {
             parser.report_error("No coincide el tipo en la istancia de la array", initArray.getTypeId());
         } else {
@@ -331,6 +332,7 @@ public class analisisSemantico {
                     int size = handleDimArray(initArray.getDimArray(), id);
                     gc.generate(InstructionType.MUL, new Operator3Address(type.getBytes(), CastType.INT), new Operator3Address(size), new Operator3Address(size));
                     arr.setSize(size);
+                    tv.get(nVar).setBytes(size);
                 }
             } else {
                 parser.report_error("No se ha encontrado la dimensión del array!", initArray);
@@ -339,9 +341,9 @@ public class analisisSemantico {
     }
 
     //checked
-    public void handleArrayDecl(ArrayDeclNode node, TypeEnum type, String id) {
+    public void handleArrayDecl(ArrayDeclNode node, TypeEnum type, String id, int nVar) {
         if (node.getInitArrayNode() != null) {
-            handleInitArray(node.getInitArrayNode(), type, id);
+            handleInitArray(node.getInitArrayNode(), type, id, nVar);
         }
     }
 
@@ -824,7 +826,7 @@ public class analisisSemantico {
                         }
                     }
                     if (declTupel.getTupeldecl() != null) {
-                        handleTupelDecl(declTupel.getTupeldecl(), declTupel.getId().getIdentifierLiteral());
+                        handleTupelDecl(declTupel.getTupeldecl(), declTupel.getId().getIdentifierLiteral(), nVar);
                     }
 
                 } else {
@@ -838,16 +840,16 @@ public class analisisSemantico {
     }
 
     //checked
-    public void handleTupelDecl(TupelDeclNode tupelDecl, String id) {
+    public void handleTupelDecl(TupelDeclNode tupelDecl, String id, int nVar) {
         if (tupelDecl.getInit() != null) {
-            handleInitTupel(tupelDecl.getInit(), id);
+            handleInitTupel(tupelDecl.getInit(), id, nVar);
         } else {
             parser.report_error("La tupla no está inicializada o hay otro error de inicialización!", tupelDecl);
         }
     }
 
     //checked
-    public void handleInitTupel(InitTupelNode initTupel, String id) {
+    public void handleInitTupel(InitTupelNode initTupel, String id, int nVar) {
         if (initTupel.getParams() != null) {
             ArrayList<ExpressionNode> paramsIn = new ArrayList<>();
             handleParamIn(initTupel.getParams(), paramsIn);
@@ -886,6 +888,7 @@ public class analisisSemantico {
                             }
                         }
                         td.setSize(desp);
+                        tv.get(nVar).setBytes(desp);
                     } else {
                         parser.report_error("No es una tupla", initTupel);
                     }
