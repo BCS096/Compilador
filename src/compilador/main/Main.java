@@ -17,7 +17,7 @@ import java_cup.runtime.ComplexSymbolFactory;
 import java_cup.runtime.SymbolFactory;
 //import compilador.sintactic.semantic.SemanticAnalysis;
 
-public class Main2021 {
+public class Main {
 
     static final String PROMPT = "Specify the name of the directory of tests you want to compile (type 'exit' to exit): ";
     public static Semaphore fileWait = new Semaphore(0);
@@ -38,12 +38,14 @@ public class Main2021 {
 
             for (String fileName : files) {
                 mvp.addLexic(fileName);
+                mvp.addSintactic(fileName);
+                mvp.addSemantic(fileName);
                 System.out.println("======= Running " + fileName + " =======");
                 Thread.sleep(1000);
                 Scanner scanner = new Scanner(new FileReader(dirName + "/" + fileName), mvp);
 
                 SymbolFactory sf = new ComplexSymbolFactory();
-                Parser parser = new Parser(scanner, sf);
+                Parser parser = new Parser(scanner, sf, mvp);
 
                 parser.parse();
 

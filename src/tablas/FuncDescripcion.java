@@ -2,11 +2,11 @@ package tablas;
 
 import types.TypeEnum;
 
-public class FuncDescription extends IdDescripcion {
+public class FuncDescripcion extends IdDescripcion {
     private final int procedureNumber;
     private TypeEnum type;
     
-    public FuncDescription(int procedureNumber, TypeEnum type) {
+    public FuncDescripcion(int procedureNumber, TypeEnum type) {
         super(TipoDescripcion.dfunc);
         this.procedureNumber = procedureNumber;
         this.type = type;

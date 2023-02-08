@@ -18,19 +18,14 @@ public class TablaAmbitos {
     public TablaAmbitos(){}
     
     public void nuevaEntrada(int n){
-        ambitos.add(n,(ambitos.get(n) + 1));
+        ambitos.add(n, ambitos.get(n) + 1);
     }
     
     public void set(int n, int valor){
         ambitos.add(n, valor);
     }
    
-    public int get(int n){
+    public int get(int n){ //ta[n]
         return ambitos.get(n);
     }
-    
-    public void cambioAmbito(int n){
-        ambitos.add((n + 1),ambitos.get(n) + 1);
-    }
-    
 }

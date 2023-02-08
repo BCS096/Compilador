@@ -12,12 +12,20 @@ package tablas;
 public class Data {
     
     private String id;
-    private String idParent; //identificador del proc/func/tupel en caso que este id pertenezca a uno de estos
     private IdDescripcion descripcion;
-    private int np;
-    private int next; // apuntador a siguiente variable en cas de una tupla o argumentos
-    private boolean descriptionCopy; // se tiene que copiar a la tabla de descripción? (caso tupla)
+    private int np; // en caso de que np sea -1 , es que es un campo de una tupla o indice de array y por tanto no hay qu meterlo en td.
+    private int next; // apuntador a siguiente variable en cas de una tupla o argumentos o indice de array
+    private int first; //apuntador a la lista de campos, o argumentos, o indices
 
+    
+    public Data(String id, IdDescripcion desc, int np, int next, int first){
+        this.id = id;
+        this.descripcion = desc;
+        this.np = np;
+        this.next = next; 
+        this.first = first;
+    }
+    
     public String getId() {
         return id;
     }
@@ -26,20 +34,20 @@ public class Data {
         this.id = id;
     }
 
-    public String getIdParent() {
-        return idParent;
-    }
-
-    public void setIdParent(String idParent) {
-        this.idParent = idParent;
-    }
-
     public IdDescripcion getDescripcion() {
         return descripcion;
     }
 
     public void setDescripcion(IdDescripcion descripcion) {
         this.descripcion = descripcion;
+    }
+
+    public int getFirst() {
+        return first;
+    }
+
+    public void setFirst(int first) {
+        this.first = first;
     }
 
     public int getNp() {
@@ -57,6 +65,4 @@ public class Data {
     public void setNext(int next) {
         this.next = next;
     }
-
-
 }

@@ -23,4 +23,8 @@ public class TablaDescripcion {
     boolean existe(String identifier) {
         return tabla.containsKey(identifier);
     }
+
+    void put(String id, Data data) {
+        tabla.put(id, data);
+    }
 }

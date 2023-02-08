@@ -10,11 +10,12 @@ package compilador.sintactic;
 import java.io.*;
 import java_cup.runtime.ComplexSymbolFactory.ComplexSymbol;
 import java_cup.runtime.ComplexSymbolFactory.Location;
-
+import compilador.main.MVP;
 import compilador.sintactic.nodes.*;
 import tablas.IdDescripcion.TipoDescripcion;
 import types.*;
 import compilador.lexic.LiteralWrapper;
+import compilador.sintactic.semantic.analisisSemantico;
 
 class Parser;
 
@@ -30,8 +31,19 @@ parser code {:
 
     final String ERROR_FILE = "errors.txt";
 
+    private MVP mvp = null;
+
+    public Parser(java_cup.runtime.Scanner s, java_cup.runtime.SymbolFactory sf, MVP mvp) {
+        super(s,sf);
+        this.mvp = mvp;
+    }
+
     public int getNumberErrors() {
         return numberErrors;
+    }
+
+    public MVP getMVP(){
+        return this.mvp;
     }
 
     @Override
@@ -47,7 +59,8 @@ parser code {:
                    .append("row: ")
                    .append(l.getLine())
                    .append(", column: ")
-                   .append(l.getColumn());
+                   .append(l.getColumn())
+                   .append('\n');
             }
         }
         if ((info != null) && (info instanceof BaseNode)) {
@@ -58,7 +71,8 @@ parser code {:
                 .append("row: ")
                 .append(node.getLine())
                 .append(", column: ")
-                .append(node.getColumn());
+                .append(node.getColumn())
+                .append("\n");
         }
         //msg.append(": ").append(message);
 
@@ -75,24 +89,34 @@ parser code {:
         } catch (IOException ex) {
         }
 
-        System.err.println(msg);
+        if (mvp.semantic() && !mvp.sintactic()) {
+            mvp.semanticError(msg);
+        } else {
+            mvp.sintacticError(msg);
+        }
     }
 
     @Override
     public void report_fatal_error(String message, Object info) throws Exception {
-        report_error("FATAL ERROR: ("+message+")", info);
+        mvp.sintactic(true);
+        report_error("FATAL ERROR: ("+message+")"+'\n', info);
         done_parsing();
+        mvp.sintactic(false);
     }
 
     @Override
     public void unrecovered_syntax_error(java_cup.runtime.Symbol cur_token) throws Exception {
-        report_error("FATAL SINTACTIC ERROR: unexpected "+ParserSym.terminalNames[cur_token.sym], cur_token);
+        mvp.sintactic(true);
+        report_error("FATAL SINTACTIC ERROR: unexpected "+ParserSym.terminalNames[cur_token.sym]+'\n', cur_token);
         done_parsing();
+        mvp.sintactic(false);
     }
 
     @Override
     public void syntax_error(java_cup.runtime.Symbol cur_token) {
-        report_error("SINTACTIC ERROR: Unexpected "+ParserSym.terminalNames[cur_token.sym], cur_token);
+        mvp.sintactic(true);
+        report_error("SINTACTIC ERROR: Unexpected "+ParserSym.terminalNames[cur_token.sym]+'\n', cur_token);
+        mvp.sintactic(false);
     }
 
     private int extractLine(ComplexSymbol symbol) {
@@ -153,6 +177,8 @@ non terminal InitArrayNode        INIT_ARRAY;
 non terminal DeclTupelNode        DECL_TUPEL;
 non terminal TupelDeclNode        TUPEL_DECL;
 non terminal InitTupelNode        INIT_TUPEL;
+non terminal GestArrayNode        GEST_ARRAY;
+non terminal GestTupelNode        GEST_TUPEL;
 non terminal MethodListNode       METHOD_LIST;
 non terminal MethodNode           METHOD;
 non terminal ProcNode             PROC;
@@ -160,7 +186,6 @@ non terminal FuncNode             FUNC;
 non terminal ParamListNode        PARAM_LIST;
 non terminal ActualParamListNode  ACTUAL_PARAM_LIST;
 non terminal ParamNode            PARAM;
-non terminal SpecialParamNode     SPECIAL_PARAM; 
 non terminal SentenceListNode     SENTENCE_LIST;
 non terminal SentenceNode         SENTENCE;
 non terminal ForInstNode          FOR_INST;
@@ -193,7 +218,8 @@ precedence left sym_lbracket;
 
 start with PROGRAM;
 
-PROGRAM           ::= DECL_LIST:dl METHOD_LIST:ml MAIN:m                                                                                                                                  {: RESULT = new ProgramNode(dl, ml, m, m.getLine(), m.getColumn());                                     :}
+PROGRAM           ::= DECL_LIST:dl METHOD_LIST:ml MAIN:m                                                                                                                                  {: RESULT = new ProgramNode(dl, ml, m, m.getLine(), m.getColumn());                                     
+                                                                                                                                                                                         analisisSemantico sem = new analisisSemantico(RESULT, parser); if(numberErrors == 0){sem.handleProgram();} :}
                     ;
 
 DECL_LIST         ::= DECL_LIST:dl DECL:d sym_semicolon                                                                                                                                   {: RESULT = new DeclListNode(dl, d, d.getLine(), d.getColumn());                                        :}
@@ -238,7 +264,6 @@ DIM_ARRAY         ::= DIM_ARRAY:dim sym_lbracket EXP:e sym_rbracket             
                     ;
 
 ARRAY_DECL        ::= INIT_ARRAY:ia                                                                                                                                                       {: RESULT = new ArrayDeclNode(ia, ia.getLine(), ia.getColumn());                                        :}
-                    |                                                                                                                                                                     {: RESULT = new ArrayDeclNode();                                                                        :}
                     ;
 
 INIT_ARRAY        ::= sym_eq:e r_new TYPE_ID:t DIM_ARRAY:da                                                                                                                               {: RESULT = new InitArrayNode(t, da, extractLine(da), extractColumn(da));                               :}
@@ -248,7 +273,6 @@ DECL_TUPEL        ::= r_tupel:r ID:id sym_lparen PARAM_LIST:pl sym_rparen TUPEL_
                     ;
 
 TUPEL_DECL        ::= INIT_TUPEL:it                                                                                                                                                       {: RESULT = new TupelDeclNode(it, it.getLine(), it.getColumn());                                        :}
-                    |                                                                                                                                                                     {: RESULT = new TupelDeclNode();                                                                        :}
                     ;
 
 INIT_TUPEL        ::= sym_eq r_new r_tupel:r sym_lparen PARAM_IN:pi sym_rparen                                                                                                            {: RESULT = new  InitTupelNode(pi, extractLine(r), extractColumn(r));                                   :}
@@ -276,14 +300,9 @@ ACTUAL_PARAM_LIST ::= PARAM:p                                                   
                     | PARAM:p sym_comma ACTUAL_PARAM_LIST:apl                                                                                                                             {: RESULT = new ActualParamListNode(p, apl, p.getLine(), p.getColumn());                                :}
                     ;
 
-PARAM             ::= TYPE_ID:t ID:id                                                                                                                                                     {: RESULT = new ParamNode(t, null, id, t.getLine(), t.getColumn());                                           :}
-                    | SPECIAL_PARAM:t ID:id                                                                                                                                               {: RESULT = new ParamNode(null, t, id, t.getLine(), t.getColumn());                                           :}
+PARAM             ::= TYPE_ID:t ID:id                                                                                                                                                     {: RESULT = new ParamNode(t, id, t.getLine(), t.getColumn());                                           :}
                     ;
-
-SPECIAL_PARAM     ::= r_tupel:t                                                                                                                                                           {: RESULT = new SpecialParamNode(TypeEnum.TUPEL, extractLine(t), extractColumn(t));                             :}                                                                                                                      
-                    | r_array:t TYPE_ID:tid                                                                                                                                                           {: RESULT = new SpecialParamNode(TypeEnum.ARRAY, extractLine(t), extractColumn(t));                             :}
-                    ;                                                                                                                                                         
-
+                                                                                                                                                         
 SENTENCE_LIST     ::= SENTENCE:sentence SENTENCE_LIST:sentence_list                                                                                                                       {: RESULT = new SentenceListNode(sentence, sentence_list, sentence.getLine(), sentence.getColumn());    :}
                     |                                                                                                                                                                     {: RESULT = new SentenceListNode();                                                                     :}
                     ;
@@ -327,10 +346,7 @@ PARAM_IN          ::= EXP:exp sym_comma PARAM_IN:param_in                       
                     |                                                                                                                                                                     {: RESULT = new ParamInNode();                                                                          :}
                     ;
 
-ASSIG             ::= GEST_IDX:gidx INIT_ARRAY:init_array                                                                                                                                 {: RESULT = new AssigNode(init_array, null, null, null, gidx, init_array.getLine(), init_array.getColumn());     :}
-                    | GEST_IDX:gidx INIT_TUPEL:it                                                                                                                                         {: RESULT = new AssigNode(null, it, null, null, gidx, extractLine(gidx), extractColumn(gidx));                   :}
-                    | GEST_IDX:gidx sym_lbracket EXP:exp1 sym_rbracket sym_eq:o EXP:exp2                                                                                                  {: RESULT = new AssigNode(null, null, exp1, exp2, gidx, extractLine(o), extractColumn(o));                       :}
-                    | GEST_IDX:gidx sym_eq:o EXP:exp                                                                                                                                      {: RESULT = new AssigNode(null, null, exp, null, gidx, extractLine(o), extractColumn(o));                        :}
+ASSIG             ::= GEST_IDX:gidx sym_eq:o EXP:exp                                                                                                                                      {: RESULT = new AssigNode(exp, gidx, extractLine(o), extractColumn(o));                        :}
                     ;
 
 EXP               ::= sym_lparen EXP:exp sym_rparen                                                                                                                                       {: RESULT = new ExpressionNode(exp, null, null, null, null, null, null, exp.getLine(), exp.getColumn()); :}
@@ -348,9 +364,17 @@ SIMPLE_VALUE      ::= LITERAL:l                                                 
 GEST_IDX           ::= ID:id GESTOR:gest                                                                                                                                                  {: RESULT = new GestIdxNode(id, gest, extractLine(id), extractColumn(id)); :}                                     
                     ;
 
-GESTOR             ::= sym_lbracket:v EXP:exp sym_rbracket GESTOR:gest                                                                                                                    {: RESULT = new GestorNode(exp, gest, null, extractLine(v), extractColumn(v));  :}
-                    | sym_dot:v GEST_IDX:gidx                                                                                                                                             {: RESULT = new GestorNode(null, null, gidx, extractLine(v), extractColumn(v));  :}
-                    |                                                                                                                                                                     {: RESULT = new GestorNode();  :}
+GESTOR             ::= GEST_ARRAY:gestArray                                                                                                                                               {: RESULT = new GestorNode(gestArray, null, extractLine(gestArray), extractColumn(gestArray)); :}
+                    | GEST_TUPEL:gtup                                                                                                                                                     {: RESULT = new GestorNode(null, gtup, extractLine(gtup), extractColumn(gtup)); :}      
+                    |                                                                                                                                                                     {: RESULT = new GestorNode(); :}
+                    ;
+
+
+GEST_ARRAY         ::= sym_lbracket:v EXP:exp sym_rbracket GEST_ARRAY:gestArray                                                                                                           {: RESULT = new GestArrayNode(exp, gestArray, extractLine(v), extractColumn(v));          :}
+                    | sym_lbracket:v EXP:exp sym_rbracket                                                                                                                                 {: RESULT = new GestArrayNode(exp, null, extractLine(v), extractColumn(v));                                                  :}
+                    ;
+
+GEST_TUPEL         ::= sym_dot:v ID:id                                                                                                                                                     {: RESULT = new GestTupelNode(id, extractLine(v), extractColumn(v));                :}
                     ;
 
 LITERAL           ::= l_int:l                                                                                                                                                             {: RESULT = new LiteralNode(Integer.toString((Integer)l.getLiteral()), TypeEnum.INT, l.getLine(), l.getColumn()); :}

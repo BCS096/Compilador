@@ -9,30 +9,25 @@ package compilador.sintactic.nodes;
  * @author tomeu
  */
 public class GestorNode extends BaseNode {
-    private ExpressionNode exp;
-    private GestorNode gest;
-    private GestIdxNode gestIdx;
-    
-    public GestorNode (ExpressionNode exp, GestorNode idxArray, GestIdxNode gestIdx, int line, int column){
+
+    private GestArrayNode gestArray;
+    private GestTupelNode gestTupel;
+
+    public GestorNode(GestArrayNode gestArray, GestTupelNode gestTupel, int line, int column) {
         super("IDX_ARRAY", false, line, column);
-        this.gest = idxArray;
-        this.gestIdx = gestIdx;
-        this.exp = exp;
+        this.gestArray = gestArray;
+        this.gestTupel = gestTupel;
     }
 
-    public GestIdxNode getGestIdx() {
-        return gestIdx;
-    }
-    
-    public GestorNode (){
-        super("GESTOR", true);
+    public GestorNode() {
+        super("IDX_ARRAY", true);
     }
 
-    public ExpressionNode getExp(){
-        return exp;
+    public GestArrayNode getGestArray() {
+        return gestArray;
     }
-    
-    public GestorNode getGestor() {
-        return gest;
+
+    public GestTupelNode getGestTupel() {
+        return gestTupel;
     }
 }

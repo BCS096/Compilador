@@ -5,10 +5,13 @@
  */
 package compilador.main;
 
+import java.awt.Color;
+import java.awt.Font;
 import java.io.File;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 
 /**
@@ -21,7 +24,24 @@ public class MVP extends javax.swing.JFrame {
     JTextArea[] lexicPanes;
     private int currentLexicTextIdx = -1;
     JScrollPane[] lexicScrollPanes;
+    StringBuilder sintacticText = new StringBuilder("");
+    JTextArea[] sintPanes;
+    private int currentSintTextIdx = -1;
+    JScrollPane[] sintScrollPanes;
+    StringBuilder semanticCode = new StringBuilder("");
+    StringBuilder semanticError = new StringBuilder("");
+    StringBuilder semanticCodeOp = new StringBuilder("");
+    JTextArea[] semPanesCode;
+    JTextArea[] semPanesError;
+    JTextArea[] semPanesCodeOp;
+    private int currentSemTextIdx = -1;
+    JScrollPane[] semScrollPanesC;
+    JScrollPane[] semScrollPanesE;
+    JScrollPane[] semScrollPanesCO;
     String carpeta = null;
+    private String currentFile;
+    private boolean semantic = false;
+    private boolean sintactic = false;
 
     /**
      * Creates new form MVP
@@ -48,11 +68,13 @@ public class MVP extends javax.swing.JFrame {
         jPanel3 = new javax.swing.JPanel();
         jButton1 = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
+        jButton2 = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
         jTabbedPane1 = new javax.swing.JTabbedPane();
         jPanel4 = new javax.swing.JPanel();
         jTabbedPane3 = new javax.swing.JTabbedPane();
-        jButton2 = new javax.swing.JButton();
+        jPanel5 = new javax.swing.JPanel();
+        jTabbedPane5 = new javax.swing.JTabbedPane();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -65,6 +87,14 @@ public class MVP extends javax.swing.JFrame {
 
         jLabel1.setText("Folder path...");
 
+        jButton2.setFont(new java.awt.Font("Verdana", 1, 36)); // NOI18N
+        jButton2.setText("Start");
+        jButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton2ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
@@ -74,7 +104,11 @@ public class MVP extends javax.swing.JFrame {
                 .addComponent(jButton1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 519, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(295, Short.MAX_VALUE))
+                .addContainerGap(478, Short.MAX_VALUE))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 156, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -83,7 +117,9 @@ public class MVP extends javax.swing.JFrame {
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jButton1)
                     .addComponent(jLabel1))
-                .addContainerGap(485, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 440, Short.MAX_VALUE)
+                .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
         );
 
         jTabbedPane2.addTab("Menu", jPanel3);
@@ -94,14 +130,14 @@ public class MVP extends javax.swing.JFrame {
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 901, Short.MAX_VALUE)
+                .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 1084, Short.MAX_VALUE)
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 535, Short.MAX_VALUE)
+                .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 560, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -113,26 +149,37 @@ public class MVP extends javax.swing.JFrame {
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel4Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jTabbedPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(811, Short.MAX_VALUE))
+                .addComponent(jTabbedPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 1084, Short.MAX_VALUE)
+                .addContainerGap())
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel4Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jTabbedPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(446, Short.MAX_VALUE))
+                .addComponent(jTabbedPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 560, Short.MAX_VALUE)
+                .addContainerGap())
         );
 
         jTabbedPane2.addTab("Sintactic", jPanel4);
 
-        jButton2.setFont(new java.awt.Font("Verdana", 1, 36)); // NOI18N
-        jButton2.setText("Start");
-        jButton2.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton2ActionPerformed(evt);
-            }
-        });
+        javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
+        jPanel5.setLayout(jPanel5Layout);
+        jPanel5Layout.setHorizontalGroup(
+            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel5Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jTabbedPane5, javax.swing.GroupLayout.DEFAULT_SIZE, 1084, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+        jPanel5Layout.setVerticalGroup(
+            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel5Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jTabbedPane5, javax.swing.GroupLayout.PREFERRED_SIZE, 560, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        jTabbedPane2.addTab("Semantic", jPanel5);
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -141,9 +188,7 @@ public class MVP extends javax.swing.JFrame {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jTabbedPane2)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 156, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(27, 27, 27))
+                .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -151,10 +196,6 @@ public class MVP extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(jTabbedPane2)
                 .addContainerGap())
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(30, 30, 30))
         );
 
         jTabbedPane2.getAccessibleContext().setAccessibleName("Lexic");
@@ -179,6 +220,15 @@ public class MVP extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+        if(carpeta != null){
+            resetLexic();
+            Main.fileWait.release();
+        }else{
+            JOptionPane.showMessageDialog(null, "No files were selected!");
+        }
+    }//GEN-LAST:event_jButton2ActionPerformed
+
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         final JFileChooser fc = new JFileChooser(System.getProperty("user.dir"));
         fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -188,15 +238,6 @@ public class MVP extends javax.swing.JFrame {
             jLabel1.setText(carpeta);
         }
     }//GEN-LAST:event_jButton1ActionPerformed
-
-    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        if(carpeta != null){
-            resetLexic();
-            Main2021.fileWait.release();
-        }else{
-            JOptionPane.showMessageDialog(null, "No files were selected!");
-        }
-    }//GEN-LAST:event_jButton2ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -242,9 +283,11 @@ public class MVP extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
+    private javax.swing.JPanel jPanel5;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JTabbedPane jTabbedPane2;
     private javax.swing.JTabbedPane jTabbedPane3;
+    private javax.swing.JTabbedPane jTabbedPane5;
     // End of variables declaration//GEN-END:variables
 
     public void setLexic(String newText) {
@@ -258,6 +301,7 @@ public class MVP extends javax.swing.JFrame {
     }
 
     public void addLexic(String fileName) {
+        currentFile = fileName;
         ++currentLexicTextIdx;
         this.lexicText = new StringBuilder("");
         lexicPanes[currentLexicTextIdx] = new JTextArea("Lexic here...");
@@ -269,10 +313,62 @@ public class MVP extends javax.swing.JFrame {
 
         jTabbedPane1.addTab(fileName, lexicScrollPanes[currentLexicTextIdx]);
     }
+    
+    public void addSintactic(String fileName) {
+        ++currentSintTextIdx;
+        this.sintacticText = new StringBuilder("");
+        sintPanes[currentSintTextIdx] = new JTextArea("No sintactic errors for now...");
+        sintPanes[currentSintTextIdx].setEditable(false);
+        sintScrollPanes[currentSintTextIdx] = new JScrollPane();
+        sintPanes[currentSintTextIdx].setColumns(20);
+        sintPanes[currentSintTextIdx].setRows(5);
+        sintScrollPanes[currentSintTextIdx].setViewportView(sintPanes[currentSintTextIdx]);
+
+        jTabbedPane3.addTab(fileName, sintScrollPanes[currentSintTextIdx]);
+    }
+    
+    public void addSemantic(String fileName) {
+        ++currentSemTextIdx;
+        this.semanticCode = new StringBuilder("");
+        this.semanticError = new StringBuilder("");
+        this.semanticCodeOp = new StringBuilder("");
+        semPanesError[currentSemTextIdx] = new JTextArea("No semantic errors for now...");
+        semPanesError[currentSemTextIdx].setEditable(false);
+        semPanesCode[currentSemTextIdx] = new JTextArea("Generating code...");
+        semPanesCode[currentSemTextIdx].setEditable(false);
+        semPanesCodeOp[currentSemTextIdx] = new JTextArea("Generating code...");
+        semPanesCodeOp[currentSemTextIdx].setEditable(false);
+        semScrollPanesC[currentSemTextIdx] = new JScrollPane();
+        semScrollPanesE[currentSemTextIdx] = new JScrollPane();
+        semScrollPanesCO[currentSemTextIdx] = new JScrollPane();
+        semPanesCode[currentSemTextIdx].setColumns(20);
+        semPanesCode[currentSemTextIdx].setRows(5);
+        semPanesError[currentSemTextIdx].setColumns(20);
+        semPanesError[currentSemTextIdx].setRows(5);
+        semPanesCodeOp[currentSemTextIdx].setColumns(20);
+        semPanesCodeOp[currentSemTextIdx].setRows(5);
+        semScrollPanesC[currentSemTextIdx].setViewportView(semPanesCode[currentSemTextIdx]);
+        semScrollPanesE[currentSemTextIdx].setViewportView(semPanesError[currentSemTextIdx]);
+        semScrollPanesCO[currentSemTextIdx].setViewportView(semPanesCodeOp[currentSemTextIdx]);
+        
+        JTabbedPane temp = new JTabbedPane();
+        jTabbedPane5.addTab(fileName, temp);
+        temp.addTab("C3@", semScrollPanesC[currentSemTextIdx]);
+        temp.addTab("Errors", semScrollPanesE[currentSemTextIdx]);
+        temp.addTab("C3@ optimized", semScrollPanesCO[currentSemTextIdx]);
+    }
 
     void setFileCount() {
-        lexicPanes = new JTextArea[Main2021.filesCount];
-        lexicScrollPanes = new JScrollPane[Main2021.filesCount];
+        lexicPanes = new JTextArea[Main.filesCount];
+        lexicScrollPanes = new JScrollPane[Main.filesCount];
+        sintPanes = new JTextArea[Main.filesCount];
+        sintScrollPanes = new JScrollPane[Main.filesCount];
+        semPanesCode = new JTextArea[Main.filesCount];
+        semPanesError = new JTextArea[Main.filesCount];
+        semPanesCodeOp = new JTextArea[Main.filesCount];
+        semScrollPanesC = new JScrollPane[Main.filesCount];
+        semScrollPanesE = new JScrollPane[Main.filesCount];
+        semScrollPanesCO = new JScrollPane[Main.filesCount];
     }
 
     String getFolder() {
@@ -281,5 +377,53 @@ public class MVP extends javax.swing.JFrame {
         } else {
             throw new UnsupportedOperationException("An error has ocurred");
         }
+    }
+
+    public void sintacticError(StringBuilder msg) {
+        sintacticText.append(msg);
+        this.sintPanes[currentSintTextIdx].setFont(new Font("Verdana", Font.BOLD, 12));
+        this.sintPanes[currentSintTextIdx].setForeground(Color.RED);
+        this.sintPanes[currentSintTextIdx].setText(sintacticText.toString());
+    }
+    
+    public void semanticError(StringBuilder msg) {
+        semanticError.append(msg);
+        this.semPanesError[currentSemTextIdx].setFont(new Font("Verdana", Font.BOLD, 12));
+        this.semPanesError[currentSemTextIdx].setForeground(Color.RED);
+        this.semPanesError[currentSemTextIdx].setText(semanticError.toString());
+    }
+    
+    public void semanticCode(StringBuilder msg) {
+        semanticCode.append(msg);
+        this.semPanesCode[currentSemTextIdx].setFont(new Font("Verdana", Font.PLAIN, 12));
+        this.semPanesCode[currentSemTextIdx].setForeground(Color.BLACK);
+        this.semPanesCode[currentSemTextIdx].setText(semanticCode.toString()+'\n');
+    }
+    
+        public void semanticCodeOp(StringBuilder msg) {
+        semanticCodeOp.append(msg);
+        this.semPanesCodeOp[currentSemTextIdx].setFont(new Font("Verdana", Font.PLAIN, 12));
+        this.semPanesCodeOp[currentSemTextIdx].setForeground(Color.BLACK);
+        this.semPanesCodeOp[currentSemTextIdx].setText(semanticCodeOp.toString()+'\n');
+    }
+
+    public boolean semantic() {
+        return this.semantic;
+    }
+    
+    public boolean sintactic() {
+        return this.sintactic;
+    }
+    
+    public void semantic(boolean semantic){
+        this.semantic = semantic;
+    }
+    
+    public void sintactic(boolean sintactic){
+        this.sintactic = sintactic;
+    }
+    
+    public String getActualFile(){
+        return this.currentFile;
     }
 }

@@ -5,7 +5,7 @@ public class IdDescripcion {
     private final TipoDescripcion desc;
 
     public enum TipoDescripcion {
-        dnula, dvar, dconst, dtipus, dproc, dfunc, dindex, dargin, darg, darray, dstring, dtupel
+        dnula, dvar, dconst, dtipus, dproc, dfunc, dindex, dargin, darg, darray, dstring, dtupel, dcampo
     }
 
     public IdDescripcion(TipoDescripcion desc) {
