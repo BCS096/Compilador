@@ -16,7 +16,7 @@ public class Variable {
     private final String id;
     private final TipoVariable tipoVar;
     private final String idProc;
-    private final int bytes;
+    private int bytes;
     private final TypeEnum tipo;
     private final boolean isArray;
     private final boolean isTupel;
@@ -80,6 +80,10 @@ public class Variable {
      */
     public void setOffset(int offset) {
         this.offset = offset;
+    }
+    
+    public void setBytes(int bytes){
+        this.bytes = bytes;
     }
     
     @Override
