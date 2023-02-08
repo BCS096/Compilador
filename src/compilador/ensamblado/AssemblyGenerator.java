@@ -75,6 +75,7 @@ public class AssemblyGenerator {
     private String currentSubProgram = "";
     int randomCounter = 99;
     private boolean isString = false;
+    private int arrayCIdx = 0;
 
     /**
      *
@@ -115,9 +116,11 @@ public class AssemblyGenerator {
                 assemblyCode.append(tv.get(i).getId() + labelSpace + "DC.B" + instSpace + getStringValue(i) + ",0\n");
             } else {
                 if (tv.get(i).isArray()) {
-                    assemblyCode.append(tv.get(i).getId() + labelSpace + "DS.L" + instSpace + "15\n");
+                    int size = true ? 15 : tv.get(i).getBytes();
+                    assemblyCode.append(tv.get(i).getId() + labelSpace + "DS.L" + instSpace + size + "\n");
                 } else if (tv.get(i).isTupel()) {
-                    assemblyCode.append(tv.get(i).getId() + labelSpace + "DS.L" + instSpace + "15\n");
+                    int size = tv.get(i).getBytes();
+                    assemblyCode.append(tv.get(i).getId() + labelSpace + "DS.L" + instSpace + size + "\n");
                 } else {
                     assemblyCode.append(tv.get(i).getId() + labelSpace + "DS.L" + instSpace + "1\n");
                 }
@@ -592,7 +595,12 @@ public class AssemblyGenerator {
                     throw new UnsupportedOperationException("Trying to load something that is not a variable!");
             }
         } else if (profx == profp && dx < 0) { //Si profundidad de la variable es la misma que el procedure y está en negativo por debajo de BlockPointer
-            assemblyCode.append(labelSpace + "MOVE." + size + instSpace + '(' + "Variable" + variableId + "), " + register + " ; Load local variable\n");
+            if (variable.isArray()) {
+                assemblyCode.append(labelSpace + "LEA" + instSpace + "Variable" + variableId + ", A0 ; Load local variable\n");
+                assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "A0, " + register + " ; Load local variable\n");
+            } else {
+                assemblyCode.append(labelSpace + "MOVE." + size + instSpace + '(' + "Variable" + variableId + "), " + register + " ; Load local variable\n");
+            }
         } else if (profx == profp && dx > 0) { //Si profundidad de la variable es la misma que el procedure y está en positivo por encima de BlockPointer
             //dx = tv.get(variableId).getOffset() + 4;
             if (true) {
@@ -673,7 +681,18 @@ public class AssemblyGenerator {
         if (profx == profp && dx < 0) { //Local variable
             //Look up variable space, if sums correctly and add all the space to A7 and we win jejeje
             if (true) {
-                assemblyCode.append(labelSpace + "MOVE.L" + instSpace + register + ", " + "(Variable" + variableId + ") ; Store local variable\n");
+                if (variable.isArray()) {
+                    ArrayDescripcion array = (ArrayDescripcion) ts.consultaId(tv.get(variableId).getId());
+                    assemblyCode.append(labelSpace + "MOVE.L" + instSpace + register + ", " + "(A0) ; Store local variable\n");
+                    assemblyCode.append(labelSpace + "LEA" + instSpace + "Variable" + variableId + ", " + "A1 ; Store local variable\n");
+                    assemblyCode.append(labelSpace + "CLR.L" + instSpace + "D1\n");
+                    assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "(Variable" + array.getSize() + "), D1 \n");
+                    assemblyCode.append(".arrayCopy" + arrayCIdx + ":\n");
+                    assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "(A0)+, " + "(A1)+ ; Store local variable\n");
+                    assemblyCode.append(labelSpace + "DBRA" + instSpace + "D1, .arrayCopy" + arrayCIdx++ + '\n');
+                } else {
+                    assemblyCode.append(labelSpace + "MOVE.L" + instSpace + register + ", " + "(Variable" + variableId + ") ; Store local variable\n");
+                }
             } else {
                 if (declaredVars.contains(variableId)) {
                     //Not bien, no se como pero hay que modificar para que las vars se modifiquen en su contexto revisar oduisgnwiebnowiqgenbwoenv
