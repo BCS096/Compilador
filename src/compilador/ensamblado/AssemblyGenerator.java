@@ -592,7 +592,7 @@ public class AssemblyGenerator {
                     throw new UnsupportedOperationException("Trying to load something that is not a variable!");
             }
         } else if (profx == profp && dx < 0) { //Si profundidad de la variable es la misma que el procedure y está en negativo por debajo de BlockPointer
-            if (variable.isArray()) {
+            if (variable.isArray() || variable.isTupel()) {
                 assemblyCode.append(labelSpace + "LEA" + instSpace + "Variable" + variableId + ", A0 ; Load local variable\n");
                 assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "A0, " + register + " ; Load local variable\n");
             } else {
@@ -691,17 +691,17 @@ public class AssemblyGenerator {
                     assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "(A0)+, " + "(A1)+ ; Store local variable\n");
                     assemblyCode.append(labelSpace + "DBRA" + instSpace + "D1, .arrayCopy" + arrayCIdx++ + '\n');
                 } else if(variable.isTupel()){
-                    int sizeArray = tv.get(variableId).getBytes();
+                    int sizeTupel = tv.get(variableId).getBytes();
                     assemblyCode.append(labelSpace + "MOVE.L" + instSpace + register + ", " + "A0 ; Store local variable\n");
                     assemblyCode.append(labelSpace + "LEA" + instSpace + "Variable" + variableId + ", " + "A1 ; Store local variable\n");
                     assemblyCode.append(labelSpace + "CLR.L" + instSpace + "D1\n");
                     assemblyCode.append(labelSpace + "CLR.L" + instSpace + "D2\n");
-                    assemblyCode.append(labelSpace + "MOVE.L" + instSpace + '#' + sizeArray + ", D2 \n");
+                    assemblyCode.append(labelSpace + "MOVE.L" + instSpace + '#' + sizeTupel + ", D2 \n");
                     assemblyCode.append(labelSpace + "DIVS" + instSpace + "#4, D2 \n");
                     assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "D2, D1 \n");
                     assemblyCode.append(".tupelCopy" + tupelCIdx + ":\n");
                     assemblyCode.append(labelSpace + "MOVE.L" + instSpace + "(A0)+, " + "(A1)+ ; Store local variable\n");
-                    assemblyCode.append(labelSpace + "DBRA" + instSpace + "D1, .arrayCopy" + arrayCIdx++ + '\n');
+                    assemblyCode.append(labelSpace + "DBRA" + instSpace + "D1, .tupelCopy" + tupelCIdx++ + '\n');
                 }else {
                     assemblyCode.append(labelSpace + "MOVE.L" + instSpace + register + ", " + "(Variable" + variableId + ") ; Store local variable\n");
                 }

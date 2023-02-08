@@ -868,6 +868,7 @@ public class analisisSemantico {
                 } else {
                     if (aux.getTipoDescripcion() == TipoDescripcion.dtupel) {
                         TupelDescripcion td = (TupelDescripcion) aux;
+                        int tupelSize = 0;
                         for (int i = 0; i < params.size(); i++) {
                             if (params.get(i).getType() != paramsIn.get(i).getType()) {
                                 parser.report_error("No coinciden los tipos del valor pasado con el tipo del campo", initTupel.getParams());
@@ -890,9 +891,10 @@ public class analisisSemantico {
                                         break;
                                 }
                             }
+                            tupelSize += 4;
                         }
                         td.setSize(desp);
-                        tv.get(nVar).setBytes(desp);
+                        tv.get(nVar).setBytes(tupelSize);
                     } else {
                         parser.report_error("No es una tupla", initTupel);
                     }
