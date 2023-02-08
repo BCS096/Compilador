@@ -123,6 +123,8 @@ public class analisisSemantico {
                     cambio = true;
                 }
             }
+            AssemblyGenerator ensamblado = new AssemblyGenerator("optimized_" + mvp.getActualFile(), ts, tv, tp, gc.getInstruccions());
+            ensamblado.mainMake();
         }
 
         opt.getCode().forEach(ins -> {

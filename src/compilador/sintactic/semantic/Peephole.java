@@ -7,6 +7,7 @@ package compilador.sintactic.semantic;
 import compilador.sintactic.semantic.Operator3Address.CastType;
 import compilador.sintactic.semantic.Operator3Address.Type;
 import java.util.ArrayList;
+import types.TypeEnum;
 
 /**
  *
@@ -343,17 +344,18 @@ public class Peephole {
                     if (code.get(i).getInstructionType() == InstructionType.CLONE || code.get(i).getInstructionType() == InstructionType.NEG) {
                         Operator3Address op = code.get(i).getOperators()[0];
                         if (code.get(pos).getInstructionType() == InstructionType.CLONE || code.get(pos).getInstructionType() == InstructionType.NEG
-                                || code.get(pos).getInstructionType() == InstructionType.PRINT || code.get(pos).getInstructionType() == InstructionType.PRINTLN
+                                /*|| code.get(pos).getInstructionType() == InstructionType.PRINT || code.get(pos).getInstructionType() == InstructionType.PRINTLN*/
                                 || code.get(pos).getInstructionType() == InstructionType.READ) {
                             code.get(pos).setOperator(0, op);
                             code.remove(i);
                             canvi = true;
                             i--;
-                        } else if (code.get(pos).getInstructionType() == InstructionType.SIMPLEPARAM || code.get(pos).getInstructionType() == InstructionType.RETURN) {
+                        } /*else if (code.get(pos).getInstructionType() == InstructionType.SIMPLEPARAM ||  code.get(pos).getInstructionType() == InstructionType.RETURN) {
                             code.get(pos).setOperator(2, op);
                             code.remove(i);
                             canvi = true;
                             i--;
+                        }*/ else if (code.get(pos).getInstructionType() == InstructionType.PRINT || code.get(pos).getInstructionType() == InstructionType.PRINTLN) {
                         } else {
                             if (code.get(pos).getOperators()[0] != null && code.get(pos).getOperators()[0].getType() == Type.reference && code.get(pos).getOperators()[0].getReference() == res) {
                                 code.get(pos).setOperator(0, op);
