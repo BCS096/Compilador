@@ -753,14 +753,16 @@ public class analisisSemantico {
             boolean isIdx = handleGestorIdx(simpleValue.getGestor(), des);
             simpleValue.setType(des.type);
             tempId = des.id;
-            int nv = idFromDesc(ts.consultaId(des.id));
-            int var = gc.newVar(Variable.TipoVariable.VARIABLE, des.type, false, false);
-            if (isIdx) {
-                gc.generate(InstructionType.INDVALUE, new Operator3Address(nv), new Operator3Address(des.desp), new Operator3Address(var));
-            } else {
-                gc.generate(InstructionType.CLONE, new Operator3Address(idFromDesc(ts.consultaId(des.id))), null, new Operator3Address(var));
+            if (tempId != null) {
+                int nv = idFromDesc(ts.consultaId(des.id));
+                int var = gc.newVar(Variable.TipoVariable.VARIABLE, des.type, false, false);
+                if (isIdx) {
+                    gc.generate(InstructionType.INDVALUE, new Operator3Address(nv), new Operator3Address(des.desp), new Operator3Address(var));
+                } else {
+                    gc.generate(InstructionType.CLONE, new Operator3Address(idFromDesc(ts.consultaId(des.id))), null, new Operator3Address(var));
+                }
+                simpleValue.setReference(var);
             }
-            simpleValue.setReference(var);
         } else if (simpleValue.getSimpl() != null) {
             //?
             //Si no es INT no se puede negar
