@@ -1,0 +1,26 @@
+main(){
+array int hola = new int[5];
+array int hola2 = new int[1];
+hola2[0] = 5;
+print(hola2[0]);
+hola[0] = hola2[0];
+array int original = new int[3];
+array int copia = new int[3];
+original[0] = 1;
+original[1] = 2;
+original[2] = 3;
+copia = original;
+print("Copia contiene:");
+println(copia[2]);
+print("Original tenia:");
+println(original[2]);
+array int cuidado = new int[2][3][3];
+cuidado[0][0][2] = 69;
+println("Arrays multidimensionales?");
+println("Array cuidado[0][0][2] vale: ");
+println(cuidado[0][0][2]);
+print("Ahora a ver la copia (llamada peligro) misma posición -> ");
+array int peligro = new int[2][3][3];
+peligro = cuidado;
+println(peligro[0][0][2]);
+}

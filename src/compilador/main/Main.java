@@ -17,7 +17,7 @@ import java_cup.runtime.ComplexSymbolFactory;
 import java_cup.runtime.SymbolFactory;
 //import compilador.sintactic.semantic.SemanticAnalysis;
 
-public class Main2021 {
+public class Main {
 
     static final String PROMPT = "Specify the name of the directory of tests you want to compile (type 'exit' to exit): ";
     public static Semaphore fileWait = new Semaphore(0);

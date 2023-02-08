@@ -1,0 +1,24 @@
+main(){
+int i = 0;
+char c ='c';
+string k = "koalas";
+tupel tupla (int i, char c) = new tupel (1,'c');
+tupel tupla2 (int i, char c) = new tupel (2,'d');
+tupla = tupla2;
+print("La tupla vale en la i (int): ");
+print(tupla.i);
+print(" y en la c (char): ");
+print(tupla.c);
+tupla.i = 0;
+print("La tupla vale ahora en la i: ");
+println(tupla.i);
+array int hola = new int[5];
+array int hola2 = new int[1];
+hola2[0] = 5;
+hola[0] = hola2[0];
+array int original = new int[2];
+array int copia = new int[2];
+original[0] = 1;
+original[1] = 2;
+copia = original;
+}

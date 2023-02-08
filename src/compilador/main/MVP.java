@@ -223,7 +223,7 @@ public class MVP extends javax.swing.JFrame {
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
         if(carpeta != null){
             resetLexic();
-            Main2021.fileWait.release();
+            Main.fileWait.release();
         }else{
             JOptionPane.showMessageDialog(null, "No files were selected!");
         }
@@ -359,16 +359,16 @@ public class MVP extends javax.swing.JFrame {
     }
 
     void setFileCount() {
-        lexicPanes = new JTextArea[Main2021.filesCount];
-        lexicScrollPanes = new JScrollPane[Main2021.filesCount];
-        sintPanes = new JTextArea[Main2021.filesCount];
-        sintScrollPanes = new JScrollPane[Main2021.filesCount];
-        semPanesCode = new JTextArea[Main2021.filesCount];
-        semPanesError = new JTextArea[Main2021.filesCount];
-        semPanesCodeOp = new JTextArea[Main2021.filesCount];
-        semScrollPanesC = new JScrollPane[Main2021.filesCount];
-        semScrollPanesE = new JScrollPane[Main2021.filesCount];
-        semScrollPanesCO = new JScrollPane[Main2021.filesCount];
+        lexicPanes = new JTextArea[Main.filesCount];
+        lexicScrollPanes = new JScrollPane[Main.filesCount];
+        sintPanes = new JTextArea[Main.filesCount];
+        sintScrollPanes = new JScrollPane[Main.filesCount];
+        semPanesCode = new JTextArea[Main.filesCount];
+        semPanesError = new JTextArea[Main.filesCount];
+        semPanesCodeOp = new JTextArea[Main.filesCount];
+        semScrollPanesC = new JScrollPane[Main.filesCount];
+        semScrollPanesE = new JScrollPane[Main.filesCount];
+        semScrollPanesCO = new JScrollPane[Main.filesCount];
     }
 
     String getFolder() {
